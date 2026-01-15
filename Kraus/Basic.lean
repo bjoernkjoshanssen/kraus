@@ -9,6 +9,9 @@ import Mathlib.Geometry.Euclidean.Angle.Oriented.Basic --  Orientation.oangle
 import Mathlib.Geometry.Euclidean.Angle.Oriented.Affine --  EuclideanGeometry.oangle
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Data.Matrix.Reflection
+
+import Mathlib.Probability.Distributions.Uniform
+import Mathlib.LinearAlgebra.Matrix.PosDef
 /-!
 
 # Automatic complexity using linear algebra
@@ -272,9 +275,9 @@ example (θ : ℝ) : quantumChannel (grudka_R' θ 1) := by
 def e₁ : Matrix (Fin 3) (Fin 1) ℝ := ![1, 0, 0]
 def e₂ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 1, 0]
 def e₃ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 0, 1]
-def e : Fin 3 → Matrix (Fin 3) (Fin 1) ℝ :=
-  fun i j _ => ite (i=j) 1 0
-def pureState (e : Matrix (Fin 3) (Fin 1) ℝ) := mulᵣ e e.transpose
+def e {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) ℝ :=
+  fun i => single i 0 1
+def pureState {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) := mulᵣ e e.transpose
 
 example : pureState e₁ = !![1,0,0;0,0,0;0,0,0] := by
   ext i j
@@ -326,6 +329,116 @@ lemma POVM {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   exact Eq.symm (Fin.sum_univ_three fun i ↦ ρ i i)
 
 
+lemma pure_state_eq {k : ℕ} (i : Fin k) :
+    (single i (0 : Fin 1) (1 : ℝ)).mulᵣ (single i 0 1)ᵀ
+    = Matrix.single i i 1 := by
+  have : (single i (0:Fin 1) (1:ℝ))ᵀ = single 0 i 1 := by
+    simp
+  rw [this]
+  simp
+
+lemma nonneg_trace {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ} (hρ' : ρ.PosSemidef) (i : Fin n) :
+  0 ≤ (pureState (e i) * ρ).trace := by
+      suffices 0 ≤ (Matrix.mulᵣ (pureState (e i)) ρ).trace by
+        convert this
+        aesop
+      -- also use identity matrix instead of ite
+      unfold pureState
+      unfold PosSemidef at hρ'
+      have hh (k : Fin n) := hρ'.2 ({
+        toFun := fun j => e k j 0
+        support := {k}
+        mem_support_toFun := by
+          intro a
+          unfold e
+          unfold single
+          simp
+          tauto
+      })
+      unfold e Finsupp.sum at hh
+      unfold e trace diag
+      -- simp
+      apply Finset.sum_nonneg
+      -- simp at hh
+      intro l hl
+      have : (single i (0 : Fin 1) (1 : ℝ)).mulᵣ (single i 0 1)ᵀ
+        = Matrix.single i i 1 := by
+          apply pure_state_eq
+      rw [this]
+      -- simp
+      have : Matrix.mulᵣ (single i i (1 : ℝ)) ρ
+        = of (Function.update 0 i (ρ.row i)) := by
+        simp only [mulᵣ_eq]
+        rw [@Matrix.single_mul_eq_updateRow_zero]
+        unfold updateRow
+        simp
+      rw [this]
+      simp only [Fin.isValue, Finsupp.coe_mk, star_trivial, Finset.sum_singleton, single_apply_same,
+        mul_one, one_mul] at hh
+      unfold Function.update
+      simp only [eq_rec_constant, Pi.zero_apply, dite_eq_ite, of_apply, ge_iff_le]
+      by_cases H : l = i
+      · subst H
+        simp only [↓reduceIte, row_apply]
+        apply hh
+      · rw [if_neg H]
+        simp
+
+
+lemma sum_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
+  ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
+      ext i j
+      rw [Finset.sum_apply]
+      simp only [row, Finset.sum_apply, of_apply, Function.update,
+        eq_rec_constant, Pi.zero_apply, dite_eq_ite]
+      rw [← congrFun (Fintype.sum_ite_eq i fun j ↦ ρ i) j]
+      aesop
+
+lemma single_row {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ} (x : Fin k) :
+  single x x 1 * ρ = of (Function.update 0 x (ρ.row x)) := by
+        rw [@Matrix.single_mul_eq_updateRow_zero]
+        unfold updateRow
+        simp
+
+lemma combined_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
+  ∑ x, single x x 1 * ρ = ρ := by
+      have := @sum_rows k ρ
+      nth_rw 2 [← this]
+      have := @single_row k ρ
+      simp_rw [this]
+
+
+theorem POVM_PMF.aux₀ {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
+  (hρ : ρ.trace = 1) (hρ' : ρ.PosSemidef) :
+  (∑ a, ⟨
+    (pureState (e a) * ρ).trace,
+    nonneg_trace hρ' a⟩) = ENNReal.toNNReal 1 := by
+  apply NNReal.eq
+  unfold pureState e
+  simp_rw [pure_state_eq]
+  simp_rw [single_row]
+  rw [← sum_rows ρ] at hρ
+  simp only [trace_sum, NNReal.coe_sum, NNReal.coe_mk, ENNReal.toNNReal_one, NNReal.coe_one] at hρ ⊢
+  exact hρ
+
+open ENNReal
+/-- Positive operator (or projection) valued measure
+as a probability mass function.
+Technically the measure is valued in `Fin k`
+although `pureState (e i)` can stand for `i`.
+Could be generalized to let `e` be any orthonormal basis.
+-/
+def POVM_PMF {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
+    (hρ : ρ.trace = 1) (hρ' : Matrix.PosSemidef ρ) : PMF (Fin k) :=
+    PMF.ofFintype
+    (fun i => ofNNReal
+      ⟨
+        (pureState (e i) * ρ).trace, -- the probability of `i`
+        nonneg_trace hρ' _⟩)
+      <|(toNNReal_eq_one_iff _).mp
+      <| ENNReal.toNNReal_one ▸ POVM_PMF.aux₀ hρ hρ'
+       ▸ toNNReal_sum (by simp)
+
 
 -- Now `pureState e₁`, `pureState e₂`, `pureState e₃` form a POVM.
 
@@ -348,6 +461,14 @@ example : krausApplyWord ![0,1] grudka_R (pureState e₁) =
   unfold krausApplyWord
   simp only [Fin.isValue, Nat.succ_eq_add_one, Nat.reduceAdd,
     cons_val_fin_one]
+  have : ![(0:Fin 2),1] ⟨1, (by simp : 1 < 1 + 1)⟩ = 1 := by simp
+  rw [this]
+  have : krausApply (grudka_R 0) (pureState e₁)
+    =  (pureState e₂) := by
+    unfold krausApply pureState e₁ e₂
+    simp
+    sorry
+  rw [this]
   unfold krausApply
   unfold grudka_R
 
