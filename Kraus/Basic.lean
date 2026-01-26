@@ -665,7 +665,7 @@ theorem trace_mul_posSemidef_nonneg {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ
 /-
 A real matrix that is a star projection (symmetric and idempotent) is positive semidefinite.
 -/
-theorem isStarProjection_matrix_posSemidef {n : ℕ}
+theorem posSemidef_of_isStarProjection {n : ℕ}
   (P : Matrix (Fin n) (Fin n) ℝ) (hP : IsStarProjection P) : P.PosSemidef := by
   revert hP;
   rintro ⟨ h₁, h₂ ⟩;
@@ -692,29 +692,29 @@ theorem isStarProjection_matrix_posSemidef {n : ℕ}
   suffices P i j = P j i by rw [this]
   exact congrFun (congrFun (id (Eq.symm h₂)) i) j
 
-lemma nonneg_trace''' {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
+lemma trace_mul_nonneg {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
     (hρ' : ρ.PosSemidef)
     (hP : IsStarProjection P) : 0 ≤ (P * ρ).trace := by
   apply trace_mul_posSemidef_nonneg hρ'
-  apply isStarProjection_matrix_posSemidef
+  apply posSemidef_of_isStarProjection
   exact hP
 
-lemma nonneg_trace'' {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
-    (hρ' : ρ.PosSemidef)
-    (hP : IsStarProjection P) : 0 ≤ (P * ρ).trace := by
-    -- this proof is too complicated but at least it's not deprecated
-  suffices 0 ≤ (P * ρ * Pᴴ).trace by
-    simp only [conjTranspose_eq_transpose_of_trivial] at this
-    have : 0 ≤ (Pᴴ * P * ρ).trace := by
-      convert this using 1
-      exact (trace_mul_cycle _ ρ _).symm
-    have h₀ : Pᴴ * P = P := by
-      have : star P = Pᴴ := rfl
-      rw [← this,hP.2,hP.1]
-    rw [h₀] at this
-    exact this
-  apply PosSemidef.trace_nonneg
-  exact Matrix.PosSemidef.mul_mul_conjTranspose_same hρ' _
+-- lemma nonneg_trace'' {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
+--     (hρ' : ρ.PosSemidef)
+--     (hP : IsStarProjection P) : 0 ≤ (P * ρ).trace := by
+--     -- this proof is too complicated but at least it's not deprecated
+--   suffices 0 ≤ (P * ρ * Pᴴ).trace by
+--     simp only [conjTranspose_eq_transpose_of_trivial] at this
+--     have : 0 ≤ (Pᴴ * P * ρ).trace := by
+--       convert this using 1
+--       exact (trace_mul_cycle _ ρ _).symm
+--     have h₀ : Pᴴ * P = P := by
+--       have : star P = Pᴴ := rfl
+--       rw [← this,hP.2,hP.1]
+--     rw [h₀] at this
+--     exact this
+--   apply PosSemidef.trace_nonneg
+--   exact Matrix.PosSemidef.mul_mul_conjTranspose_same hρ' _
 
 /-- A general reason why `nonneg_trace` below holds.
 Can be generalized to let `(e * eᵀ)` be any projection, see above ^^.
@@ -723,7 +723,7 @@ lemma nonneg_trace' {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ} (hρ' : ρ.PosSe
   (e : Matrix (Fin n) (Fin 1) ℝ)
   (he : ‖WithLp.toLp 2 fun i ↦ e i 0‖ = 1) -- not really necessary
   : 0 ≤ (pureState e * ρ).trace := by
-      apply nonneg_trace'' hρ'
+      apply trace_mul_nonneg hρ'
       have := @pureState_projection' n {ofLp := fun i => e i 0} he
       convert this
 
@@ -841,7 +841,7 @@ lemma one_eq_sum_pureState {k : ℕ} :
       Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq, ne_eq]
     exact H
 
-def PVM_PMF₂₃General {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
+def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
   apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)
       ⟨((1 - (pureState (e acc))) * ρ).trace, by
@@ -881,7 +881,7 @@ def PVM_PMF₂₃General {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) �
           simp only [↓reduceIte]
           exact PosSemidef.zero
         · rw [if_neg H]
-          refine isStarProjection_matrix_posSemidef (pureState (e i)) ?_
+          refine posSemidef_of_isStarProjection (pureState (e i)) ?_
           exact pureState_projection i⟩
       ⟨(                   pureState (e acc)  * ρ).trace, nonneg_trace hPS _⟩)
   rw [← standard_basis_probability_one hUT hPS]
@@ -932,7 +932,7 @@ structure PVM where
 
   p : PMF (Fin t)                                       -- the measure
   pf' : ∀ i, p i = ofNNReal ⟨(op i * ρ).trace, by
-      apply nonneg_trace'' hρ
+      apply trace_mul_nonneg hρ
       apply pf
     ⟩  -- is given by the probs.
        -- will usually be by `rfl`
@@ -974,7 +974,7 @@ def PVM_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVM := {
   k := k
   t := 2
-  p := PVM_PMF₂₃General acc hUT hPS
+  p := PMF_of_state acc hUT hPS
   ρ := ρ
   hρ := hPS
   op := fun i : Fin 2 => ite (i=0)
@@ -989,7 +989,7 @@ def PVM_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
   pf' := by
     intro i
     fin_cases i
-    · unfold PVM_PMF₂₃General
+    · unfold PMF_of_state
       simp
     · rfl
 }
@@ -1021,7 +1021,7 @@ theorem pureState_trace₃ : (pureState (e (0 : Fin 3))).trace = 1 := by
   rw [grudka_helper]
   simp
 
-theorem pureState_trace {k : ℕ} : (pureState (e (0 : Fin k.succ))).trace = 1 := by
+theorem basisState_trace_one {k : ℕ} : (pureState (e (0 : Fin k.succ))).trace = 1 := by
     unfold pureState e
     have : ((single (0:Fin k.succ) (0:Fin 1) (1:ℝ)).mulᵣ
             (single (0:Fin k.succ) (0:Fin 1) 1)ᵀ)
@@ -1042,7 +1042,7 @@ def PVM_of_word_of_channel {α : Type u_1} {r k : ℕ} (acc : Fin k.succ)
 (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ)
 (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM := by
 have := krausApplyWord_densityMatrix (𝓚 := 𝓚) (word := word.2)
-    (ρ := ⟨pureState (e 0),⟨pureState_psd _, pureState_trace⟩⟩) (hq := h𝓚)
+    (ρ := ⟨pureState (e 0),⟨pureState_psd _, basisState_trace_one⟩⟩) (hq := h𝓚)
 exact @PVM_of_state k.succ acc
     (@krausApplyWord α ℝ _ _ _ word.1 k.succ r word.2 𝓚 (pureState (e 0)))
     this.2 this.1

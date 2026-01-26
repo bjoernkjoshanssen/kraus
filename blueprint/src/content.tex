@@ -5,3 +5,111 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
+In this project we formalize parts of the article \emph{Unbounded length minimal synchronizing words for quantum channels over qutrits} and notions in quantum information theory.
+
+\begin{definition}\label{krausApply}
+	\lean{krausApply}
+	\leanok
+	The operation $\rho\mapsto \sum_i K_i  ρ  K_i^*$.
+\end{definition}
+
+\begin{lemma}\label{posSemidef_of_isStarProjection}
+\lean{posSemidef_of_isStarProjection}
+\leanok
+Each projective is PSD.
+\end{lemma}
+
+\begin{lemma}\label{PMF_of_state}
+	\lean{PMF_of_state}
+	\leanok
+A probability mass function on two orthogonal projections $P, P^{\bot}$,
+with measure equal to the trace of the density matrix $\rho$ times the projection.
+\end{lemma}
+
+\begin{definition}\label{krausApplyWord}
+	\lean{krausApplyWord}
+	\leanok
+	\uses{krausApply}
+	Transition function $\delta^*$ corresponding to a word over an alphabet,
+	  where each symbol is mapped to a completely positive map in Kraus form,
+	  of rank at most $r$.
+\end{definition}
+
+\begin{lemma}\label{PVM_of_state}
+	\lean{PVM_of_state}
+	\leanok
+	\uses{PMF_of_state}
+A projection-valued measure, with measure equal to the trace of the density matrix $\rho$ times the projection.
+\end{lemma}
+
+\begin{lemma}\label{trace_mul_posSemidef_nonneg}
+	\lean{trace_mul_posSemidef_nonneg}
+	\leanok
+	If $A$ and $B$ are PSD then $AB$ has nonnegative trace.
+\end{lemma}
+
+\begin{lemma}\label{trace_mul_nonneg}
+	\lean{trace_mul_nonneg}
+	\leanok
+	\uses{trace_mul_posSemidef_nonneg,posSemidef_of_isStarProjection}
+	If $P$ is a projection and $\rho$ is PSD then the trace of $P\rho$ is nonnegative.
+\end{lemma}
+
+\begin{definition}\label{PVM}
+	\lean{PVM}
+	\leanok
+	\uses{trace_mul_nonneg}
+	Projection-valued measure.
+\end{definition}
+
+\begin{definition}\label{quantumChannel}
+	\lean{quantumChannel}
+	\leanok
+	Quantum channel.
+\end{definition}
+\begin{lemma}\label{krausApply_psd}
+	\lean{krausApply_psd}
+	\leanok
+	Kraus operators preserve the PSD property.
+\end{lemma}
+
+\begin{lemma}\label{krausApply_densityMatrix}
+	\lean{krausApply_densityMatrix}
+	\leanok
+	\uses{quantumChannel,krausApply,krausApply_psd}
+	An automaton based on a quantum channel maps density matrices to density matrices while reading a single letter.
+\end{lemma}
+
+\begin{lemma}\label{krausApplyWord_densityMatrix}
+	\lean{krausApplyWord_densityMatrix}
+	\leanok
+	\uses{quantumChannel, krausApplyWord, krausApply_densityMatrix}
+	An automaton based on a quantum channel maps density matrices to density matrices while reading a word.
+\end{lemma}
+
+\begin{lemma}\label{basisState_trace_one}
+	\lean{basisState_trace_one}
+	\leanok
+	A basis state density matrix has trace one.
+\end{lemma}
+
+\begin{lemma}\label{pureState_psd}
+	\lean{pureState_psd}
+	\leanok
+	A pure state is PSD.
+\end{lemma}
+
+\begin{definition}\label{PVM_of_word_of_channel}
+	\lean{PVM_of_word_of_channel}
+	\leanok
+	\uses{PVM,quantumChannel,PVM_of_state,krausApplyWord_densityMatrix,pureState_psd,basisState_trace_one,krausApplyWord}
+The projection-valued measure corresponding to a word belonging to the measure-once language of the KOA $\mathcal K$.
+\end{definition}
+
+\begin{definition}\label{MOlanguageAcceptedBy}
+	\lean{MOlanguageAcceptedBy}
+	\leanok
+	\uses{PVM_of_word_of_channel}
+	We accept a word if starting in $e_0$ we end up in $e_1$ with probability at least 1/2.
+
+\end{definition}
