@@ -1,152 +1,25 @@
-import Mathlib.Geometry.Euclidean.Angle.Unoriented.Affine
-import Mathlib.Analysis.InnerProductSpace.EuclideanDist
--- import Mathlib.Analysis.Normed.Affine.Convex
-import Mathlib.Analysis.Calculus.LocalExtr.Basic
-import Mathlib.Analysis.Calculus.Gradient.Basic
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Data.Matrix.Reflection
-import Mathlib.Geometry.Euclidean.Angle.Oriented.Basic --  Orientation.oangle
-import Mathlib.Geometry.Euclidean.Angle.Oriented.Affine --  EuclideanGeometry.oangle
-import Mathlib.Analysis.Calculus.Deriv.Basic
-import Mathlib.Data.Matrix.Reflection
-
-import Mathlib.Probability.Distributions.Uniform
-import Mathlib.LinearAlgebra.Matrix.PosDef
-
-import Mathlib.Algebra.Star.StarProjection
 import Mathlib.Analysis.Matrix.Order
-
-import Mathlib.Analysis.CStarAlgebra.CStarMatrix
-import Mathlib.Analysis.InnerProductSpace.Positive
-import Mathlib.LinearAlgebra.Trace
+import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
 
-# Automatic complexity using linear algebra
+# Kraus operator automata and projection-valued measures
 
-We define
+We define the language accepted by a measure-once Kraus operator automaton,
+and a family of examples due to Grudka et al.
 
- * `Al` (linear algebra automatic complexity over a semiring `R`, allowing any vector to be
-  initial or final state)
+References:
 
- * `As` (semi-classical automatic complexity over a semiring `R`, allowing only
-  standard basis vectors to be initial or final state)
+ * J. Lakshmanan, doctoral dissertation, University of Hawaii at Manoa, 2026
 
-and prove `log_|R| A ≤ Al < As ≤ A`.
+ * *Quantum Synchronizing Words: Resetting and Preparing Qutrit States*,
+   Grudka et al., 2025
 
-The closest of the newcomers to `A` is probably `As ℕ`.
+ * *Unbounded length minimal synchronizing words for quantum channels over qutrits*,
+   B. Kjos-Hanssen and J. Lakshmanan, preprint 2026.
 -/
-
-/-- ast for "asterisk": ast δ is what we in mathematics articles would
- call δ^*, the iteration of the transition function δ over a word in.
- To be able to talk about the identity matrix intelligently,
- we assume the field is at least `ℤ / 2ℤ`.
--/
-def myf : ℝ × ℝ → ℝ := by
-    intro x
-    exact x.fst^2+x.snd^2
-
-
-
-
-noncomputable def partial_deriv_x
-    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
-    fun y => deriv fun x => f x y
-
-noncomputable def partial_deriv_y
-    (f : ℝ → ℝ → ℝ) : ℝ → ℝ → ℝ :=
-    fun x => deriv fun y => f x y
-
-noncomputable def part_deriv_x
-    (f : (Fin 2 → ℝ) → ℝ) : ℝ → ℝ → ℝ :=
-    fun y => deriv fun x => f ![x, y]
-
-noncomputable def partDeriv_x
-    (f : (Fin 2 → ℝ) → ℝ) : (Fin 2 → ℝ) → ℝ :=
-    fun x => part_deriv_x f (x 0) (x 1)
-
-
-
-theorem suggestion (f : EuclideanSpace ℝ (Fin 2) → ℝ)
-    (a : Fin 2 → ℝ)
-    (h : IsLocalExtr f (WithLp.toLp 2 a)) : fderiv ℝ f (WithLp.toLp 2 a) =0 :=
-      IsLocalExtr.fderiv_eq_zero h
-
-
-
--- make a repo with this
-theorem grad_zero_of_extr (f : EuclideanSpace ℝ (Fin 2) → ℝ)
-    (a : Fin 2 → ℝ) (h₀ : DifferentiableAt ℝ f (WithLp.toLp 2 a))
-    (h : IsLocalExtr f (WithLp.toLp 2 a)) : gradient f (WithLp.toLp 2 a) =0 := by
-    apply HasGradientAt.gradient
-    have h₁ := (hasFDerivAt_iff_hasGradientAt).mp
-        (DifferentiableAt.hasFDerivAt h₀)
-    rw [IsLocalExtr.fderiv_eq_zero h] at h₁
-    simp only [map_zero] at h₁
-    exact h₁
-
-
-
-
-
--- example : (!![(1:ℝ),0;0,1]).det = 0 := sorry
-
-def f0 : (Fin 2 → ℝ) → ℝ := by
-    intro x
-    have := x 0
-    have := x 1
-    exact (x 0)^2 + (x 1)^2
-def f₀ : EuclideanSpace ℝ (Fin 2) → ℝ := by
-    intro x
-    have := x 0
-    have := x 1
-    exact (x 0)^2 + (x 1)^2
-
--- Function of two variables first partial derivative test
--- example (f₀ : EuclideanSpace ℝ (Fin 2) → ℝ) :
---     (hf₀ : )
-
--- example : f0 ![2,2] = 8 := by
---     simp [f0]
---     linarith
-
--- def myf'' : ℝ → ℝ → ℝ := by
---     intro x y
---     exact x^2+y^2
-
--- def myf' : EuclideanSpace ℝ (Fin 2) → ℝ := by
---     intro x y
---     exact x^2+y^2
-
-
-
-
-
-
-
-
-
-
-
-def astMat {α : Type*} {R : Type*} [Add R] [Mul R] [Zero R] [One R]
-  {n q : ℕ} (word : Fin n → α) (matrices : α → Matrix (Fin q) (Fin q) R) :
-  Fin q → Fin q → R := match n with
-| 0 => fun x y => ite (x=y) 1 0
-| Nat.succ m => Matrix.mulᵣ (matrices (word ⟨m,by simp⟩)) (astMat (Fin.init word) matrices)
 
 open Matrix
-
-example {R : Type*} [Mul R] [AddCommMonoid R]
-  (q : ℕ) (A B : Matrix (Fin q) (Fin q) R) :
-  mulᵣ A B = A * B := by simp only [mulᵣ_eq]
-
--- /-- Completely positive map in Kraus operator form. -/
--- def CP_apply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
---   {q krausDecompositionLength : ℕ}
---   (krausOperator : Fin krausDecompositionLength → Matrix (Fin q) (Fin q) R)
---   (ρ : Matrix (Fin q) (Fin q) R) : Matrix (Fin q) (Fin q) R :=
---     ∑ i : Fin krausDecompositionLength,
---       krausOperator i * ρ * (krausOperator i).conjTranspose
 
 /-- Completely positive map given by a (not necessarily minimal) Kraus family. -/
 def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
@@ -727,10 +600,11 @@ lemma nonneg_trace' {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ} (hρ' : ρ.PosSe
       have := @pureState_projection' n {ofLp := fun i => e i 0} he
       convert this
 
-lemma nonneg_trace {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ} (hρ' : ρ.PosSemidef) (i : Fin n) :
-  0 ≤ (pureState (e i) * ρ).trace := by
-      apply nonneg_trace' hρ'
-      simp [e, single, PiLp.instNorm]
+lemma nonneg_trace_of_posSemidef {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ}
+    (hρ' : ρ.PosSemidef) (i : Fin n) :
+    0 ≤ (pureState (e i) * ρ).trace := by
+  apply nonneg_trace' hρ'
+  simp [e, single, PiLp.instNorm]
 
 lemma sum_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
   ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
@@ -759,7 +633,7 @@ theorem POVM_PMF.aux₀ {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
   (hρ : ρ.trace = 1) (hρ' : ρ.PosSemidef) :
   (∑ a, ⟨
     (pureState (e a) * ρ).trace,
-    nonneg_trace hρ' a⟩) = ENNReal.toNNReal 1 := by
+    nonneg_trace_of_posSemidef hρ' a⟩) = ENNReal.toNNReal 1 := by
   apply NNReal.eq
   unfold pureState e
   simp_rw [pure_state_eq]
@@ -772,7 +646,7 @@ open ENNReal
 
 lemma standard_basis_probability_one {k : ℕ}
   {ρ : Matrix (Fin k) (Fin k) ℝ} (hUT : ρ.trace = 1) (hPS : ρ.PosSemidef) :
-  ∑ a, ofNNReal ⟨(pureState (e a) * ρ).trace, nonneg_trace hPS _⟩ = 1 := by
+  ∑ a, ofNNReal ⟨(pureState (e a) * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩ = 1 := by
     exact
       (toNNReal_eq_one_iff _).mp
       <| ENNReal.toNNReal_one ▸ POVM_PMF.aux₀ hUT hPS
@@ -796,7 +670,7 @@ def POVM_PMF {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
      (fun i => ofNNReal
       ⟨
         (pureState (e i) * ρ).trace, -- the probability of `i` acc. to ρ
-        nonneg_trace hPS _⟩) <| standard_basis_probability_one hUT hPS
+        nonneg_trace_of_posSemidef hPS _⟩) <| standard_basis_probability_one hUT hPS
 
 lemma PMF₂₃help {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   (hPS : ρ.PosSemidef) :
@@ -814,7 +688,7 @@ def PVM_PMF₂₃ {ρ : Matrix (Fin 3) (Fin 3) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
   apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)
       ⟨((pureState (e 0) + pureState (e 1)) * ρ).trace, PMF₂₃help hPS⟩
-      ⟨(                   pureState (e 2)  * ρ).trace, nonneg_trace hPS _⟩)
+      ⟨(                   pureState (e 2)  * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩)
   rw [← standard_basis_probability_one hUT hPS]
   rw [Fin.sum_univ_two, Fin.sum_univ_three]
   simp_rw [add_mul, trace_add]
@@ -883,7 +757,7 @@ def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
         · rw [if_neg H]
           refine posSemidef_of_isStarProjection (pureState (e i)) ?_
           exact pureState_projection i⟩
-      ⟨(                   pureState (e acc)  * ρ).trace, nonneg_trace hPS _⟩)
+      ⟨(                   pureState (e acc)  * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩)
   rw [← standard_basis_probability_one hUT hPS]
   rw [Fin.sum_univ_two]
   simp_rw [one_eq_sum_pureState]
@@ -902,14 +776,15 @@ def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     rw [← trace_sum]
     congr
     exact Matrix.sum_mul Finset.univ (fun a ↦ pureState (e a)) ρ
-  have h₁ : (∑ a, ENNReal.ofNNReal ⟨(pureState (e a) * ρ).trace, nonneg_trace hPS a⟩ ).toReal
+  have h₁ : (∑ a, ENNReal.ofNNReal ⟨(pureState (e a) * ρ).trace,
+    nonneg_trace_of_posSemidef hPS a⟩ ).toReal
     = ∑ a, (pureState (e a) * ρ).trace := by
         refine toReal_sum ?_
         simp
   rw [h₁]
   rw [← h₀]
   rw [toReal_add (by simp) (by simp)]
-  have : (ofNNReal (⟨(pureState (e acc) * ρ).trace, nonneg_trace hPS acc⟩)).toReal
+  have : (ofNNReal (⟨(pureState (e acc) * ρ).trace, nonneg_trace_of_posSemidef hPS acc⟩)).toReal
     = (pureState (e acc) * ρ).trace := by exact rfl
   rw [this]
   have (a b c : ℝ) (h : a = c)  : a + b = c + b := by
@@ -1021,11 +896,12 @@ theorem pureState_trace₃ : (pureState (e (0 : Fin 3))).trace = 1 := by
   rw [grudka_helper]
   simp
 
-theorem basisState_trace_one {k : ℕ} : (pureState (e (0 : Fin k.succ))).trace = 1 := by
+theorem basisState_trace_one {k : ℕ} {i : Fin k.succ} :
+    (pureState (e (i : Fin k.succ))).trace = 1 := by
     unfold pureState e
-    have : ((single (0:Fin k.succ) (0:Fin 1) (1:ℝ)).mulᵣ
-            (single (0:Fin k.succ) (0:Fin 1) 1)ᵀ)
-        = Matrix.of (fun i j => ite (i = 0) (ite (j = 0) 1 0) 0
+    have : ((single (i:Fin k.succ) (0:Fin 1) (1:ℝ)).mulᵣ
+            (single (i:Fin k.succ) (0:Fin 1) 1)ᵀ)
+        = Matrix.of (fun a b => ite (a = i) (ite (b = i) 1 0) 0
         ) := by
         ext i j
         unfold mulᵣ dotProductᵣ single
@@ -1063,6 +939,41 @@ def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
   {word | (PVM_of_word_of_channel acc 𝓚 (h𝓚) word).p
     (by simp only [PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
 
+
+/-- If the start and accept states are the same then
+the empty string is accepted in the measure-once setting. -/
+lemma MO_language_nonempty {α : Type*} {r k : ℕ}
+    (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ)
+    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) :
+  MOlanguageAcceptedBy 0 𝓚
+    h𝓚 ≠ ∅ := by
+  refine Set.nonempty_iff_ne_empty'.mp ?_
+  refine nonempty_subtype.mpr ?_
+  use ⟨0,![]⟩
+  unfold MOlanguageAcceptedBy PVM_of_word_of_channel
+  unfold PVM_of_state PMF_of_state
+  simp only [Nat.succ_eq_add_one, Fin.isValue, Lean.Elab.WF.paramLet, id_eq, PMF.ofFintype_apply,
+    one_ne_zero, ↓reduceIte, one_div, gt_iff_lt, Set.mem_setOf_eq]
+  unfold krausApplyWord
+  have : pureState (e (0 : Fin k.succ)) * pureState (e 0) = pureState (e 0) := by
+    suffices IsStarProjection (pureState (e (0 : Fin k.succ))) by exact this.1
+    exact pureState_projection 0
+  simp only [gt_iff_lt]
+  simp_rw [this]
+  simp_rw [basisState_trace_one]
+  simp
+
+/-- For the Grudka channel with start state 0,
+the probability of accepting the empty word is 1 > 1/2
+hence ![] is in the corresponding measure-once language.
+This can be generalized to any quantum channel.
+-/
+lemma MO_grudka0_language_nonempty :
+  MOlanguageAcceptedBy 0 (grudka_R (θ := 0))
+    (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
+  apply MO_language_nonempty
+
+
 /-- Measure-Once language accepted by 𝓚 is
 {word | Probability that we are in state e₃, and not in the span of e₁,e₂, > 1/2}.
 `q = 2` because we haven't generalized myPVM₂₃ yet
@@ -1096,7 +1007,7 @@ lemma grudka_language_nonempty :
 -- Now `pureState e₁`, `pureState e₂`, `pureState e₃` form a POVM.
 
 
-lemma grudka_basic_operation : krausApply (grudka_R₀ 0)
+lemma grudka₀_basic_operation : krausApply (grudka_R₀ 0)
   (pureState e₁) = pureState e₂ := by
     unfold krausApply pureState e₁ e₂
     have : mulᵣ ![(0: Fin 1 → ℝ), 1, 0] ![0, 1, 0]ᵀ =
@@ -1115,6 +1026,36 @@ lemma grudka_basic_operation : krausApply (grudka_R₀ 0)
         apply grudka_helper
     rw [this]
     unfold grudka_R₀
+    simp only [Fin.isValue, cons_val', cons_val_fin_one, cons_val_zero,
+      conjTranspose_eq_transpose_of_trivial, Fin.sum_univ_two, cons_mul, Nat.succ_eq_add_one,
+      Nat.reduceAdd, vecMul_cons, head_cons, zero_smul, tail_cons, empty_vecMul, add_zero, one_smul,
+      empty_mul, Equiv.symm_apply_apply, cons_transpose, zero_vecMul, cons_vecMul, cons_val_one,
+      neg_smul, neg_cons, neg_zero, neg_empty, zero_add, of_add_of, add_cons, empty_add_empty,
+      EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true]
+    constructor
+    · ext i; fin_cases i <;> simp
+    · constructor <;>
+      · ext i; fin_cases i <;> simp [vecHead]
+
+lemma grudka_basic_operation : krausApply (grudka_R 0 0)
+  (pureState e₁) = pureState e₂ := by
+    unfold krausApply pureState e₁ e₂
+    have : mulᵣ ![(0: Fin 1 → ℝ), 1, 0] ![0, 1, 0]ᵀ =
+      !![0,0,0;0,1,0;0,0,0] := by
+      -- this could be generalized
+        ext i j
+        fin_cases i <;> fin_cases j <;> simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.zero_eta,
+          Fin.isValue, mulᵣ_eq, of_apply, cons_val', cons_val_zero, cons_val_fin_one]
+        all_goals
+          rw [← mulᵣ_eq]
+          unfold mulᵣ
+          simp
+    rw [this]
+    have : mulᵣ ![(1: Fin 1 → ℝ), 0, 0] ![1, 0, 0]ᵀ =
+      !![1,0,0;0,0,0;0,0,0] := by
+        apply grudka_helper
+    rw [this]
+    unfold grudka_R
     simp only [Fin.isValue, cons_val', cons_val_fin_one, cons_val_zero,
       conjTranspose_eq_transpose_of_trivial, Fin.sum_univ_two, cons_mul, Nat.succ_eq_add_one,
       Nat.reduceAdd, vecMul_cons, head_cons, zero_smul, tail_cons, empty_vecMul, add_zero, one_smul,
@@ -1162,6 +1103,34 @@ lemma grudka_basic_operation₂ : krausApply (grudka_R₀ 0)
     · ext i
       fin_cases i <;> simp [vecHead,vecTail,vecHead,vecTail]
 
+/- If now the 2nd basis state is the accept state, we should still be able
+to accept something... -/
+lemma MO_grudka1_language_nonempty :
+  MOlanguageAcceptedBy 1 (grudka_R (θ := 0))
+    (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
+  refine Set.nonempty_iff_ne_empty'.mp <| nonempty_subtype.mpr ?_
+  use ⟨1,![0]⟩
+  simp only [
+    MOlanguageAcceptedBy, PVM_of_word_of_channel, PVM_of_state, PMF_of_state,
+    Set.mem_setOf_eq, krausApplyWord, krausApply, cons_val_fin_one,
+    conjTranspose_eq_transpose_of_trivial, Fin.sum_univ_two]
+  have g₀: (
+    grudka_R (0:ℝ) (0:Fin 2) (0:Fin 2) * pureState (single 0 0 1) * (grudka_R 0 0 0)ᵀ
+    +
+    grudka_R 0 0 1 * pureState (single 0 0 1) * (grudka_R 0 0 1)ᵀ
+    ) =  pureState ![0, 1, 0] := by
+    have h₅ := @grudka_basic_operation
+    unfold e₁ e₂ krausApply at h₅
+    rw [← h₅, Fin.sum_univ_two]
+    congr
+    all_goals exact ext_iff_trace_mul_left.mpr (congrFun rfl)
+  have g₁: (single (1:Fin 3) (0:Fin 1) (1:ℝ)) = ![0,1,0] := by
+    ext i j; fin_cases i <;> (fin_cases j; simp)
+  have g₂ : pureState ![(0 : Fin 1 → ℝ), 1, 0] * pureState ![0, 1, 0]
+   = pureState ![0, 1, 0] := (pureState_projection 1).1
+  have g₃ : (pureState ![0, 1, 0]).trace = 1 := g₁ ▸ @basisState_trace_one 2 (1 : Fin 3)
+  simp_rw [e, g₀, g₁, g₂, g₃]
+  simp
 
 -- This is not hard to finish now:
 -- example : krausApplyWord ![0,1] grudka_R₀ (pureState e₁) =
