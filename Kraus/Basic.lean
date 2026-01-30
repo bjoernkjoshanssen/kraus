@@ -19,7 +19,7 @@ References:
    B. Kjos-Hanssen and J. Lakshmanan, preprint 2026.
 -/
 
-open Matrix
+open Matrix MatrixOrder
 
 /-- Completely positive map given by a (not necessarily minimal) Kraus family. -/
 def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
@@ -28,20 +28,19 @@ def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
   (ρ : Matrix (Fin q) (Fin q) R) : Matrix (Fin q) (Fin q) R :=
   ∑ i : Fin r, K i * ρ * (K i)ᴴ
 
-def densityMatrix (q : ℕ) : Type :=
-{ρ : Matrix (Fin q) (Fin q) ℝ // ρ.PosSemidef ∧ ρ.trace = 1}
 
 
 /-- 1/24/26. Kraus operator preserves PSD property. -/
-lemma krausApply_psd
+lemma krausApply_psd {R : Type*} [Ring R] [PartialOrder R] [StarRing R]
+[AddLeftMono R]
   {q r : ℕ}
-  (K : Fin r → Matrix (Fin q) (Fin q) ℝ)
-  (ρ : Matrix (Fin q) (Fin q) ℝ) (hρ : ρ.PosSemidef) :
+  (K : Fin r → Matrix (Fin q) (Fin q) R)
+  (ρ : Matrix (Fin q) (Fin q) R) (hρ : ρ.PosSemidef) :
   (krausApply K ρ).PosSemidef := by
   unfold krausApply
   refine posSemidef_sum Finset.univ ?_
   intro i _
-  have := @Matrix.PosSemidef.mul_mul_conjTranspose_same (Fin q) (Fin q) ℝ
+  have := @Matrix.PosSemidef.mul_mul_conjTranspose_same (Fin q) (Fin q) R
     _ _ _ _ _ ρ hρ (K i)
   convert this
 
@@ -50,16 +49,23 @@ def quantumChannel {R : Type*} [Mul R] [One R] [Star R] [AddCommMonoid R]
   (K : Fin r → Matrix (Fin q) (Fin q) R) : Prop :=
     ∑ i : Fin r, (K i)ᴴ * K i = 1
 
-def quantum_channel (q r : ℕ) : Type :=
-  {K : Fin r → Matrix (Fin q) (Fin q) ℝ // ∑ i : Fin r, (K i)ᴴ * K i = 1 }
+def densityMatrix.{u_2}
+    {R : Type u_2} [Ring R] [PartialOrder R] [StarRing R]
+    (q : ℕ) : Type (u_2) :=
+{ρ : Matrix (Fin q) (Fin q) R // ρ.PosSemidef ∧ ρ.trace = 1}
+
+def quantum_channel.{u_2}
+    {R : Type u_2} [Ring R] [PartialOrder R] [StarRing R] (q r : ℕ) : Type u_2 :=
+  {K : Fin r → Matrix (Fin q) (Fin q) R // ∑ i : Fin r, (K i)ᴴ * K i = 1 }
 
 /-- This proves a claim by ChatGPT
 in the chat Kraus operator conditions. -/
-lemma quantumChannel_preserves_trace
+lemma quantumChannel_preserves_trace.{u_2}
+    {R : Type u_2} [CommRing R] [PartialOrder R] [StarRing R]
   {q r : ℕ}
-  (K : Fin r → Matrix (Fin q) (Fin q) ℝ)
+  (K : Fin r → Matrix (Fin q) (Fin q) R)
   (hq : quantumChannel K)
-  (ρ : Matrix (Fin q) (Fin q) ℝ) :
+  (ρ : Matrix (Fin q) (Fin q) R) :
   (krausApply K ρ).trace = ρ.trace := by
   unfold krausApply
   rw [trace_sum]
@@ -69,10 +75,11 @@ lemma quantumChannel_preserves_trace
   rw [hq]
   simp
 
-lemma quantum_channel_preserves_trace
+lemma quantum_channel_preserves_trace.{u_2}
+    {R : Type u_2} [CommRing R] [PartialOrder R] [StarRing R]
   {q r : ℕ}
   (K : quantum_channel q r)
-  (ρ : Matrix (Fin q) (Fin q) ℝ) :
+  (ρ : Matrix (Fin q) (Fin q) R) :
   (krausApply K.1 ρ).trace = ρ.trace := by
   unfold krausApply
   rw [trace_sum]
@@ -83,21 +90,23 @@ lemma quantum_channel_preserves_trace
   simp
 
 
-lemma quantumChannel_preserves_trace_one
+lemma quantumChannel_preserves_trace_one.{u_2}
+    {R : Type u_2} [CommRing R] [PartialOrder R] [StarRing R]
   {q r : ℕ}
-  (K : Fin r → Matrix (Fin q) (Fin q) ℝ)
+  (K : Fin r → Matrix (Fin q) (Fin q) R)
   (hq : quantumChannel K)
-  (ρ : Matrix (Fin q) (Fin q) ℝ) (hρ : ρ.trace = 1) :
+  (ρ : Matrix (Fin q) (Fin q) R) (hρ : ρ.trace = 1) :
   (krausApply K ρ).trace = 1 := by
-  rw [@quantumChannel_preserves_trace q r K hq ρ]
+  rw [@quantumChannel_preserves_trace R _ _ _ q r K hq ρ]
   exact hρ
 
 /-- Realizing a quantumChannel as a map on densityMatrices. -/
-def krausApply_densityMatrix
+def krausApply_densityMatrix.{u_2}
+    {R : Type u_2} [CommRing R] [PartialOrder R] [StarRing R] [AddLeftMono R]
   {q r : ℕ}
-  (K : Fin r → Matrix (Fin q) (Fin q) ℝ)
+  (K : Fin r → Matrix (Fin q) (Fin q) R)
   (hq : quantumChannel K)
-  (ρ : densityMatrix q) : densityMatrix q :=
+  (ρ : densityMatrix q (R := R)) : densityMatrix q (R := R) :=
   ⟨krausApply K ρ.1, ⟨krausApply_psd K ρ.1 ρ.2.1,
    quantumChannel_preserves_trace_one K hq ρ.1 ρ.2.2⟩⟩
 
@@ -116,8 +125,9 @@ def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
         (krausApplyWord (Fin.init word) 𝓚 ρ)
 
 theorem krausApplyWord_densityMatrix.{u_1} {α : Type u_1}
+ {R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
 {n q r : ℕ} (word : Fin n → α)
-  {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) ℝ}
+  {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R}
   (hq : ∀ (a : α), quantumChannel (𝓚 a)) (ρ : densityMatrix q) :
   (krausApplyWord word 𝓚 ρ.1).PosSemidef ∧ (krausApplyWord word 𝓚 ρ.1).trace = 1 := by
     induction n with
@@ -129,21 +139,21 @@ theorem krausApplyWord_densityMatrix.{u_1} {α : Type u_1}
 /-- If each letter is a quantum channel
 then the whole word maps density matrices to density matrices. -/
 def krausApplyWord_map {α : Type*}
+{R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
   {n q r : ℕ} (word : Fin n → α)
-  (𝓚 : α → Fin r → Matrix (Fin q) (Fin q) ℝ)
+  (𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R)
   (hq : ∀ a, quantumChannel (𝓚 a))
-  (ρ : densityMatrix q) : densityMatrix q :=
+  (ρ : densityMatrix q (R := R)) : densityMatrix q (R := R) :=
   ⟨krausApplyWord word 𝓚 ρ.1, krausApplyWord_densityMatrix _ hq _⟩
 
 
 def krausApplyWord_channel {α : Type*}
-  {n q r : ℕ} (word : Fin n → α)
-  (𝓚 : α → quantum_channel q r)
-  (ρ : densityMatrix q) : densityMatrix q := by
-  exact krausApplyWord_map word
-    (fun a => (𝓚 a).1)
-    (fun a => (𝓚 a).2) ρ
-
+    {R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
+    {n q r : ℕ} (word : Fin n → α)
+    (𝓚 : α → quantum_channel q r (R := R))
+    (ρ : densityMatrix q (R := R)) : densityMatrix q (R := R) :=
+  krausApplyWord_map word (fun a => (𝓚 a).1)
+                          (fun a => (𝓚 a).2) ρ
 
 
 /-- The example Kraus operators from QCNC submission. -/
@@ -293,19 +303,30 @@ lemma grudka_quantumChannel (θ : ℝ) (i : Fin 2) : quantumChannel (grudka_R θ
 
 /-- Grudka et al.' map does indeed map density matrices to density matrices. -/
 noncomputable def grudka_map (θ : ℝ) {n : ℕ} (word : Fin n → Fin 2) :
-  densityMatrix 3 → densityMatrix 3 :=
+  densityMatrix 3 (R := ℝ) → densityMatrix 3 (R := ℝ) :=
   krausApplyWord_map word _ fun i ↦ grudka_quantumChannel θ i
 
 
 
 
 
-def e₁ : Matrix (Fin 3) (Fin 1) ℝ := ![1, 0, 0]
-def e₂ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 1, 0]
-def e₃ : Matrix (Fin 3) (Fin 1) ℝ := ![0, 0, 1]
-def e {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) ℝ :=
+def e₁ {R : Type*} [One R] [Zero R] : Matrix (Fin 3) (Fin 1) R := ![1, 0, 0]
+def e₂ {R : Type*} [One R] [Zero R] : Matrix (Fin 3) (Fin 1) R := ![0, 1, 0]
+def e₃ {R : Type*} [One R] [Zero R] : Matrix (Fin 3) (Fin 1) R := ![0, 0, 1]
+def e {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) R :=
   fun i => single i 0 1
-def pureState {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) := mulᵣ e e.transpose
+def pureState {R : Type*} [Mul R] [Add R] [Zero R] {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :=
+    mulᵣ e e.transpose
+
+def pureState_C {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
+    {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :=
+  mulᵣ e eᴴ
+
+lemma pureState_selfAdjoint_C {R : Type*} [Ring R] [StarRing R]
+        {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :
+  Matrix.IsHermitian (pureState_C e) := by
+    unfold pureState_C
+    simp +decide [ Matrix.IsHermitian]
 
 lemma pureState_selfAdjoint {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) :
   Matrix.IsHermitian (pureState e) := by
@@ -313,8 +334,37 @@ lemma pureState_selfAdjoint {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) :
     norm_num [ Matrix.PosSemidef ] at *;
     simp +decide [ Matrix.IsHermitian, Matrix.transpose_mul ];
 
+def pureState_projection'_C {R : Type*} [RCLike R]
+    {k : ℕ} (e : EuclideanSpace R (Fin k)) (he : ‖e‖ = 1) :
+    IsStarProjection (pureState_C (fun (i : Fin k) (_ : Fin 1) => e i)) := {
+      isIdempotentElem := by
+        unfold pureState_C
+        simp +decide only [IsIdempotentElem, mulᵣ_eq];
+        simp +decide only [ ← Matrix.ext_iff, Matrix.mul_apply ];
+        simp +decide only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue,
+          conjTranspose_apply, RCLike.star_def, Finset.sum_const, Finset.card_singleton, one_smul,
+          ← mul_assoc, ← Finset.sum_mul, mul_eq_mul_right_iff, map_eq_zero];
+        simp +decide only [EuclideanSpace.norm_eq, sqrt_eq_one, mul_assoc,
+          ← Finset.mul_sum _ _ _] at he ⊢;
+        intro i j
+        left
+        suffices  ∑ i, (starRingEnd R) (e.ofLp i) * e.ofLp i = 1 by
+            rw [this]
+            simp
+        have (i : Fin k) : (starRingEnd R) (e.ofLp i) * e.ofLp i
+            = ‖e.ofLp i‖ ^ 2 := by exact RCLike.conj_mul (e.ofLp i)
+        simp_rw [this]
+        generalize e.ofLp = α at *
+        suffices RCLike.ofReal (∑ x, ‖α x‖ ^ 2) = (1 : R) by
+            rw [← this]
+            norm_num
+        rw [he]
+        simp
+      isSelfAdjoint := by apply pureState_selfAdjoint_C
+  }
+
 def pureState_projection' {k : ℕ} (e : EuclideanSpace ℝ (Fin k)) (he : ‖e‖ = 1) :
-  IsStarProjection (pureState (fun (i : Fin k) (_ : Fin 1) => e i)) := {
+    IsStarProjection (pureState (fun (i : Fin k) (_ : Fin 1) => e i)) := {
       isIdempotentElem := by
         unfold pureState
         simp
@@ -329,38 +379,47 @@ def pureState_projection' {k : ℕ} (e : EuclideanSpace ℝ (Fin k)) (he : ‖e�
   }
 
 lemma pureState_projection {k : ℕ} (i : Fin k) :
-  IsStarProjection (pureState (e i)) := {
+  IsStarProjection (pureState (e i) (R := ℝ)) := {
       isIdempotentElem := by
         unfold IsIdempotentElem pureState e
         simp
       isSelfAdjoint := by apply pureState_selfAdjoint
   }
 
+lemma pureState_projection_C {R : Type*} [Ring R] [StarRing R] {k : ℕ} (i : Fin k) :
+  IsStarProjection (pureState_C (e i) (R := R)) := {
+      isIdempotentElem := by
+        unfold IsIdempotentElem pureState_C e
+        simp
+      isSelfAdjoint := by apply pureState_selfAdjoint_C
+  }
+
 /-- Projection onto span ⟨e₁, e₂⟩ is indeed a star-projection.
 So we could form a PMF with two outcomes (e₁,e₂) vs. e₃.
 -/
 lemma pureState_projection'' :
-  IsStarProjection (pureState (e (0:Fin 3)) + pureState (e (1 : Fin 3))) := {
+  IsStarProjection (pureState (e (0:Fin 3) (R := ℝ))
+    + pureState (e (1 : Fin 3))) := {
       isIdempotentElem := by
         unfold IsIdempotentElem
         rw [mul_add]
         repeat rw [add_mul]
-        have : pureState (e (0:Fin 3)) * pureState (e 0) =
+        have : pureState (e (0:Fin 3)) * pureState (e 0) (R := ℝ) =
           pureState (e 0) := by
           have := @pureState_projection 3 0
           exact this.isIdempotentElem
         rw [this]
-        have : pureState (e (1:Fin 3)) * pureState (e 1) =
+        have : pureState (e (1:Fin 3)) * pureState (e 1) (R := ℝ) =
           pureState (e 1) := by
           have := @pureState_projection 3 1
           exact this.isIdempotentElem
         rw [this]
-        have : pureState (e (1:Fin 3)) * pureState (e 0) =
+        have : pureState (e (1:Fin 3)) * pureState (e 0) (R := ℝ) =
           0 := by
           unfold pureState e
           simp
         rw [this]
-        have : pureState (e (0:Fin 3)) * pureState (e 1) =
+        have : pureState (e (0:Fin 3)) * pureState (e 1) (R := ℝ) =
           0 := by
           unfold pureState e
           simp
@@ -372,24 +431,73 @@ lemma pureState_projection'' :
         · apply (@pureState_projection 3 1).isSelfAdjoint
   }
 
+lemma pureState_projection''_C :
+  IsStarProjection (pureState_C (e (0:Fin 3) (R := ℂ))
+    + pureState_C (e (1 : Fin 3))) := {
+      isIdempotentElem := by
+        unfold IsIdempotentElem
+        rw [mul_add]
+        repeat rw [add_mul]
+        have : pureState_C (e (0:Fin 3)) * pureState_C (e 0) (R := ℂ) =
+          pureState_C (e 0) := by
+          have := @pureState_projection_C ℂ _ _ 3 0
+          exact this.isIdempotentElem
+        rw [this]
+        have : pureState_C (e (1:Fin 3)) * pureState_C (e 1) (R := ℂ) =
+          pureState_C (e 1) := by
+          have := @pureState_projection_C ℂ _ _ 3 1
+          exact this.isIdempotentElem
+        rw [this]
+        have : pureState_C (e (1:Fin 3)) * pureState_C (e 0) (R := ℂ) =
+          0 := by
+          unfold pureState_C e
+          simp
+        rw [this]
+        have : pureState_C (e (0:Fin 3)) * pureState_C (e 1) (R := ℂ) =
+          0 := by
+          unfold pureState_C e
+          simp
+        rw [this]
+        simp
+      isSelfAdjoint := by
+        refine IsSelfAdjoint.add ?_ ?_
+        · apply (@pureState_projection_C ℂ _ _ 3 0).isSelfAdjoint
+        · apply (@pureState_projection_C ℂ _ _ 3 1).isSelfAdjoint
+  }
+
+
+theorem psd_versions_general {R : Type*} [Ring R] [StarRing R] [PartialOrder R]
+    {k : ℕ} (e : Matrix (Fin k) (Fin k) R) (x : Fin k →₀ R)
+  (this : 0 ≤ star ⇑x ⬝ᵥ e *ᵥ ⇑x) :
+  0 ≤ x.sum fun i xi ↦ x.sum fun j xj ↦ star xi * e i j * xj := by
+      convert this
+      rw [Finsupp.sum]
+      have : (∑ a ∈ x.support, x.sum fun j xj ↦ star (x a) * e a j * xj)
+           = (∑ a ∈ x.support, star (x a) * x.sum fun j xj ↦ e a j * xj)  := by
+        congr
+        ext j
+        simp_rw [mul_assoc]
+        exact Eq.symm (Finsupp.mul_sum _ x)
+      simp_rw [this]
+      rw [Finset.sum_subset (Finset.subset_univ _)]
+      · rw [dotProduct]
+        congr
+        ext i
+        rw [mulVec, dotProduct]
+        simp only [Pi.star_apply]
+        congr
+        refine Finsupp.sum_fintype x (fun j xj ↦ e i j * xj) ?_
+        simp
+      · intro i _ hi
+        simp only [Finsupp.mem_support_iff, ne_eq, not_not] at hi
+        rw [hi]
+        simp
 
 theorem psd_versions {k : ℕ} (e : Matrix (Fin k) (Fin k) ℝ) (x : Fin k →₀ ℝ)
   (this : 0 ≤ ⇑x ⬝ᵥ e *ᵥ ⇑x) :
   0 ≤ x.sum fun i xi ↦ x.sum fun j xj ↦ star xi * e i j * xj := by
+      apply psd_versions_general
       convert this
-      rw [Finsupp.sum]
-      simp only [star_trivial]
-      change ∑ i ∈ x.1, ∑ j ∈ x.1, x i * e i j * x j =
-        ∑ i : Fin k, x i * ∑ j : Fin k, e i j * x j
-      have (i : Fin k) : x i * ∑ j : Fin k, e i j * x j
-                      = ∑ j : Fin k, x i *  e i j * x j := by
-          simp_rw [mul_assoc]
-          exact Finset.mul_sum Finset.univ _ _
-      simp_rw [this]
-      rw [ ← Finset.sum_subset ( Finset.subset_univ x.support ) ];
-      · exact Finset.sum_congr rfl fun i hi =>
-          Finset.sum_subset ( Finset.subset_univ _ ) fun j hj₁ hj₂ => by aesop;
-      · aesop
 
 lemma pureState_psd {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) :
   Matrix.PosSemidef (mulᵣ e e.transpose) := by
@@ -406,6 +514,47 @@ lemma pureState_psd {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℝ) :
     rw [h_expand, dotProduct, Finset.univ_unique, Finset.sum_singleton]
     exact mul_self_nonneg _
 
+-- {R : Type*} [Ring R] [StarRing R] [PartialOrder R]
+
+theorem matrix_identity_general {R : Type*} [RCLike R]
+    (k : ℕ) (e : Matrix (Fin k) (Fin 1) R) (α : Fin k → R) :
+  star α ⬝ᵥ (e * eᴴ) *ᵥ α = (star α ᵥ* e * eᴴ *ᵥ α) 0 := by
+  simp only [Pi.mul_apply, vecMul, dotProduct, Pi.star_apply,
+    RCLike.star_def, mulVec, mul_comm, Finset.mul_sum, mul_assoc];
+  congr; ext u; congr; ext v
+  simp [ Matrix.mul_apply, mul_comm, mul_left_comm ]
+
+instance : PartialOrder ℂ := Complex.partialOrder
+
+
+lemma pureState_psd_C {k : ℕ} (e : Matrix (Fin k) (Fin 1) ℂ) :
+  Matrix.PosSemidef (pureState_C e) := by
+  constructor
+  · exact pureState_selfAdjoint_C _
+  · intro x
+    suffices 0 ≤ star x ⬝ᵥ (pureState_C e).mulVec x by
+      apply psd_versions_general
+      convert this
+    unfold pureState_C
+    generalize ⇑x = α at *
+    rw [mulᵣ_eq]
+    rw [matrix_identity_general]
+    change 0 ≤ (star α ᵥ* e) 0 * (eᴴ *ᵥ α) 0
+    have : star ((eᴴ *ᵥ α) 0) = (star α ᵥ* e) 0 := by
+        rw [vecMul, mulVec, dotProduct, dotProduct]
+        simp only [conjTranspose_apply, RCLike.star_def, star_sum, star_mul',
+          RingHomCompTriple.comp_apply, RingHom.id_apply, Pi.star_apply]
+        congr
+        ext i
+        rw [mul_comm]
+    rw [← this]
+    refine (Complex.re_nonneg_iff_nonneg ?_).mp ?_
+    · exact IsSelfAdjoint.star_mul_self _
+    · simp only [RCLike.star_def, Complex.mul_re, Complex.conj_re, Complex.conj_im, neg_mul,
+      sub_neg_eq_add]
+      apply add_nonneg
+      · exact mul_self_nonneg _
+      · exact mul_self_nonneg _
 
 example : pureState e₁ = !![1,0,0;0,0,0;0,0,0] := by
   ext i j
@@ -453,14 +602,42 @@ lemma pureState_probability_one {ρ : Matrix (Fin 3) (Fin 3) ℝ}
     Fin.succ_one_eq_two] at hρ ⊢
   rw [trace] at hρ
   simp only [diag_apply] at hρ
-  rw [← hρ]
-  exact Eq.symm (Fin.sum_univ_three fun i ↦ ρ i i)
+  rw [← hρ, Fin.sum_univ_three]
+
+lemma pureState_probability_one_C {ρ : Matrix (Fin 3) (Fin 3) ℂ}
+    (hρ : ρ.trace = 1) :
+      (pureState_C e₁ * ρ).trace
+    + (pureState_C e₂ * ρ).trace
+    + (pureState_C e₃ * ρ).trace = 1 := by
+  unfold pureState_C e₁ e₂ e₃
+  unfold conjTranspose
+  simp only [transpose, cons_val', Pi.one_apply, Pi.zero_apply, cons_val_fin_one, mulᵣ_eq]
+  repeat rw [trace]
+  simp only [diag, mul_apply] at hρ ⊢
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, cons_val', Pi.one_apply,
+    Pi.zero_apply, cons_val_fin_one, Finset.sum_const, Finset.card_singleton, one_smul,
+    Fin.sum_univ_succ, cons_val_zero, cons_val_succ, Fin.succ_zero_eq_one,
+    zero_mul, add_zero, one_mul, zero_add, Finset.sum_singleton,
+    Fin.succ_one_eq_two] at hρ ⊢
+  rw [trace] at hρ
+  simp only [diag_apply] at hρ
+  simp only [RCLike.star_def, Fin.isValue, map_apply, of_apply, cons_val_zero, map_one, one_mul,
+    cons_val_one, map_zero, zero_mul, cons_val, add_zero, zero_add]
+  rw [← hρ, Fin.sum_univ_three]
 
 
 lemma pure_state_eq {k : ℕ} (i : Fin k) :
     (single i (0 : Fin 1) (1 : ℝ)).mulᵣ (single i 0 1)ᵀ
     = Matrix.single i i 1 := by
   have : (single i (0:Fin 1) (1:ℝ))ᵀ = single 0 i 1 := by
+    simp
+  rw [this]
+  simp
+
+lemma pure_state_eq_C {k : ℕ} (i : Fin k) :
+    (single i (0 : Fin 1) (1 : ℂ)).mulᵣ (single i 0 1)ᴴ
+    = Matrix.single i i 1 := by
+  have : (single i (0:Fin 1) (1:ℂ))ᴴ = single 0 i 1 := by
     simp
   rw [this]
   simp
@@ -499,6 +676,37 @@ theorem matrix_posSemidef_eq_star_mul_self' {n : ℕ} (P : Matrix (Fin n) (Fin n
   · simp;tauto
   · exact CFC.sqrt_nonneg P
 
+theorem matrix_posSemidef_eq_star_mul_self'_C {n : ℕ} (P : Matrix (Fin n) (Fin n) ℂ)
+(hP : 0 ≤ P) : ∃ B, P = star B * B := by
+  use CFC.sqrt P
+  have h₀ : (CFC.sqrt P)ᴴ = CFC.sqrt P := by
+    have := hP.1
+    simp only [sub_zero] at this ⊢
+    nth_rw 2 [← this]
+    symm
+    rw [@CFC.sqrt_eq_iff]
+    · rw [← conjTranspose_mul]
+      congr
+      apply @CFC.sqrt_mul_sqrt_self (a := P)
+      · exact topologicalRing
+      · exact instT2SpaceMatrix
+      · exact hP
+    · exact star_nonneg_iff.mpr hP
+    · exact star_nonneg_iff.mpr <| CFC.sqrt_nonneg P
+  have : star (CFC.sqrt P) = CFC.sqrt P := by
+    have := hP.1
+    simp only [sub_zero] at this ⊢
+    nth_rw 2 [← h₀]
+    congr
+  rw [this]
+  symm
+  rw [← @CFC.sqrt_eq_iff (a := P) (b := CFC.sqrt P)]
+  · exact topologicalRing
+  · exact instT2SpaceMatrix
+  · simp;tauto
+  · exact CFC.sqrt_nonneg P
+
+
   -- exact Matrix.posSemidef_iff_eq_conjTranspose_mul_self.mp hP
 
 
@@ -534,6 +742,24 @@ theorem trace_mul_posSemidef_nonneg {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ
         apply Matrix.PosSemidef.mul_mul_conjTranspose_same hρ
       exact h_trace_cyclic ▸ h_pos_semidef.trace_nonneg
 
+instance : IsOrderedAddMonoid ℂ := by exact RCLike.toIsOrderedAddMonoid
+
+theorem trace_mul_posSemidef_nonneg_C {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℂ}
+    (hρ : ρ.PosSemidef) (hP : P.PosSemidef) : 0 ≤ (P * ρ).trace := by
+      obtain ⟨B, hB⟩ : ∃ B : Matrix (Fin n) (Fin n) ℂ, P = star B * B := by
+        apply matrix_posSemidef_eq_star_mul_self'_C
+        exact nonneg_iff_posSemidef.mpr hP
+      obtain ⟨B, hB⟩ : ∃ B : Matrix (Fin n) (Fin n) ℂ, P = Bᴴ * B := by
+        use B
+        rw [hB]
+        congr
+      have h_trace_cyclic : Matrix.trace (P * ρ) = Matrix.trace (B * ρ * Bᴴ) := by
+        simp +decide only [hB, Matrix.mul_assoc, Matrix.trace_mul_comm B];
+        exact trace_mul_cycle' Bᴴ B ρ;
+      have h_pos_semidef : Matrix.PosSemidef (B * ρ * Bᴴ) := by
+        apply Matrix.PosSemidef.mul_mul_conjTranspose_same hρ
+      rw [h_trace_cyclic]
+      exact h_trace_cyclic ▸ h_pos_semidef.trace_nonneg
 
 /-
 A real matrix that is a star projection (symmetric and idempotent) is positive semidefinite.
@@ -565,11 +791,24 @@ theorem posSemidef_of_isStarProjection {n : ℕ}
   suffices P i j = P j i by rw [this]
   exact congrFun (congrFun (id (Eq.symm h₂)) i) j
 
+theorem posSemidef_of_isStarProjection_C {n : ℕ}
+  (P : Matrix (Fin n) (Fin n) ℂ) (hP : IsStarProjection P) : P.PosSemidef := by
+  rw [← Matrix.nonneg_iff_posSemidef]
+  exact IsStarProjection.nonneg hP
+
+
 lemma trace_mul_nonneg {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
     (hρ' : ρ.PosSemidef)
     (hP : IsStarProjection P) : 0 ≤ (P * ρ).trace := by
   apply trace_mul_posSemidef_nonneg hρ'
   apply posSemidef_of_isStarProjection
+  exact hP
+
+lemma trace_mul_nonneg_C {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℂ}
+    (hρ' : ρ.PosSemidef)
+    (hP : IsStarProjection P) : 0 ≤ (P * ρ).trace := by
+  apply trace_mul_posSemidef_nonneg_C hρ'
+  apply posSemidef_of_isStarProjection_C
   exact hP
 
 -- lemma nonneg_trace'' {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
@@ -600,11 +839,34 @@ lemma nonneg_trace' {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ} (hρ' : ρ.PosSe
       have := @pureState_projection' n {ofLp := fun i => e i 0} he
       convert this
 
+lemma nonneg_trace'_C {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℂ} (hρ' : ρ.PosSemidef)
+  (e : Matrix (Fin n) (Fin 1) ℂ)
+  (he : ‖WithLp.toLp 2 fun i ↦ e i 0‖ = 1) -- not really necessary
+  : 0 ≤ (pureState_C e * ρ).trace := by
+      apply trace_mul_nonneg_C hρ'
+      have := @pureState_projection'_C _ _ n {ofLp := fun i => e i 0} he
+      convert this
+
 lemma nonneg_trace_of_posSemidef {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℝ}
     (hρ' : ρ.PosSemidef) (i : Fin n) :
     0 ≤ (pureState (e i) * ρ).trace := by
   apply nonneg_trace' hρ'
   simp [e, single, PiLp.instNorm]
+
+lemma nonneg_trace_of_posSemidef_C {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℂ}
+    (hρ' : ρ.PosSemidef) (i : Fin n) :
+    0 ≤ (pureState_C (e i) * ρ).trace := by
+  apply nonneg_trace'_C hρ'
+  simp only [PiLp.instNorm, OfNat.ofNat_ne_zero, ↓reduceIte, ENNReal.ofNat_ne_top,
+    ENNReal.toReal_ofNat, rpow_ofNat, one_div, e, single, Fin.isValue, of_apply, and_true]
+  suffices (∑ x, ‖if i = x then (1:ℂ) else 0‖ ^ 2) = 1 by rw [this];simp
+  have : (fun (x : Fin n) => ‖if i = x then  (1:ℂ)  else 0‖ ^ 2) =
+         (fun x =>            if i = x then ‖(1:ℂ)‖ else ‖(0:ℂ)‖) := by
+        ext j
+        split_ifs <;> simp
+  simp_rw [this]
+  simp
+
 
 lemma sum_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
   ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
@@ -615,7 +877,22 @@ lemma sum_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
       rw [← congrFun (Fintype.sum_ite_eq i fun j ↦ ρ i) j]
       aesop
 
+lemma sum_rows_C {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℂ) :
+  ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
+      ext i j
+      rw [Finset.sum_apply]
+      simp only [row, Finset.sum_apply, of_apply, Function.update,
+        eq_rec_constant, Pi.zero_apply, dite_eq_ite]
+      rw [← congrFun (Fintype.sum_ite_eq i fun j ↦ ρ i) j]
+      aesop
+
 lemma single_row {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ} (x : Fin k) :
+  single x x 1 * ρ = of (Function.update 0 x (ρ.row x)) := by
+        rw [@Matrix.single_mul_eq_updateRow_zero]
+        unfold updateRow
+        simp
+
+lemma single_row_C {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℂ} (x : Fin k) :
   single x x 1 * ρ = of (Function.update 0 x (ρ.row x)) := by
         rw [@Matrix.single_mul_eq_updateRow_zero]
         unfold updateRow
@@ -652,6 +929,17 @@ lemma standard_basis_probability_one {k : ℕ}
       <| ENNReal.toNNReal_one ▸ POVM_PMF.aux₀ hUT hPS
        ▸ toNNReal_sum (by simp)
 
+/-- Unlike `standard_basis_probability_one` this one does not require PSD. -/
+lemma standard_basis_probability_one_C {k : ℕ}
+  {ρ : Matrix (Fin k) (Fin k) ℂ} (hUT : ρ.trace = 1) :
+  ∑ a, (pureState_C (e a) * ρ).trace = 1 := by
+    unfold pureState_C e
+    simp_rw [pure_state_eq_C]
+    simp_rw [single_row_C]
+    rw [← sum_rows_C ρ] at hUT
+    rw [← trace_sum]
+    exact hUT
+
 /-- Positive operator (or projection) valued measure
 as a probability mass function.
 Technically the measure is valued in `Fin k`
@@ -672,12 +960,43 @@ def POVM_PMF {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
         (pureState (e i) * ρ).trace, -- the probability of `i` acc. to ρ
         nonneg_trace_of_posSemidef hPS _⟩) <| standard_basis_probability_one hUT hPS
 
+noncomputable def POVM_PMF_C {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℂ}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin k) := by
+    apply PMF.ofFintype (
+        fun i => by
+      let t := (pureState_C (e i) * ρ).trace
+      have : t ≥ 0 := by
+        apply nonneg_trace_of_posSemidef_C hPS
+      apply ofNNReal
+      exact ⟨t.re, this.1⟩
+    )
+    have := @standard_basis_probability_one_C k ρ hUT
+    change  ∑ a, ((pureState_C ∘ e) a * ρ).trace = 1 at this
+    let δ : Fin k → Matrix (Fin k) (Fin k) ℂ := fun a => (pureState_C ∘ e (R := ℂ)) a * ρ
+    change  ∑ a, (δ a).trace = 1 at this
+    refine Eq.symm ((fun {x y} hx hy ↦ (toReal_eq_toReal_iff' hx hy).mp) ?_ ?_ ?_)
+    · simp
+    · simp
+    have := congrArg (Complex.re) this
+    simp only [Complex.re_sum, Complex.one_re, toReal_one] at this ⊢
+    rw [← this]
+    refine Eq.symm (toReal_sum ?_)
+    intro a _
+    simp
+
+
 lemma PMF₂₃help {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   (hPS : ρ.PosSemidef) :
   0 ≤ ((pureState (e 0) + pureState (e 1)) * ρ).trace := by
         refine trace_mul_posSemidef_nonneg hPS ?_
         refine PosSemidef.add (pureState_psd _) (pureState_psd _)
 
+
+lemma PMF₂₃help_C {ρ : Matrix (Fin 3) (Fin 3) ℂ}
+  (hPS : ρ.PosSemidef) :
+  0 ≤ ((pureState_C (e 0) + pureState_C (e 1)) * ρ).trace := by
+        refine trace_mul_posSemidef_nonneg_C hPS ?_
+        refine PosSemidef.add (pureState_psd_C _) (pureState_psd_C _)
 
 /-- A probability measure that gives the probability
 of being in the xy-plane, or the z-axis,
@@ -695,8 +1014,35 @@ def PVM_PMF₂₃ {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   simp
   rfl
 
+-- noncomputable def PVM_PMF₂₃_C {ρ : Matrix (Fin 3) (Fin 3) ℂ}
+--     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
+--   apply PMF.ofFintype (fun i => ofNNReal <| by
+--     by_cases H : i = 0
+--     · let p := ((pureState_C (e 0) + pureState_C (e 1)) * ρ).trace.re
+--       exact ⟨p, (@PMF₂₃help_C ρ hPS).1⟩
+--     · let p : NNReal := ⟨(pureState_C (e 2)  * ρ).trace.re, by
+--             have := (nonneg_trace_of_posSemidef_C hPS 2).1
+--             simp only [Complex.zero_re] at this
+--             exact this
+--             ⟩
+--       exact ⟨p, by
+--         unfold p
+--         have := (@nonneg_trace_of_posSemidef_C 3 ρ hPS 2).1
+--         simp only [Complex.zero_re] at this
+--         exact this⟩)
+--   simp
+--   have := @standard_basis_probability_one_C 3 ρ hUT
+--   rw [Fin.sum_univ_three] at this
+--   simp_rw [add_mul, trace_add]
+--   simp
+
+--   have := @Complex.add_re (pureState_C (e 0) * ρ).trace
+--     (pureState_C (e 1) * ρ).trace
+--   simp_rw [← this]
+--   sorry
+
 lemma one_eq_sum_pureState {k : ℕ} :
-    1 = ∑ i : Fin k, pureState (e i) := by
+    1 = ∑ i : Fin k, pureState (e i) (R := ℝ) := by
   unfold pureState e
   ext i j
   simp only [Fin.isValue, transpose_single, mulᵣ_eq, single_mul_single_same, mul_one]
@@ -715,38 +1061,73 @@ lemma one_eq_sum_pureState {k : ℕ} :
       Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq, ne_eq]
     exact H
 
-def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
-    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
-  apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)
-      ⟨((1 - (pureState (e acc))) * ρ).trace, by
-        rw [one_eq_sum_pureState]
-        have : ∑ i, pureState (e i) - pureState (e acc) =
-            ∑ i, ite (i = acc) 0 (pureState (e i)) := by
-                suffices ∑ i, pureState (e i)
-                = ∑ i, (if i = acc then 0 else (pureState (e i))) + pureState (e acc) by
-                    rw [this]
-                    simp
-                rw [← Finset.sum_add_sum_compl (s := {i | i ≠ acc})]
-                simp only [ne_eq, Finset.compl_filter, Decidable.not_not]
-                have : ∑ i with i = acc, pureState (e i) =
-                    pureState (e acc) := by
-                    have :  ∑ i with i = acc, pureState (e i)
-                        =  ∑ i ∈ {acc}, pureState (e i) := by
-                        congr
-                        ext;simp
-                    rw [this]
-                    rw [@Finset.sum_singleton]
-                rw [this]
-                simp only [_root_.add_left_inj]
-                refine Finset.sum_congr_of_eq_on_inter ?_ ?_ ?_
-                · simp
-                · intro i _
-                  simp
-                  tauto
-                · intro i hi _
-                  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
-                  rw [if_neg hi]
+lemma one_eq_sum_pureState_C {k : ℕ} :
+    1 = ∑ i : Fin k, pureState_C (e i) (R := ℂ) := by
+  unfold pureState_C e
+  ext i j
+  simp only [Fin.isValue, conjTranspose_single, star_one, mulᵣ_eq, single_mul_single_same, mul_one]
+  by_cases H : i = j
+  · subst H
+    simp only [one_apply_eq, single]
+    rw [Finset.sum_apply] -- !
+    simp
+  · simp only [single]
+    rw [Finset.sum_apply] -- !
+    symm
+    have : (1 : Matrix (Fin k) (Fin k) ℂ) i j = 0 := by
+        exact one_apply_ne' fun a ↦ H (id (Eq.symm a))
+    rw [this]
+    simp only [Finset.sum_apply, of_apply, Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero,
+      Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq, ne_eq]
+    exact H
+
+lemma sum_one_sub₀ {R : Type*} [Ring R]
+{k : ℕ}
+(acc : Fin k)
+(f : Fin k → Matrix (Fin k) (Fin k) R)
+: ∑ i, f i - f acc = ∑ i, if i = acc then 0 else f i := by
+    suffices  ∑ i, f i = (∑ i, if i = acc then 0 else f i) + f acc
+        by rw [this];simp
+    rw [← Finset.sum_add_sum_compl (s := {i | i ≠ acc})]
+    simp only [ne_eq, Finset.compl_filter, Decidable.not_not]
+    have : ∑ i with i = acc, f i =
+        f acc := by
+        have :  ∑ i with i = acc, f i
+            =  ∑ i ∈ {acc}, f i := by
+            congr
+            ext;simp
         rw [this]
+        rw [@Finset.sum_singleton]
+    rw [this]
+    simp only [_root_.add_left_inj]
+    refine Finset.sum_congr_of_eq_on_inter ?_ ?_ ?_
+    · simp
+    · intro i _
+      simp
+      tauto
+    · intro i hi _
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
+      rw [if_neg hi]
+
+lemma trace_one_sub_C {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℂ}
+  (hPS : ρ.PosSemidef) : 0 ≤ ((1 - pureState_C (e acc)) * ρ).trace := by
+        rw [one_eq_sum_pureState_C]
+        rw [sum_one_sub₀]
+        refine trace_mul_posSemidef_nonneg_C hPS ?_
+        refine posSemidef_sum Finset.univ ?_
+        intro i _
+        by_cases H : i = acc
+        · subst H
+          simp only [↓reduceIte]
+          exact PosSemidef.zero
+        · rw [if_neg H]
+          refine posSemidef_of_isStarProjection_C (pureState_C (e i)) ?_
+          exact pureState_projection_C i
+
+lemma trace_one_sub {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
+  (hPS : ρ.PosSemidef) : 0 ≤ ((1 - pureState (e acc)) * ρ).trace := by
+        rw [one_eq_sum_pureState]
+        rw [sum_one_sub₀]
         refine trace_mul_posSemidef_nonneg hPS ?_
         refine posSemidef_sum Finset.univ ?_
         intro i _
@@ -756,43 +1137,129 @@ def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
           exact PosSemidef.zero
         · rw [if_neg H]
           refine posSemidef_of_isStarProjection (pureState (e i)) ?_
-          exact pureState_projection i⟩
-      ⟨(                   pureState (e acc)  * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩)
-  rw [← standard_basis_probability_one hUT hPS]
-  rw [Fin.sum_univ_two]
+          exact pureState_projection i
+
+lemma PMF_of_state.sum_one {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ} (hUT : ρ.trace = 1)
+  (hPS : ρ.PosSemidef) :
+  ∑ i : Fin 2, ofNNReal (ite (i = 0)
+      ⟨((1 - pureState (e acc)) * ρ).trace, trace_one_sub _ hPS⟩
+      ⟨(     pureState (e acc)  * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩) = 1 := by
+  rw [← standard_basis_probability_one hUT hPS, Fin.sum_univ_two]
   simp_rw [one_eq_sum_pureState]
   simp only [↓reduceIte, Fin.isValue, one_ne_zero]
-  simp_rw [sub_mul]
-  simp_rw [trace_sub]
-  refine (toReal_eq_toReal_iff' ?_ ?_).mp ?_
-  · simp
-  · simp
-  have h₀ : ((∑ i, pureState (e i) - pureState (e acc)) * ρ).trace +
-    (pureState (e acc) * ρ).trace =
-  ∑ a, (pureState (e a) * ρ).trace := by
-    rw [sub_mul]
-    rw [trace_sub]
-    simp only [sub_add_cancel]
-    rw [← trace_sum]
+  simp_rw [sub_mul, trace_sub]
+  refine (toReal_eq_toReal_iff' (by simp) (by simp)).mp ?_
+  have h₀ : ((∑ i, pureState (e i) - pureState (e acc)) * ρ).trace
+                                   + (pureState (e acc) * ρ).trace =
+                                  ∑ a, (pureState (e a) * ρ).trace := by
+    rw [sub_mul, trace_sub, sub_add_cancel, ← trace_sum]
     congr
-    exact Matrix.sum_mul Finset.univ (fun a ↦ pureState (e a)) ρ
-  have h₁ : (∑ a, ENNReal.ofNNReal ⟨(pureState (e a) * ρ).trace,
-    nonneg_trace_of_posSemidef hPS a⟩ ).toReal
-    = ∑ a, (pureState (e a) * ρ).trace := by
-        refine toReal_sum ?_
-        simp
+    apply Matrix.sum_mul
+  have h₁ : (∑ a, ofNNReal ⟨(pureState (e a) * ρ).trace, nonneg_trace_of_posSemidef hPS a⟩ ).toReal
+           = ∑ a,           (pureState (e a) * ρ).trace := toReal_sum (by simp)
+  rw [h₁, ← h₀, toReal_add (by simp) (by simp)]
+  have (x : ℝ) (hx : x ≥ 0) : (ofNNReal ⟨x,hx⟩).toReal = x := by rfl
+  have h₁ :=
+    this (pureState (e acc) * ρ).trace (nonneg_trace_of_posSemidef hPS acc)
   rw [h₁]
-  rw [← h₀]
-  rw [toReal_add (by simp) (by simp)]
-  have : (ofNNReal (⟨(pureState (e acc) * ρ).trace, nonneg_trace_of_posSemidef hPS acc⟩)).toReal
-    = (pureState (e acc) * ρ).trace := by exact rfl
-  rw [this]
-  have (a b c : ℝ) (h : a = c)  : a + b = c + b := by
-    linarith
-  apply this
-  simp_rw [sub_mul]
-  simp_rw [trace_sub]
+  rw [_root_.add_left_inj]
+  simp_rw [sub_mul, trace_sub]
   congr
+
+lemma ofReal_inj_aux {k : ℕ} (J : Fin k → ℝ) (hnn : ∀ a, J a ≥ 0) : ∑ a, (⟨J a, hnn a⟩ : NNReal) =
+        ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
+            refine Eq.symm (Subtype.ext ?_)
+            simp only [NNReal.val_eq_coe]
+            rw [← @RCLike.ofReal_inj ℝ _ _ (∑ a, ⟨J a, hnn a⟩ : NNReal)]
+            simp
+
+lemma PMF_of_state.sum_one_C {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℂ}
+    (hUT : ρ.trace = 1)
+  (hPS : ρ.PosSemidef) :
+  ∑ i : Fin 2, ofNNReal (ite (i = 0)
+      ⟨((1 - pureState_C (e acc)) * ρ).trace.re,  (@trace_one_sub_C k acc ρ hPS).1⟩
+      ⟨(     pureState_C (e acc)  * ρ).trace.re,
+      (nonneg_trace_of_posSemidef_C hPS acc).1⟩) = 1 := by
+  have := @standard_basis_probability_one_C k ρ hUT
+  rw [← toReal_eq_toReal_iff']
+  · simp only [Fin.isValue, Fin.sum_univ_two, ↓reduceIte, one_ne_zero, toReal_one]
+    have :  (∑ a, (pureState_C (e a) * ρ).trace).re = 1 := by
+      rw [this]
+      simp
+    rw [← this]
+    simp_rw [one_eq_sum_pureState_C]
+    have (j : Fin k) : pureState_C (e j) = (pureState_C ∘ e (R := ℂ)) j := by
+        simp
+    simp_rw [this] at *
+    have hnn (a : Fin k) :  0 ≤ ((pureState_C ∘ e (R := ℂ)) a * ρ).trace.re := by
+        exact (@nonneg_trace_of_posSemidef_C k ρ hPS a).1
+    generalize (pureState_C ∘ e (R := ℂ)) = f at *
+    simp only [Complex.re_sum]
+    simp_rw [sub_mul, trace_sub]
+    have h₁ : (∑ a, ofNNReal ⟨(f a * ρ).trace.re,
+      hnn _⟩ ).toReal
+           = ∑ a,           (f a * ρ).trace.re := by
+        rw [toReal_sum]
+        · simp
+        · simp
+    rw [← h₁]
+    have h₀ : ((∑ i, f i - f acc) * ρ).trace
+                                   + (f acc * ρ).trace =
+                                  ∑ a, (f a * ρ).trace := by
+      rw [sub_mul, trace_sub, sub_add_cancel, ← trace_sum]
+      congr
+      apply Matrix.sum_mul
+    congr
+    rw [← coe_finset_sum]
+    ring_nf
+    set c := acc
+    have := @Matrix.sum_mul (M := ρ) (f := f) (s := Finset.univ)
+    simp_rw [this]
+    simp_rw [Complex.sub_re, trace_sum, Complex.re_sum]
+    let J : Fin k → ℝ := fun a => (f a * ρ).trace.re
+    conv => left; left; right; left; right; change J c
+    conv => left; right; right; change ⟨J c, _⟩
+    conv => right; right; change ∑ a, ⟨J a, _⟩
+    conv => left; left; right; left; left; change ∑ i, J i
+    have : ∑ i, J i - J c = ∑ i with i ≠ c, J i := by
+        suffices ∑ i, J i = ∑ i with i ≠ c, J i + J c by linarith
+        rw [← Finset.sum_erase_add (a := c)]
+        · congr
+          ext
+          simp
+        · simp
+    simp_rw [this]
+    have (u v : NNReal) : ofNNReal u + ofNNReal v = ofNNReal (u + v) := by
+        exact Eq.symm (coe_add u v)
+    rw [this]
+    congr
+    have (a b : ℝ) (ha : a ≥ 0) (hb : b ≥ 0) :
+        (⟨a,ha⟩ : NNReal) + (⟨b,hb⟩ : NNReal) =
+        (⟨a+b, by linarith⟩) := Nonneg.mk_add_mk ha hb
+    rw [this]
+    have (J : Fin k → ℝ) (hnn : ∀ a, J a ≥ 0) : ∑ a, (⟨J a, hnn a⟩ : NNReal) =
+        ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
+            apply ofReal_inj_aux
+    rw [this]
+    congr
+    apply add_eq_of_eq_sub
+    tauto
+  · simp
+  · simp
+
+def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
+  apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)
+      ⟨((1 - pureState (e acc)) * ρ).trace, trace_one_sub _ hPS⟩
+      ⟨(     pureState (e acc)  * ρ).trace, nonneg_trace_of_posSemidef hPS _⟩)
+  exact PMF_of_state.sum_one _ hUT hPS
+
+noncomputable def PMF_of_state_C {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℂ}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
+  apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)
+      ⟨((1 - pureState_C (e acc)) * ρ).trace.re, (trace_one_sub_C _ hPS).1⟩
+      ⟨(     pureState_C (e acc)  * ρ).trace.re, (nonneg_trace_of_posSemidef_C hPS _).1⟩)
+  exact PMF_of_state.sum_one_C _ hUT hPS
 
 
 /-- Projection-valued measure. -/
@@ -813,6 +1280,52 @@ structure PVM where
        -- will usually be by `rfl`
        -- so instead say that p = POVM_PMF
 
+structure PVM_C where
+  k : ℕ -- the dimension
+  ρ : Matrix (Fin k) (Fin k) ℂ          -- the state we're in
+  hρ : ρ.PosSemidef
+  t : ℕ -- the number of projections (states)
+  op : Fin t → Matrix (Fin k) (Fin k) ℂ -- the projections
+
+  pf : ∀ i, IsStarProjection (op i)     -- ... are projections
+
+  p : PMF (Fin t)                                       -- the measure
+  pf' : ∀ i, p i = ofNNReal ⟨(op i * ρ).trace.re,
+    (trace_mul_nonneg_C hρ (pf i)).1
+    ⟩
+
+open scoped ComplexOrder in
+theorem trace_real_of_projection_and_pos_semidef
+  {k : ℕ}
+  (ρ O : Matrix (Fin k) (Fin k) ℂ)
+  (g₀ : ρ.IsHermitian) (g₁ : O.IsHermitian) :
+  (O * ρ).trace = star (O * ρ).trace := by
+    suffices h_trace : Matrix.trace ((O * ρ).conjTranspose) = Matrix.trace (O * ρ) by
+      convert h_trace.symm using 1 ; simp +decide [ Matrix.trace ];
+      simp +decide [ Matrix.mul_apply, mul_comm ];
+    simp_all +decide only [IsHermitian, conjTranspose_mul];
+    rw [ Matrix.trace_mul_comm ]
+
+/-- The probability is given as a real part of a complex number.
+Fortunately, the imaginary part is zero. -/
+lemma im_zero_PVM (M : PVM_C) : ∀ i, (M.op i * M.ρ).trace.im = 0 := by
+    intro i
+    have h₀ := M.hρ
+    have h₁ := M.pf i
+    generalize M.ρ = ρ at *
+    generalize M.op i = O at *
+    generalize M.t = n at *
+    generalize M.k = k at *
+    clear M
+    have g₀ : ρ.IsHermitian := PosSemidef.isHermitian h₀
+    have g₁ : O.IsHermitian := by
+        refine isHermitian_iff_isSelfAdjoint.mpr ?_
+        exact h₁.isSelfAdjoint
+    suffices (O * ρ).trace = star (O * ρ).trace by
+        exact Complex.conj_eq_iff_im.mp (id (Eq.symm this))
+    exact @trace_real_of_projection_and_pos_semidef k ρ O g₀ g₁
+
+
 def myPVM {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVM := {
   k := k
@@ -824,6 +1337,19 @@ def myPVM {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℝ}
   pf := by exact fun i ↦ pureState_projection i
   pf' := by intro i; rfl
 }
+
+noncomputable def myPVM_C {k : ℕ} {ρ : Matrix (Fin k) (Fin k) ℂ}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVM_C := {
+  k := k
+  t := k
+  p := POVM_PMF_C hUT hPS
+  ρ := ρ
+  hρ := hPS
+  op := fun i : Fin k => pureState_C (e i)
+  pf := by exact fun i ↦ pureState_projection_C i
+  pf' := by intro i; rfl
+}
+
 
 def myPVM₂₃ {ρ : Matrix (Fin 3) (Fin 3) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVM := {
@@ -869,6 +1395,30 @@ def PVM_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     · rfl
 }
 
+noncomputable def PVM_of_state_C {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℂ}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVM_C := {
+  k := k
+  t := 2
+  p := PMF_of_state_C acc hUT hPS
+  ρ := ρ
+  hρ := hPS
+  op := fun i : Fin 2 => ite (i=0)
+    (1 - pureState_C (e acc)) <| pureState_C (e acc)
+  pf := fun i ↦ by
+    fin_cases i
+    · simp only [Fin.zero_eta, Fin.isValue, ↓reduceIte];
+      refine IsStarProjection.one_sub ?_
+      exact pureState_projection_C _
+    · simp only [Fin.mk_one, Fin.isValue, one_ne_zero, ↓reduceIte];
+      exact pureState_projection_C acc
+  pf' := by
+    intro i
+    fin_cases i
+    · unfold PMF_of_state_C
+      simp
+    · rfl
+}
+
 
 /-- 1/24/26 -/
 def languageAcceptedBy {α : Type*}
@@ -877,6 +1427,13 @@ def languageAcceptedBy {α : Type*}
   {word : Σ n : ℕ, (Fin n → α) |
     krausApplyWord word.2 𝓚 (pureState (e 0)) = pureState (e acceptStateIndex)}
 -- now make this probabilistic: PVM_PMF (pureState (e acceptStateIndex)) > 1/2
+
+def languageAcceptedBy_C {α : Type*}
+  {q r : ℕ} (acceptStateIndex : Fin q.succ)
+  (𝓚 : α → Fin r → Matrix (Fin q.succ) (Fin q.succ) ℂ) :=
+  {word : Σ n : ℕ, (Fin n → α) |
+    krausApplyWord word.2 𝓚 (pureState_C (e 0)) = pureState_C (e acceptStateIndex)}
+
 
 lemma grudka_helper : mulᵣ ![(1: Fin 1 → ℝ), 0, 0] ![1, 0, 0]ᵀ =
       !![1,0,0;0,0,0;0,0,0] := by
@@ -888,19 +1445,26 @@ lemma grudka_helper : mulᵣ ![(1: Fin 1 → ℝ), 0, 0] ![1, 0, 0]ᵀ =
           unfold mulᵣ
           simp
 
-theorem pureState_trace₃ : (pureState (e (0 : Fin 3))).trace = 1 := by
-  unfold pureState e
-  suffices (mulᵣ ![(1 : Fin 1 → ℝ), 0, 0] ![1, 0, 0]ᵀ).trace = 1 by
-    convert this <;>
-    (ext i j; fin_cases i <;> fin_cases j <;> simp)
-  rw [grudka_helper]
-  simp
-
 theorem basisState_trace_one {k : ℕ} {i : Fin k.succ} :
-    (pureState (e (i : Fin k.succ))).trace = 1 := by
+    (pureState (e (i : Fin k.succ)) (R := ℝ)).trace = 1 := by
     unfold pureState e
     have : ((single (i:Fin k.succ) (0:Fin 1) (1:ℝ)).mulᵣ
             (single (i:Fin k.succ) (0:Fin 1) 1)ᵀ)
+        = Matrix.of (fun a b => ite (a = i) (ite (b = i) 1 0) 0
+        ) := by
+        ext i j
+        unfold mulᵣ dotProductᵣ single
+        simp
+        split_ifs
+        all_goals tauto
+    simp_rw [this, trace]
+    simp
+
+theorem basisState_trace_one_C {k : ℕ} {i : Fin k.succ} :
+    (pureState_C (e (i : Fin k.succ)) (R := ℂ)).trace = 1 := by
+    unfold pureState_C e
+    have : ((single (i:Fin k.succ) (0:Fin 1) (1:ℂ)).mulᵣ
+            (single (i:Fin k.succ) (0:Fin 1) 1)ᴴ)
         = Matrix.of (fun a b => ite (a = i) (ite (b = i) 1 0) 0
         ) := by
         ext i j
@@ -923,6 +1487,15 @@ exact @PVM_of_state k.succ acc
     (@krausApplyWord α ℝ _ _ _ word.1 k.succ r word.2 𝓚 (pureState (e 0)))
     this.2 this.1
 
+noncomputable def PVM_of_word_of_channel_C {α : Type u_1} {r k : ℕ} (acc : Fin k.succ)
+(𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℂ)
+(h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM_C := by
+have := krausApplyWord_densityMatrix (𝓚 := 𝓚) (word := word.2)
+    (ρ := ⟨pureState_C (e 0),⟨pureState_psd_C _, basisState_trace_one_C⟩⟩) (hq := h𝓚)
+exact @PVM_of_state_C k.succ acc
+    (@krausApplyWord α ℂ _ _ _ word.1 k.succ r word.2 𝓚 (pureState_C (e 0)))
+    this.2 this.1
+
 def getPVM₃ {α : Type u_1} {r : ℕ}
 (𝓚 : α → Fin r → Matrix (Fin (Nat.succ 2)) (Fin (Nat.succ 2)) ℝ)
 (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM :=
@@ -938,6 +1511,12 @@ def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel acc 𝓚 (h𝓚) word).p
     (by simp only [PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
+
+def MOlanguageAcceptedBy_C {α : Type*} {r k : ℕ} (acc : Fin k.succ)
+    (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℂ)
+    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
+  {word | (PVM_of_word_of_channel_C acc 𝓚 (h𝓚) word).p
+    (by simp only [PVM_of_word_of_channel_C, PVM_of_state_C]; exact 1) > 1/2}
 
 
 /-- If the start and accept states are the same then
@@ -955,7 +1534,7 @@ lemma MO_language_nonempty {α : Type*} {r k : ℕ}
   simp only [Nat.succ_eq_add_one, Fin.isValue, Lean.Elab.WF.paramLet, id_eq, PMF.ofFintype_apply,
     one_ne_zero, ↓reduceIte, one_div, gt_iff_lt, Set.mem_setOf_eq]
   unfold krausApplyWord
-  have : pureState (e (0 : Fin k.succ)) * pureState (e 0) = pureState (e 0) := by
+  have : pureState (e (0 : Fin k.succ)) * pureState (e 0) (R := ℝ) = pureState (e 0) := by
     suffices IsStarProjection (pureState (e (0 : Fin k.succ))) by exact this.1
     exact pureState_projection 0
   simp only [gt_iff_lt]
@@ -986,7 +1565,7 @@ def MOlanguageAcceptedBy₃ {α : Type*} {r : ℕ}
 
 
 def MOlanguageAcceptedBy' {α : Type*} {r : ℕ}
-    (𝓚 : α → quantum_channel 3 r) : Set ((n : ℕ) × (Fin n → α)) :=
+    (𝓚 : α → quantum_channel 3 r (R := ℝ)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (getPVM₃ (fun a => (𝓚 a).1) (fun a => (𝓚 a).2) word).p
   (by simp only [getPVM₃, PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
 
@@ -1117,7 +1696,7 @@ lemma MO_grudka1_language_nonempty :
   have g₀: (
     grudka_R (0:ℝ) (0:Fin 2) (0:Fin 2) * pureState (single 0 0 1) * (grudka_R 0 0 0)ᵀ
     +
-    grudka_R 0 0 1 * pureState (single 0 0 1) * (grudka_R 0 0 1)ᵀ
+    grudka_R 0 0 1 * pureState (single 0 0 1) (R := ℝ) * (grudka_R 0 0 1)ᵀ
     ) =  pureState ![0, 1, 0] := by
     have h₅ := @grudka_basic_operation
     unfold e₁ e₂ krausApply at h₅
@@ -1126,9 +1705,9 @@ lemma MO_grudka1_language_nonempty :
     all_goals exact ext_iff_trace_mul_left.mpr (congrFun rfl)
   have g₁: (single (1:Fin 3) (0:Fin 1) (1:ℝ)) = ![0,1,0] := by
     ext i j; fin_cases i <;> (fin_cases j; simp)
-  have g₂ : pureState ![(0 : Fin 1 → ℝ), 1, 0] * pureState ![0, 1, 0]
+  have g₂ : pureState ![(0 : Fin 1 → ℝ), 1, 0] (R := ℝ) * pureState ![0, 1, 0]
    = pureState ![0, 1, 0] := (pureState_projection 1).1
-  have g₃ : (pureState ![0, 1, 0]).trace = 1 := g₁ ▸ @basisState_trace_one 2 (1 : Fin 3)
+  have g₃ : (pureState ![0, 1, 0] (R := ℝ)).trace = 1 := g₁ ▸ @basisState_trace_one 2 (1 : Fin 3)
   simp_rw [e, g₀, g₁, g₂, g₃]
   simp
 
