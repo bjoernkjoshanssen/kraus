@@ -7,6 +7,9 @@
 % can start with a \section or \chapter for instance.
 In this project we formalize parts of the article \emph{Unbounded length minimal synchronizing words for quantum channels over qutrits} and notions in quantum information theory.
 
+In particular we formalize the notion of a measure-once one-way general quantum finite automaton (MO-1gQFA) introduced by Li, Qiu, Zou, Li, Wu, Mateus \cite{MR2885820} in 2012. As an alternative to ``MO-1gQFA'' we refer to these simply as Kraus operator automata. In particular we formalize cut-point languages as in
+\cite{MR2817180} who call the automata ``RT-QFA'' (real-time QFA). 
+
 \begin{definition}\label{krausApply}
 	\lean{krausApply}
 	\leanok
@@ -113,3 +116,6 @@ The projection-valued measure corresponding to a word belonging to the measure-o
 	We accept a word if starting in $e_0$ we end up in $e_1$ with probability at least 1/2.
 
 \end{definition}
+
+\bibliographystyle{plain}
+\bibliography{kraus}
