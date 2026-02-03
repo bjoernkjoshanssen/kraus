@@ -1,0 +1,598 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dependency graph</title>
+  <meta name="generator" content="plasTeX" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles/theme-white.css" />
+  <link rel="stylesheet" href="styles/dep_graph.css" />
+  
+  <script type="text/x-mathjax-config">
+  
+    MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+  
+  </script>
+
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">  </script>
+
+
+<link rel="stylesheet" href="styles/extra_styles.css" />
+
+</head>
+
+<body>
+<header>
+  <a class="toc" href="index.html">Home</a>
+  <h1 id="doc_title">Dependencies</h1>
+</header>
+<div class="wrapper">
+<div class="content">
+  <div id="Legend">
+    <span id="legend_title" class="title">Legend
+    <div class="btn">
+       <div class="bar"></div>
+       <div class="bar"></div>
+       <div class="bar"></div>
+    </div></span> 
+    <dl class="legend">
+      
+      <dt>Boxes</dt><dd>definitions</dd>
+      
+      <dt>Ellipses</dt><dd>theorems and lemmas</dd>
+      
+      <dt>Blue border</dt><dd>the <em>statement</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Orange border</dt><dd>the <em>statement</em> of this result is not ready to be formalized; the blueprint needs more work</dd>
+      
+      <dt>Blue background</dt><dd>the <em>proof</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Green border</dt><dd>the <em>statement</em> of this result is formalized</dd>
+      
+      <dt>Green background</dt><dd>the <em>proof</em> of this result is formalized</dd>
+      
+      <dt>Dark green background</dt><dd>the <em>proof</em> of this result and all its ancestors are formalized</dd>
+      
+    </dl>
+  </div>
+    <div id="graph"></div>
+<div id="statements">
+
+    
+    <div class="dep-modal-container" id="basisState_trace_one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="basisState_trace_one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">13</span></div>
+    <div class="thm_thmcontent"><p>  A basis state density matrix has trace one. </p>
+</div>
+
+    <a class="latex_link" href="index.html#basisState_trace_one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/basisState_trace_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="krausApply_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="krausApply" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1</span></div>
+    <div class="thm_thmcontent"><p>  The operation \(\rho \mapsto \sum _i K_i ρ K_i^*\). </p>
+</div>
+
+    <a class="latex_link" href="index.html#krausApply">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/krausApply">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="krausApply_densityMatrix_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="krausApply_densityMatrix" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">11</span></div>
+    <div class="thm_thmcontent"><p>   An automaton based on a quantum channel maps density matrices to density matrices while reading a single letter. </p>
+</div>
+
+    <a class="latex_link" href="index.html#krausApply_densityMatrix">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/krausApply_densityMatrix">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="krausApply_psd_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="krausApply_psd" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">10</span></div>
+    <div class="thm_thmcontent"><p>  Kraus operators preserve the PSD property. </p>
+</div>
+
+    <a class="latex_link" href="index.html#krausApply_psd">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/krausApply_psd">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="krausApplyWord_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="krausApplyWord" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">4</span></div>
+    <div class="thm_thmcontent"><p>   Transition function \(\delta ^*\) corresponding to a word over an alphabet, where each symbol is mapped to a completely positive map in Kraus form, of rank at most \(r\). </p>
+</div>
+
+    <a class="latex_link" href="index.html#krausApplyWord">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/krausApplyWord">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="krausApplyWord_densityMatrix_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="krausApplyWord_densityMatrix" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">12</span></div>
+    <div class="thm_thmcontent"><p>   An automaton based on a quantum channel maps density matrices to density matrices while reading a word. </p>
+</div>
+
+    <a class="latex_link" href="index.html#krausApplyWord_densityMatrix">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/krausApplyWord_densityMatrix">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="MOlanguageAcceptedBy_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="MOlanguageAcceptedBy" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">16</span></div>
+    <div class="thm_thmcontent"><p>   We accept a word if starting in \(e_0\) we end up in \(e_1\) with probability at least 1/2. </p>
+</div>
+
+    <a class="latex_link" href="index.html#MOlanguageAcceptedBy">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/MOlanguageAcceptedBy">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="PMF_of_state_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="PMF_of_state" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">3</span></div>
+    <div class="thm_thmcontent"><p>  A probability mass function on two orthogonal projections \(P, P^{\bot }\), with measure equal to the trace of the density matrix \(\rho \) times the projection. </p>
+</div>
+
+    <a class="latex_link" href="index.html#PMF_of_state">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/PMF_of_state">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="posSemidef_of_isStarProjection_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="posSemidef_of_isStarProjection" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">2</span></div>
+    <div class="thm_thmcontent"><p>  Each projective is PSD. </p>
+</div>
+
+    <a class="latex_link" href="index.html#posSemidef_of_isStarProjection">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/posSemidef_of_isStarProjection">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="pureState_psd_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="pureState_psd" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">14</span></div>
+    <div class="thm_thmcontent"><p>  A pure state is PSD. </p>
+</div>
+
+    <a class="latex_link" href="index.html#pureState_psd">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/pureState_psd">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="PVM_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="PVM" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">8</span></div>
+    <div class="thm_thmcontent"><p>   Projection-valued measure. </p>
+</div>
+
+    <a class="latex_link" href="index.html#PVM">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/PVM">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="PVM_of_state_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="PVM_of_state" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">5</span></div>
+    <div class="thm_thmcontent"><p>   A projection-valued measure, with measure equal to the trace of the density matrix \(\rho \) times the projection. </p>
+</div>
+
+    <a class="latex_link" href="index.html#PVM_of_state">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/PVM_of_state">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="PVM_of_word_of_channel_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="PVM_of_word_of_channel" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">15</span></div>
+    <div class="thm_thmcontent"><p>   The projection-valued measure corresponding to a word belonging to the measure-once language of the KOA \(\mathcal K\). </p>
+</div>
+
+    <a class="latex_link" href="index.html#PVM_of_word_of_channel">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/PVM_of_word_of_channel">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="quantumChannel_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="quantumChannel" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">9</span></div>
+    <div class="thm_thmcontent"><p>  Quantum channel. </p>
+</div>
+
+    <a class="latex_link" href="index.html#quantumChannel">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/quantumChannel">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="trace_mul_nonneg_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="trace_mul_nonneg" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">7</span></div>
+    <div class="thm_thmcontent"><p>   If \(P\) is a projection and \(\rho \) is PSD then the trace of \(P\rho \) is nonnegative. </p>
+</div>
+
+    <a class="latex_link" href="index.html#trace_mul_nonneg">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/trace_mul_nonneg">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="trace_mul_posSemidef_nonneg_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="trace_mul_posSemidef_nonneg" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">6</span></div>
+    <div class="thm_thmcontent"><p>  If \(A\) and \(B\) are PSD then \(AB\) has nonnegative trace. </p>
+</div>
+
+    <a class="latex_link" href="index.html#trace_mul_posSemidef_nonneg">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://bjoernkjoshanssen.github.io/kraus/docs/find/#doc/trace_mul_posSemidef_nonneg">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+</div>
+</div> <!-- content -->
+</div> <!-- wrapper -->
+<script src="js/jquery.min.js" type="text/javascript"></script>
+
+<script src="js/d3.min.js"></script>
+<script src="js/hpcc.min.js"></script>
+<script src="js/d3-graphviz.js"></script>
+
+<script type="text/javascript">
+const graphContainer = d3.select("#graph");
+const width = graphContainer.node().clientWidth;
+const height = graphContainer.node().clientHeight;
+
+
+graphContainer.graphviz({useWorker: true})
+    .width(width)
+    .height(height)
+    .fit(true)
+    .renderDot(`strict digraph "" {	graph [bgcolor=transparent];	node [label="\N",		penwidth=1.8	];	edge [arrowhead=vee];	krausApplyWord_densityMatrix	[color=green,		label=krausApplyWord_densityMatrix,		shape=ellipse];	PVM_of_word_of_channel	[color=green,		fillcolor="#B0ECA3",		label=PVM_of_word_of_channel,		shape=box,		style=filled];	krausApplyWord_densityMatrix -> PVM_of_word_of_channel	[style=dashed];	MOlanguageAcceptedBy	[color=green,		fillcolor="#B0ECA3",		label=MOlanguageAcceptedBy,		shape=box,		style=filled];	PVM_of_word_of_channel -> MOlanguageAcceptedBy	[style=dashed];	krausApply_psd	[color=green,		label=krausApply_psd,		shape=ellipse];	krausApply_densityMatrix	[color=green,		label=krausApply_densityMatrix,		shape=ellipse];	krausApply_psd -> krausApply_densityMatrix	[style=dashed];	krausApply_densityMatrix -> krausApplyWord_densityMatrix	[style=dashed];	basisState_trace_one	[color=green,		label=basisState_trace_one,		shape=ellipse];	basisState_trace_one -> PVM_of_word_of_channel	[style=dashed];	pureState_psd	[color=green,		label=pureState_psd,		shape=ellipse];	pureState_psd -> PVM_of_word_of_channel	[style=dashed];	krausApply	[color=green,		fillcolor="#B0ECA3",		label=krausApply,		shape=box,		style=filled];	krausApply -> krausApply_densityMatrix	[style=dashed];	krausApplyWord	[color=green,		fillcolor="#B0ECA3",		label=krausApplyWord,		shape=box,		style=filled];	krausApply -> krausApplyWord	[style=dashed];	krausApplyWord -> krausApplyWord_densityMatrix	[style=dashed];	quantumChannel	[color=green,		fillcolor="#B0ECA3",		label=quantumChannel,		shape=box,		style=filled];	quantumChannel -> krausApply_densityMatrix	[style=dashed];	PVM	[color=green,		fillcolor="#B0ECA3",		label=PVM,		shape=box,		style=filled];	PVM_of_state	[color=green,		label=PVM_of_state,		shape=ellipse];	PVM -> PVM_of_state	[style=dashed];	PVM_of_state -> PVM_of_word_of_channel	[style=dashed];	posSemidef_of_isStarProjection	[color=green,		label=posSemidef_of_isStarProjection,		shape=ellipse];	trace_mul_nonneg	[color=green,		label=trace_mul_nonneg,		shape=ellipse];	posSemidef_of_isStarProjection -> trace_mul_nonneg	[style=dashed];	trace_mul_nonneg -> PVM	[style=dashed];	PMF_of_state	[color=green,		label=PMF_of_state,		shape=ellipse];	PMF_of_state -> PVM_of_state	[style=dashed];	trace_mul_posSemidef_nonneg	[color=green,		label=trace_mul_posSemidef_nonneg,		shape=ellipse];	trace_mul_posSemidef_nonneg -> trace_mul_nonneg	[style=dashed];}`)
+    .on("end", interactive);
+
+latexLabelEscaper = function(label) {
+  return label.replace(/\./g, '\\.').replace(/:/g, '\\:')
+}
+
+clickNode = function() {
+  $("#statements div").hide()
+  var node_id = $('text', this).text();
+  $('.thm').hide();
+  $('#'+latexLabelEscaper(node_id)).show().children().show();
+}
+function interactive() {
+    $("span#legend_title").on("click", function () {
+           $(this).siblings('dl').toggle();
+        })
+
+    d3.selectAll('.node')
+        .attr('pointer-events', 'fill')
+        .on('click', function () {
+           var title = d3.select(this).selectAll('title').text().trim();
+           $('#statements > div').hide()
+           $('.thm').hide();
+           $('#'+latexLabelEscaper(title)+'_modal').show().children().show().children().show();
+           $('#statements').show()
+        });
+
+    d3.selectAll('.dep-closebtn').on('click', function() {
+        var modal =
+            d3.select(this).node().parentNode.parentNode.parentNode ;
+        d3.select(modal).style('display', 'none');
+    });
+}
+
+</script>
+
+</body>
+</html>
