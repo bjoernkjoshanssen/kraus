@@ -1700,7 +1700,7 @@ noncomputable def PMF_of_state_bern {R : Type*} [RCLike R]
   · exact this.1
 
 
-/-- Feb 2, 2026 -/
+/-- Feb 2, 2026 The "not orthogonal" CPTP completion of a CPTNI map. -/
 lemma CPTP_of_CPTNI {R : Type*} [RCLike R]
   {q r : ℕ} (hr : r = 1)
   {K : Fin r → Matrix (Fin q) (Fin q) R}
@@ -1783,6 +1783,34 @@ noncomputable def V {m r : ℕ}
     Matrix.kronecker (K i) <| single i 0 1
   let V : Matrix (Fin m × Fin r) (Fin m) ℂ := fun x y => V₀ x (y,0)
   exact V
+
+/-- The "orthogonal" CPTP completion of a CPTNI map. -/
+noncomputable def Vtilde {m r : ℕ}
+  (K : Fin r → Matrix (Fin m) (Fin m) ℂ) :
+  Matrix (Fin m × Fin (r+1)) (Fin m) ℂ := by
+  let V₀ : Matrix ((Fin m) × (Fin r)) ((Fin m) × (Fin 1)) ℂ :=
+    Finset.sum (s := Finset.univ) fun i =>
+    Matrix.kronecker (K i) <| single i 0 1
+  let V : Matrix (Fin m × Fin r) (Fin m) ℂ := fun x y => V₀ x (y,0)
+  intro x
+  by_cases H : x.2 = Fin.last r
+  · have : (1 - Vᴴ * V).PosSemidef := by
+        sorry
+    have : (1 - Vᴴ * V) ≥ 0 := by sorry
+    have := CFC.sqrt (1 - Vᴴ * V)
+    intro y
+    exact this x.1 y
+  · apply V
+    exact ⟨x.1, x.2.castPred H⟩
+
+lemma Vtilde_I {m r : ℕ}
+  (K : Fin r → Matrix (Fin m) (Fin m) ℂ) :
+  (Vtilde K)ᴴ * Vtilde K = 1 := by
+  ext i j
+  unfold Vtilde
+  simp
+
+  sorry
 
 noncomputable def preStinespringDilation {m r : ℕ}
   (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
