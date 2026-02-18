@@ -101,18 +101,16 @@ lemma partialTrace_tensor {m n : ℕ}
     simp_rw [mul_comm]
 
 
-noncomputable def V {m r : ℕ}
-  (K : Fin r → Matrix (Fin m) (Fin m) ℂ) : Matrix (Fin m × Fin r) (Fin m) ℂ := by
-  let V₀ : Matrix ((Fin m) × (Fin r)) ((Fin m) × (Fin 1)) ℂ :=
-    Finset.sum (s := Finset.univ) fun i =>
-    Matrix.kronecker (K i) <| single i 0 1
-  let V : Matrix (Fin m × Fin r) (Fin m) ℂ := fun x y => V₀ x (y,0)
-  exact V
+noncomputable def V {R : Type*} [Ring R] {m r : ℕ}
+  (K : Fin r → Matrix (Fin m) (Fin m) R) : Matrix (Fin m × Fin r) (Fin m) R :=
+  let V₀ : Matrix ((Fin m) × (Fin r)) ((Fin m) × (Fin 1)) R :=
+    ∑ i, Matrix.kronecker (K i) (single i 0 1)
+  fun x y => V₀ x (y,0)
 
 /-- The "orthogonal" CPTP completion of a CPTNI map. -/
-noncomputable def Vtilde {m r : ℕ}
-  (K : Fin r → Matrix (Fin m) (Fin m) ℂ) :
-  Matrix (Fin m × Fin (r+1)) (Fin m) ℂ := fun x => dite (x.2 < r)
+noncomputable def Vtilde {R : Type*} [RCLike R] {m r : ℕ}
+  (K : Fin r → Matrix (Fin m) (Fin m) R) :
+  Matrix (Fin m × Fin (r+1)) (Fin m) R := fun x => dite (x.2 < r)
   (fun H => V K ⟨x.1, ⟨x.2, H⟩⟩)
    fun _ => (CFC.sqrt (1 - (V K)ᴴ * (V K)) : Matrix _ _ _) x.1
 
@@ -161,119 +159,14 @@ lemma Vtilde_I₀ₘ {m r : ℕ}
     rw [← Matrix.mul_apply]
     rw [Matrix.one_mul 1]
 
--- lemma feb5
--- {K L : Matrix (Fin 1) (Fin 1) ℂ}
-
---  : K ≤ L → K 0 0 ≤ L 0 0 := by
-
---  sorry
-
--- lemma feb (L : Matrix (Fin 1) (Fin 1) ℂ) :
---     L.PosSemidef ↔ 0 ≤ L 0 0 := by
---     unfold PosSemidef
---     sorry
-
--- lemma feb5'
--- {L : Matrix (Fin 1) (Fin 1) ℂ}
--- (hadhoc : Lᴴ * L ≤ 1)
---  : (1 - !![(starRingEnd ℂ) (L 0 0) * L 0 0]).PosSemidef := by
---  sorry
-
--- lemma feb5''
--- {A : Matrix (Fin 1) (Fin 1) ℂ}
--- (hA : A.PosSemidef) : (starRingEnd ℂ) (CFC.sqrt A 0 0) = CFC.sqrt A 0 0 := by
---     sorry
-
-lemma Vtilde_I''
-  (K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ)
-  (h : (K 0)ᴴ * K 0 ≤ 1) : star (K 0 0 0) * (K 0 0 0) ≤ 1 := by
-    sorry
-
-lemma Vtilde_I
-  (K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ)
-  (h₀ : (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]).PosSemidef)
-  (h₁ : (starRingEnd ℂ) (CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) =
-                         CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0)
-  :
-  (Vtilde K)ᴴ * Vtilde K = 1 := by
-
-  unfold Vtilde V
-  ext a b
-  rw [Matrix.mul_apply]
-  rw [Fintype.sum_prod_type]
-  rw [Fin.fin_one_eq_zero a]
-  rw [Fin.fin_one_eq_zero b]
-  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
-    Fin.val_eq_zero_iff, kronecker, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
-    star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
-    single_apply_same, mul_one, one_ne_zero, one_apply_eq]
-  generalize K 0 = L at *
-  have (x y : Fin 1) : L x y = L 0 0 := by
-    have : x = 0 := by exact Fin.fin_one_eq_zero x
-    subst this
-    have : y = 0 := by exact Fin.fin_one_eq_zero _
-    subst this
-    rfl
-  simp_rw [this]
---   generalize L 0 0 = l at *
-  have (l : ℂ) : (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
-    (0:Fin 1) : ℂ))
-       = (fun x y ↦                             (l * single 0 0 1 0 0 : ℂ)) := by
-        ext x y
-        unfold single
-        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, and_self,
-          ↓reduceIte, ite_eq_left_iff]
-        intro h
-        exfalso
-        apply h
-        exact Eq.symm (Fin.fin_one_eq_zero x.2)
-  have (l : ℂ): (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
-    (0:Fin 1) : ℂ))
-       = (fun x y ↦                             (l  : ℂ)) := by
-        ext x y
-        unfold single
-        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, ite_eq_left_iff]
-        intro h
-        exfalso
-        apply h
-        exact Eq.symm (Fin.fin_one_eq_zero x.2)
-  simp_rw [this]
-  have (l : ℂ) : (@HMul.hMul (Matrix (Fin 1) (Fin 1 × Fin 1) ℂ) (Matrix (Fin 1 × Fin 1) (Fin 1) ℂ)
-    (Matrix (Fin 1) (Fin 1) ℂ)
-  instHMulOfFintypeOfMulOfAddCommMonoid (fun x y ↦ l)ᴴ fun x y ↦ l : Matrix (Fin 1) (Fin 1) ℂ)
-     = !![(starRingEnd ℂ) l * l] := by
-        ext i j
-        rw [Fin.fin_one_eq_zero i]
-        rw [Fin.fin_one_eq_zero j]
-        rw [Matrix.mul_apply]
-        simp
-  rw [this]
-  have (a b : ℂ) : a + b = 1 ↔ b = 1 - a := by
-    exact Iff.symm eq_sub_iff_add_eq'
-  rw [this]
-  rw [h₁]
-
-  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
-    (CFC.sqrt A) * (CFC.sqrt A) = A  := PosSemidef.sqrt_mul_self hA
-
-  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) ( i j : Fin 1)
-    (hA : A.PosSemidef) :
-    (CFC.sqrt A i j) * (CFC.sqrt A i j)
-     = A i j := by
-        rw [Fin.fin_one_eq_zero i]
-        rw [Fin.fin_one_eq_zero j]
-        nth_rw 3 [← this (A := A)]
-        · rw [Matrix.mul_apply]
-          simp
-        · tauto
-  rw [this (hA := h₀)]
-  simp
 
 theorem Complex.sqrt_nonneg (α : ℂ) (h : 0 ≤ α) : 0 ≤ α.sqrt := by
   unfold Complex.sqrt;
   rw [ Complex.le_def ] at *;
   norm_num [ Complex.cpow_def ] at *;
-  split_ifs <;> simp_all +decide [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im ];
+  split_ifs
+  all_goals
+    simp [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im ];
   norm_num [ Complex.arg ];
   norm_num [ h.1, h.2.symm ];
   positivity
@@ -294,18 +187,22 @@ lemma matrix_1x1_nonneg_iff (x : ℂ) : 0 ≤ !![x] ↔ 0 ≤ x := by
     specialize hy {
       toFun := by intro _; exact 1
       support := by exact Finset.univ
-      mem_support_toFun := by intro z; simp only [Finset.univ_unique, Fin.default_eq_zero,
-        Fin.isValue, Finset.mem_singleton, ne_eq, one_ne_zero, not_false_eq_true, iff_true]; exact Fin.fin_one_eq_zero z
+      mem_support_toFun := by
+        intro z; simp only [Finset.univ_unique, Fin.default_eq_zero,
+          Fin.isValue, Finset.mem_singleton, ne_eq, one_ne_zero, not_false_eq_true, iff_true];
+        exact Fin.fin_one_eq_zero z
     }
     simp at hy
     convert hy using 1
     unfold Finsupp.sum
     norm_num [ Matrix.mulVec, dotProduct ];
-
   · intro hx
     have h_pos : ∀ v : Fin 1 → ℂ, 0 ≤ (star v 0 * x * v 0).re := by
-      simp_all +decide [ Complex.le_def ];
-      intro v; rw [ ← hx.2 ] ; ring_nf; nlinarith [ sq_nonneg ( ( v 0 |> Complex.re ) - ( v 0 |> Complex.im ) ), sq_nonneg ( ( v 0 |> Complex.re ) + ( v 0 |> Complex.im ) ) ] ;
+      simp_all [ Complex.le_def ];
+      intro v; rw [ ← hx.2 ] ;
+      ring_nf;
+      nlinarith [ sq_nonneg ( ( v 0 |> Complex.re ) - ( v 0 |> Complex.im ) ),
+        sq_nonneg ( ( v 0 |> Complex.re ) + ( v 0 |> Complex.im ) ) ] ;
     constructor <;> norm_num;
     · ext i j ; fin_cases i ; fin_cases j ; simp +decide [ Complex.ext_iff ];
       simp_all +decide [ Complex.le_def ];
@@ -371,8 +268,11 @@ lemma complex_sqrt_nonneg {x : ℂ} (hx : 0 ≤ x) : 0 ≤ Complex.sqrt x := by
   simp_all +decide [ Complex.le_def ];
   cases le_total a 0 <;> simp +decide [ *, Complex.sqrt ];
   · norm_num [ show a = 0 by linarith, show b = 0 by linarith ];
-  · norm_num [ ← hx.2, Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Complex.cpow_def ];
-    split_ifs <;> simp +decide [ *, Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im ];
+  · norm_num [← hx.2, Complex.exp_re, Complex.exp_im,
+      Complex.log_re, Complex.log_im, Complex.cpow_def]
+    split_ifs
+    all_goals
+      simp +decide [ *, Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im ];
     norm_num [ ← hx.2, Complex.arg_ofReal_of_nonneg hx.1 ];
     positivity
 
@@ -387,7 +287,10 @@ lemma matrix_1x1_sqrt (α : ℂ) (h₀ : 0 ≤ α) : CFC.sqrt !![α] = !![Comple
   · exact !![ Complex.sqrt α ];
   · exact (matrix_1x1_nonneg_iff α).mpr h₀;
   · convert matrix_1x1_nonneg_iff _ |>.2 ( complex_sqrt_nonneg h₀ ) using 1;
-  · simp +decide [ ← Matrix.ext_iff, Fin.forall_fin_one ];
+  · simp only [← Matrix.ext_iff, of_apply, cons_val', cons_val_fin_one, Fin.forall_fin_one,
+    Fin.isValue, cons_mul, Nat.succ_eq_add_one, Nat.reduceAdd, vecMul_cons, head_cons, smul_cons,
+    smul_eq_mul, smul_empty, tail_cons, empty_vecMul, add_zero, empty_mul, Equiv.symm_apply_apply,
+    EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true];
     rw [ ← sq, complex_sq_sqrt ] ; norm_num
 
 open scoped ComplexOrder MatrixOrder
@@ -412,8 +315,6 @@ lemma Vtilde_I' (z : ℂ) (hz : star z * z ≤ 1) :
     star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
     single_apply_same, mul_one, one_ne_zero, one_apply_eq]
   rw [Iff.symm eq_sub_iff_add_eq']
-  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
-    (CFC.sqrt A) * (CFC.sqrt A) = A  := PosSemidef.sqrt_mul_self hA
   simp only [of_apply, cons_val', cons_val_fin_one, Fin.isValue]
   have : (fun (x : Fin 1 × Fin 1) (y : Fin 1) => z * single (0:Fin 1) (0:Fin 1) 1 x.2 0)
         = fun  x                   y          => z := by
@@ -426,11 +327,7 @@ lemma Vtilde_I' (z : ℂ) (hz : star z * z ≤ 1) :
   instHMulOfFintypeOfMulOfAddCommMonoid (fun x y ↦ z)ᴴ fun x y ↦ z : Matrix (Fin 1) (Fin 1) ℂ)
     = !![star z * z] := by
     ext i j
-    have : i = 0 := by exact Fin.fin_one_eq_zero i
-    rw [this]
-    have : j = 0 := by exact Fin.fin_one_eq_zero j
-    rw [this]
-    rw [Matrix.mul_apply]
+    rw [Fin.fin_one_eq_zero i, Fin.fin_one_eq_zero j, Matrix.mul_apply]
     simp
   rw [this]
   simp only [star_def, Fin.isValue]
@@ -486,27 +383,108 @@ lemma Vtilde_I' (z : ℂ) (hz : star z * z ≤ 1) :
   rw [this]
   exact H
 
+lemma Vtilde_I
+  (K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ)
+  (h₀ : (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]).PosSemidef)
+  (h₁ : (starRingEnd ℂ) (CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) =
+                         CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) :
+  (Vtilde K)ᴴ * Vtilde K = 1 := by
+  have := @Vtilde_I' (K 0 0 0) (by
+    generalize K 0 0 0 = κ at *
+    have : 1 - !![(starRingEnd ℂ) κ * κ] ≥ 0 := by sorry
+    have : 1 - !![star κ * κ] ≥ 0 := this
+    have : !![star κ * κ] ≤ 1 := by sorry
+    generalize star κ * κ = μ at *
+
+    have := matrix_1x1_nonneg_iff -- maybe generalize that
+    sorry)
+  simp at this
+
+  unfold Vtilde V
+  ext a b
+  rw [Matrix.mul_apply]
+  rw [Fintype.sum_prod_type]
+  rw [Fin.fin_one_eq_zero a]
+  rw [Fin.fin_one_eq_zero b]
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
+    Fin.val_eq_zero_iff, kronecker, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
+    star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
+    single_apply_same, mul_one, one_ne_zero, one_apply_eq]
+  generalize K 0 = L at *
+  have (x y : Fin 1) : L x y = L 0 0 := by
+    have : x = 0 := by exact Fin.fin_one_eq_zero x
+    subst this
+    have : y = 0 := by exact Fin.fin_one_eq_zero _
+    subst this
+    rfl
+  simp_rw [this]
+--   generalize L 0 0 = l at *
+  have (l : ℂ) : (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
+    (0:Fin 1) : ℂ))
+       = (fun x y ↦                             (l * single 0 0 1 0 0 : ℂ)) := by
+        ext x y
+        unfold single
+        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, and_self,
+          ↓reduceIte, ite_eq_left_iff]
+        intro h
+        exfalso
+        apply h
+        exact Eq.symm (Fin.fin_one_eq_zero x.2)
+  have (l : ℂ): (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
+    (0:Fin 1) : ℂ))
+       = (fun x y ↦                             (l  : ℂ)) := by
+        ext x y
+        unfold single
+        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, ite_eq_left_iff]
+        intro h
+        exfalso
+        apply h
+        exact Eq.symm (Fin.fin_one_eq_zero x.2)
+  simp_rw [this]
+  have (l : ℂ) : (@HMul.hMul (Matrix (Fin 1) (Fin 1 × Fin 1) ℂ) (Matrix (Fin 1 × Fin 1) (Fin 1) ℂ)
+    (Matrix (Fin 1) (Fin 1) ℂ)
+  instHMulOfFintypeOfMulOfAddCommMonoid (fun x y ↦ l)ᴴ fun x y ↦ l : Matrix (Fin 1) (Fin 1) ℂ)
+     = !![(starRingEnd ℂ) l * l] := by
+        ext i j
+        rw [Fin.fin_one_eq_zero i]
+        rw [Fin.fin_one_eq_zero j]
+        rw [Matrix.mul_apply]
+        simp
+  rw [this]
+  have (a b : ℂ) : a + b = 1 ↔ b = 1 - a := by
+    exact Iff.symm eq_sub_iff_add_eq'
+  rw [this]
+  rw [h₁]
+  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
+    (CFC.sqrt A) * (CFC.sqrt A) = A  := by
+    have : A ≥ 0 := by exact nonneg_iff_posSemidef.mpr hA
+    exact CFC.sqrt_mul_sqrt_self A this -- PosSemidef.sqrt_mul_self hA
+  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) ( i j : Fin 1)
+    (hA : A.PosSemidef) :
+    (CFC.sqrt A i j) * (CFC.sqrt A i j)
+     = A i j := by
+        rw [Fin.fin_one_eq_zero i]
+        rw [Fin.fin_one_eq_zero j]
+        nth_rw 3 [← this (A := A)]
+        · rw [Matrix.mul_apply]
+          simp
+        · tauto
+  rw [this (hA := h₀)]
+  simp
+
+
 noncomputable def stinespringDilation {m r : ℕ}
   (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
   (ρ : Matrix (Fin m) (Fin m) ℂ) :  Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ := by
   exact (V K) * ρ * (V K)ᴴ
 
 noncomputable def stinespringForm {m r : ℕ}
-  (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
-  (ρ : Matrix (Fin m) (Fin m) ℂ) : Matrix (Fin m) (Fin m) ℂ := by
-  let V₀ : Matrix ((Fin m) × (Fin r)) ((Fin m) × (Fin 1)) ℂ :=
-    Finset.sum (s := Finset.univ) fun i =>
-    Matrix.kronecker (K i) <| single i 0 1
-  let V : Matrix (Fin m × Fin r) (Fin m) ℂ := fun x y => V₀ x (y,0)
-  exact partialTraceRight (stinespringDilation K ρ)
+    (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) : Matrix (Fin m) (Fin m) ℂ :=
+  partialTraceRight (stinespringDilation K ρ)
 
-lemma stinespringForm_CPTP {m r : ℕ}
-  (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
-  (hK : ∑ i, (K i)ᴴ * K i ≤ 1) (hr : r = 1)
-  :
-  (V K)ᴴ * (V K) ≤ 1 := by
-  subst hr
-  convert hK
+lemma stinespringForm_CPTNI_reason {m : ℕ} (K : Fin 1 → Matrix (Fin m) (Fin m) ℂ) :
+    (V K)ᴴ * V K = ∑ i, (K i)ᴴ * K i := by
   unfold V
   simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, kronecker, Finset.sum_singleton,
     kroneckerMap_apply]
@@ -521,6 +499,14 @@ lemma stinespringForm_CPTP {m r : ℕ}
     ]
   · simp
   · simp
+
+lemma stinespringForm_CPTNI {m r : ℕ}
+  (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
+  (hK : ∑ i, (K i)ᴴ * K i ≤ 1) (hr : r = 1) :
+  (V K)ᴴ * (V K) ≤ 1 := by
+  subst hr
+  convert hK
+  apply stinespringForm_CPTNI_reason
 
 
 /-- stinespringForm works
