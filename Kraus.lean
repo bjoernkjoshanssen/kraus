@@ -1,2 +1,1 @@
-import Kraus.Basic
-import Kraus.Stinespring
+import Kraus.Stinespring100
