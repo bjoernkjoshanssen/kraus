@@ -1,15 +1,15 @@
 # Fdb version 3
-["bibtex ../print/print"] 1769891832 "../print/print.aux" "../print/print.bbl" "../print/print" 1769891833
-  "../print/print.aux" 1769891833 1602 62fffa93222a7cdc948406f4b26e2898 ""
+["bibtex ../print/print"] 1769891832 "../print/print.aux" "../print/print.bbl" "../print/print" 1773380340
+  "../print/print.aux" 1773380340 1602 62fffa93222a7cdc948406f4b26e2898 ""
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/base/plain.bst" 1480098433 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
   "kraus.bib" 1769891816 1151 ddc1386203a21b2e706401f472fe8265 ""
   (generated)
   "../print/print.blg"
   "../print/print.bbl"
-["pdflatex"] 1769891832 "print.tex" "../print/print.pdf" "print" 1769891833
-  "../print/print.aux" 1769891833 1602 62fffa93222a7cdc948406f4b26e2898 ""
+["pdflatex"] 1773380338 "print.tex" "../print/print.pdf" "print" 1773380340
+  "../print/print.aux" 1773380340 1602 62fffa93222a7cdc948406f4b26e2898 ""
   "../print/print.bbl" 1769891832 467 67db8cef9a7cd74e7ec4b10562445de2 "bibtex ../print/print"
-  "../print/print.out" 1769891832 0 d41d8cd98f00b204e9800998ecf8427e ""
+  "../print/print.out" 1773380339 0 d41d8cd98f00b204e9800998ecf8427e ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1480098689 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1480098698 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -87,12 +87,12 @@
   "/usr/local/texlive/2018/texmf-dist/web2c/texmf.cnf" 1522066949 33362 cf75436e19743e94a92a6b1b9183c434 ""
   "/usr/local/texlive/2018/texmf-var/web2c/xetex/xelatex.fmt" 1523934532 3731946 97a69080a287fbc922a3cd699c6fd124 ""
   "/usr/local/texlive/2018/texmf.cnf" 1523934483 577 0b39adfd7c93507ff20c9c14c2f1a33f ""
-  "content.tex" 1769891732 4031 3f092be45b2e9b19ff6d50e468f857cf ""
+  "content.tex" 1769896931 4081 fd97c367a9f3a7b355d70e633d6cd84c ""
   "macros/common.tex" 1769377786 820 60fafcc3aa944a5e60030581a943ef6b ""
   "macros/print.tex" 1769377786 1101 87627b2ec24fef68edc71c13f43f7bab ""
   "print.tex" 1769377786 1113 bc51a2a0bfaaeb4928b9b337019c7866 ""
   (generated)
-  "../print/print.out"
   "../print/print.aux"
   "../print/print.log"
+  "../print/print.out"
   "../print/print.pdf"
