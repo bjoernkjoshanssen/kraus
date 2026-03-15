@@ -12,7 +12,7 @@
 <meta name="generator" content="plasTeX" />
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kraus</title>
+<title>Quantum Finite Automata and the Stinespring Dilation Theorem in Lean</title>
 <link rel="stylesheet" href="styles/theme-white.css" />
 <link rel="stylesheet" href="styles/amsthm.css" />
 <link rel="stylesheet" href="styles/showmore.css" />
@@ -30,21 +30,60 @@
 
 <div class="main-text">
 <div class="titlepage">
-<h1>Kraus</h1>
+<h1>Quantum Finite Automata and the Stinespring Dilation Theorem in Lean</h1>
 <p class="authors">
-<span class="author">Bjørn Kjos-Hanssen</span>
+<span class="author">Bjørn Kjos-Hanssen and Swarnalakshmi Lakshmanan</span>
 </p>
 </div>
-<p>In this project we formalize parts of the article <em>Unbounded length minimal synchronizing words for quantum channels over qutrits</em> and notions in quantum information theory. </p>
+<p>In this project we formalize parts of the article <em>Unbounded length minimal synchronizing words for quantum channels over qutrits</em> <span class="cite">
+	[
+	<a href="index.html#kjoshanssen2026unboundedlengthminimalsynchronizing" >5</a>
+	]
+</span> and notions in quantum information theory. </p>
 <p>In particular we formalize the notion of a measure-once one-way general quantum finite automaton (MO-1gQFA) introduced by Li, Qiu, Zou, Li, Wu, Mateus <span class="cite">
 	[
-	<a href="index.html#MR2885820" >1</a>
+	<a href="index.html#MR2885820" >6</a>
 	]
 </span> in 2012. As an alternative to “MO-1gQFA” we refer to these simply as Kraus operator automata. In particular we formalize cut-point languages as in <span class="cite">
 	[
-	<a href="index.html#MR2817180" >2</a>
+	<a href="index.html#MR2817180" >9</a>
 	]
 </span> who call the automata “RT-QFA” (real-time QFA). </p>
+<p>The paper addresses two needs or request by other researchers: </p>
+<p>Marco David and Jens Palsberg posted a list of Top 100 Quantum Theorems on March 11, 2026, at <a href="https://marcodavid.net/top100">https://marcodavid.net/top100</a>. We include a matrix version of #54 on their list, the Stinespring Dilation Theorem. </p>
+<p>Meiburg, Lessa and Soldati <span class="cite">
+	[
+	<a href="index.html#meiburg2025formalizationgeneralizedquantumsteins" >8</a>
+	]
+</span> formalized a result from Hayashi and Yamasaki <span class="cite">
+	[
+	<a href="index.html#hayashi2025generalizedquantumsteinslemma" >2</a>
+	]
+</span> in the proof assistant Lean, giving a corrected proof of the Generalized Quantum Stein’s Lemma. The latter is an important result in operational quantum information theory going back to Hiai and Petz <span class="cite">
+	[
+	<a href="index.html#HiaiPetz1991" >3</a>
+	]
+</span>. </p>
+<p>In the course of formalizing this monumental result they build a library <span class="ttfamily">Lean-QuantumInfo</span> <span class="cite">
+	[
+	<a href="index.html#meiburg2024quantuminfo" >7</a>
+	]
+</span> containing large parts of quantum information theory. </p>
+<p>One notable missing and sought-after ingredient in Lean-Quantuminfo is the theory of quantum finite automata. In the project <span class="ttfamily">Kraus</span> <span class="cite">
+	[
+	<a href="index.html#kraus" >4</a>
+	]
+</span> we partially remedy this. In particular, we formalize the language of a measure-once real-time QFA <span class="cite">
+	[
+	<a href="index.html#MR2817180" >9</a>
+	, 
+	<a href="index.html#MR2885820" >6</a>
+	]
+</span> in terms of Mathlib’s probability mass functions (PMF) and compute some examples related to the Kraus operators in this paper and in Grudka et al.’s paper <span class="cite">
+	[
+	<a href="index.html#grudka2025quantumsynchronizingwordsresetting" >1</a>
+	]
+</span>. Most results are proved for the two fields \(\mathbb R\) and \(\mathbb C\), encapsulated in Lean’s mathematics library Mathlib4 by the <span class="ttfamily">RCLike</span> typeclass. </p>
 <div class="definition_thmwrapper theorem-style-definition" id="krausApply">
   <div class="definition_thmheading">
     <span class="definition_thmcaption">
@@ -921,10 +960,31 @@
 <div class="bibliography">
 <h1>Bibliography</h1>
 <dl class="bibliography">
-  <dt><a name="MR2885820">1</a></dt>
+  <dt><a name="grudka2025quantumsynchronizingwordsresetting">1</a></dt>
+  <dd><p>Andrzej Grudka, Marcin Karczewski, Paweł Kurzyński, Jedrzej Stempin, Jan Wójcik, and Antoni Wójcik. Quantum synchronizing words: Resetting and preparing qutrit states, 2025. </p>
+</dd>
+  <dt><a name="hayashi2025generalizedquantumsteinslemma">2</a></dt>
+  <dd><p>Masahito Hayashi and Hayata Yamasaki. Generalized quantum Stein’s lemma and second law of quantum resource theories, 2025. </p>
+</dd>
+  <dt><a name="HiaiPetz1991">3</a></dt>
+  <dd><p>Fumio Hiai and Dénes Petz. The proper formula for relative entropy and its asymptotics in quantum probability. <em>Communications in Mathematical Physics</em>, 143(1):99–114, 1991. </p>
+</dd>
+  <dt><a name="kraus">4</a></dt>
+  <dd><p>Bjørn Kjos-Hanssen. Kraus: formalization of quantum finite automata, 2026. Project website. </p>
+</dd>
+  <dt><a name="kjoshanssen2026unboundedlengthminimalsynchronizing">5</a></dt>
+  <dd><p>Bjørn Kjos-Hanssen and Swarnalakshmi Lakshmanan. Unbounded length minimal synchronizing words for quantum channels over qutrits, 2026. </p>
+</dd>
+  <dt><a name="MR2885820">6</a></dt>
   <dd><p>Lvzhou Li, Daowen Qiu, Xiangfu Zou, Lvjun Li, Lihua Wu, and Paulo Mateus. Characterizations of one-way general quantum finite automata. <em>Theoret. Comput. Sci.</em>, 419:73–91, 2012. </p>
 </dd>
-  <dt><a name="MR2817180">2</a></dt>
+  <dt><a name="meiburg2024quantuminfo">7</a></dt>
+  <dd><p>Alex Meiburg. Quantum Information in Lean. <a href="https://github.com/Meiburg/Lean-QuantumInfo">https://github.com/Meiburg/Lean-QuantumInfo</a>, 2024. </p>
+</dd>
+  <dt><a name="meiburg2025formalizationgeneralizedquantumsteins">8</a></dt>
+  <dd><p>Alex Meiburg, Leonardo&#160;A. Lessa, and Rodolfo&#160;R. Soldati. A formalization of the generalized quantum Stein’s lemma in Lean, 2025. </p>
+</dd>
+  <dt><a name="MR2817180">9</a></dt>
   <dd><p>Abuzer Yakaryılmaz and A.&#160;C.&#160;Cem Say. Unbounded-error quantum computation with small space bounds. <em>Inform. and Comput.</em>, 209(6):873–892, 2011. </p>
 </dd>
 </dl>

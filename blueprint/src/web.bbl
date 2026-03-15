@@ -1,9 +1,46 @@
 \begin{thebibliography}{1}
 
+\bibitem{grudka2025quantumsynchronizingwordsresetting}
+Andrzej Grudka, Marcin Karczewski, Paweł Kurzyński, Jedrzej Stempin, Jan
+  Wójcik, and Antoni Wójcik.
+\newblock Quantum synchronizing words: Resetting and preparing qutrit states,
+  2025.
+
+\bibitem{hayashi2025generalizedquantumsteinslemma}
+Masahito Hayashi and Hayata Yamasaki.
+\newblock Generalized quantum {S}tein's lemma and second law of quantum
+  resource theories, 2025.
+
+\bibitem{HiaiPetz1991}
+Fumio Hiai and D{\'e}nes Petz.
+\newblock The proper formula for relative entropy and its asymptotics in
+  quantum probability.
+\newblock {\em Communications in Mathematical Physics}, 143(1):99--114, 1991.
+
+\bibitem{kraus}
+Bj{\o}rn Kjos-Hanssen.
+\newblock Kraus: formalization of quantum finite automata, 2026.
+\newblock Project website.
+
+\bibitem{kjoshanssen2026unboundedlengthminimalsynchronizing}
+Bjørn Kjos-Hanssen and Swarnalakshmi Lakshmanan.
+\newblock Unbounded length minimal synchronizing words for quantum channels
+  over qutrits, 2026.
+
 \bibitem{MR2885820}
 Lvzhou Li, Daowen Qiu, Xiangfu Zou, Lvjun Li, Lihua Wu, and Paulo Mateus.
 \newblock Characterizations of one-way general quantum finite automata.
 \newblock {\em Theoret. Comput. Sci.}, 419:73--91, 2012.
+
+\bibitem{meiburg2024quantuminfo}
+Alex Meiburg.
+\newblock {Q}uantum {I}nformation in {L}ean.
+\newblock \url{https://github.com/Meiburg/Lean-QuantumInfo}, 2024.
+
+\bibitem{meiburg2025formalizationgeneralizedquantumsteins}
+Alex Meiburg, Leonardo~A. Lessa, and Rodolfo~R. Soldati.
+\newblock A formalization of the generalized quantum {S}tein's lemma in {L}ean,
+  2025.
 
 \bibitem{MR2817180}
 Abuzer Yakary{\i}lmaz and A.~C.~Cem Say.

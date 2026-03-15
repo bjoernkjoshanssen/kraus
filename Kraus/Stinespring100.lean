@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Analysis.RCLike.Basic
+import Kraus.Basic
 
 /-!
 # Stinespring dilation
@@ -27,9 +28,9 @@ noncomputable def stinespringDilation {m r : ℕ}
 lemma stinespringForm_eq {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
     (ρ : Matrix (Fin m) (Fin m) ℂ) :
-    partialTraceRight (stinespringDilation K ρ) = ∑ i, K i * ρ * (K i)ᴴ := by
+    partialTraceRight (stinespringDilation K ρ) = krausApply K ρ := by
   ext u v
-  simp only [partialTraceRight, stinespringDilation, V, kronecker, Fin.isValue]
+  simp only [partialTraceRight, stinespringDilation, V, kronecker, Fin.isValue, krausApply]
   have :  (∑ i, K i * ρ * (K i)ᴴ) u v =  ∑ i, (K i * ρ * (K i)ᴴ) u v := by
     exact sum_apply u v Finset.univ fun c ↦ K c * ρ * (K c)ᴴ
   rw [this]
