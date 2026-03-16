@@ -1,13 +1,10 @@
 # kraus
 
-## GitHub configuration
+## Kraus operators in Lean
 
-To set up your new GitHub repository, follow these steps:
-
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
-
-After following the steps above, you can remove this section from the README file.
+Wiedijk has a famous list of 100 mathematical theorems whose formalization is sought in a proof assistant.
+David and Palsberg recently announced a similar list restricted to quantum information theory.
+The latter subject has been intensively formalized by Meiburg.
+In this project our aim is twofold:
+* to answer the challenge of David and Palsberg by supplying a solution to a finite-dimensional version of their problem #54: formalize the Stinespring dilation theorem;
+* answer an unpublished challenge by Meiburg to formalize quantum finite automata.
