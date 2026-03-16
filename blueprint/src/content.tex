@@ -1,3 +1,12 @@
+\begin{abstract}
+Wiedijk has a famous list of 100 mathematical theorems whose formalization is sought in a proof assistant.
+David and Palsberg recently announced a similar list restricted to quantum information theory.
+The latter subject has been intensively formalized by Meiburg.
+In this article our aim is twofold:
+(1) to answer the challenge of David and Palsberg by supplying a solution to a finite-dimensional version of their problem \#54: formalize the Stinespring dilation theorem;
+(2) answer an unpublished challenge by Meiburg to formalize quantum finite automata.
+\end{abstract}
+
 % In this file you should put the actual content of the blueprint.
 % It will be used both by the web and the print version.
 % It should *not* include the \begin{document}
@@ -5,6 +14,7 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
+\section{Introduction}
 In this project we formalize parts of the article \emph{Unbounded length minimal synchronizing words for quantum channels over qutrits} \cite{kjoshanssen2026unboundedlengthminimalsynchronizing} and notions in quantum information theory.
 
 In particular we formalize the notion of a measure-once one-way general quantum finite automaton (MO-1gQFA) introduced by Li, Qiu, Zou, Li, Wu, Mateus \cite{MR2885820} in 2012. As an alternative to ``MO-1gQFA'' we refer to these simply as Kraus operator automata. In particular we formalize cut-point languages as in
@@ -21,17 +31,289 @@ In the course of formalizing this monumental result they build a library \texttt
 
 One notable missing and sought-after ingredient in Lean-Quantuminfo is the theory of quantum finite automata. In the project \texttt{Kraus} \cite{kraus} we partially remedy this. In particular, we formalize the language of a measure-once real-time QFA \cite{MR2817180,MR2885820} in terms of Mathlib's probability mass functions (PMF) and compute some examples related to the Kraus operators in this paper and in Grudka et al.'s paper \cite{grudka2025quantumsynchronizingwordsresetting}. Most results are proved for the two fields $\mathbb R$ and $\mathbb C$, encapsulated in Lean's mathematics library Mathlib4 by the \texttt{RCLike} typeclass.
 
-\begin{definition}\label{krausApply}
+
+The list collects 100 important theorems in quantum physics, quantum information and quantum computing. It was inspired by the list of the top 100 mathematical theorems of which Freek Wiedijk tracks the formalization progress (Figure \ref{100}).
+
+\begin{figure}
+\begin{multicols}{3}
+{\fontsize{5}{5}\selectfont
+\begin{enumerate}
+\item The Spectral Theorem
+\item Eigenstates in an infinite square well
+\item The Quantum Harmonic Oscillator
+\item Ehrenfest’s Theorem
+\item Quantum tunneling through a finite potential barrier
+\item Conservation of the probability (4-)current
+\item Eigenstates of a δ-distribution well
+\item Heisenberg Uncertainty Relation
+\item Baker–Campbell–Hausdorff Formula
+\item Trotter Product Formula (Lie–Trotter–Kato)
+\item Simultaneous diagonalization of commuting observables
+\item Noether’s Theorem
+\item Wigner’s Theorem
+\item Stone–von Neumann Theorem
+\item Spectrum of the hydrogen atom (Coulomb potential)
+\item Addition of angular momentum (e.g. Clebsch–Gordan)
+\item Wigner–Eckart Theorem
+\item Power-series spectrum of a perturbed time-independent Hamiltonian
+\item Dyson series for time-dependent perturbation theory
+\item Correctness of the Rayleigh–Ritz method
+\item Correctness of the Born–Oppenheimer approximation
+\item The Adiabatic Theorem
+\item Berry phase (Geometric phase)
+\item Superdense coding
+\item Quantum teleportation with shared entanglement
+\item No-Cloning Theorem / No-Broadcast Theorem / No-Teleportation Theorem
+\item No-Communication Theorem
+\item No-Deleting Theorem
+\item Schrödinger–HJW Theorem (purification of mixed states)
+\item Schmidt decomposition for Hilbert spaces
+\item Bell’s Theorem (QM violates CHSH inequality)
+\item Monogamy of entanglement
+\item Tsirelson bound
+\item Correctness of the Deutsch–Jozsa algorithm
+\item Correctness of Shor’s algorithm
+\item Correctness of Grover’s algorithm
+\item The Bennett–Bernstein–Brassard–Vazirani Theorem (BBBV)
+\item Quantum key distribution by BB84
+\item Impossibility of quantum bit commitment (Mayers–Lo–Chau)
+\item Solovay–Kitaev Theorem
+\item Universality of sets of two-qubit quantum gates
+\item Universality of the Toffoli and the Hadamard
+\item Five two-qubit gates are necessary and sufficient to implement a Toffoli gate
+\item Six two-qubit linear nearest-neighbor gates are necessary and sufficient to implement a Toffoli gate
+\item 3n CX gates are necessary to implement a multi-control Toffoli gate with n-1 controls
+\item Adiabatic and gate-based quantum computing are equivalent up to polynomial factors
+\item The Threshold Theorem (quantum fault-tolerance)
+\item Petz recovery map
+\item Choi’s Theorem on completely positive maps
+\item Choi–Jamiołkowski isomorphism (channel-state duality)
+\item Gelfand–Naimark–Segal construction
+\item Gelfand–Naimark Theorem
+\item Krein–Milman Theorem
+\item \textbf{Stinespring’s Factorization Theorem / Naimark’s Dilation Theorem}
+\item Continuous Functional Calculus
+\item Gleason’s Theorem
+\item Holevo’s Theorem
+\item Pusey–Barrett–Rudolph Theorem
+\item Kochen–Specker Theorem
+\item The Spectral Theorem for PVMs
+\item Strong subadditivity of quantum entropy
+\item Entanglement-assisted classical capacity of quantum channels
+\item Quantum state discrimination for two states (Ivanović–Dieks–Peres Limit)
+\item The Lloyd–Shor–Devetak Theorem for quantum channel capacity
+\item Eastin–Knill Theorem
+\item Gottesman–Knill Theorem
+\item Magic state distillation
+\item Correctness of distillation of Bell pairs
+\item 1D gapped Hamiltonians have area-law ground states
+\item The Lieb–Robinson bound
+\item Onsager’s solution to the 2D Ising model
+\item MIP* = RE
+\item BQP $\subseteq$ PP
+\item QIP = PSPACE
+\item Quantum Stein Lemma
+\item Quantum 3-SAT is QMA1-complete
+\item Computing the Jones polynomial at roots of unity is BQP-hard
+\item Uniqueness of 4-dimensional representations of the Clifford algebra (up to unitary equivalence)
+\item Spin-statistics Theorem
+\item Reeh–Schlieder Theorem
+\item Wick’s Theorem
+\item Elitzur’s Theorem
+\item 2D TQFTs are equivalent to Frobenius algebras
+\item Chern–Simons theory can compute the Jones polynomial
+\item The CFT central charge is its entanglement entropy
+\item Osterwalder–Schrader Reconstruction Theorem
+\item 4D Gaussian free field theory satisfies the Osterwalder-Schrader axioms
+\item Bisognano–Wichmann Theorem
+\item Wood–Spekkens–Bell Theorem
+\item Correctness of block encoding
+\item Correctness of Hamiltonian simulation by Trotterization
+\item Correctness of Hamiltonian simulation by Linear Combination of Unitaries
+\item Correctness of Hamiltonian simulation by Qubitization
+\item Qubit reuse is NP-complete
+\item Correctness of a quantum circuit optimizer
+\item Correctness of the toric code
+\item Correctness of entanglement-assisted stabilizer codes
+\item The Knill–Laflamme conditions
+\item Correctness of approximate circuit synthesis
+\item Correctness of Simon’s algorithm
+\end{enumerate}
+}
+\end{multicols}
+
+\caption{The Top 100 Quantum Theorems.}\label{100}
+\end{figure}
+
+\section{Formalizing QFAs}
+The following definitions and lemmas were generated by the Gemini 3 agent when asked to translate our Lean code from \cite{kraus} into \LaTeX\ and English.
+
+First, operator ``sandwiches''.
+\begin{definition}[Kraus Map]\label{krausApply}
 	\lean{krausApply}
 	\leanok
-	The operation $\rho\mapsto \sum_i K_i  ρ  K_i^*$.
+Let $R$ be a star-ring with an additive commutative monoid structure. Given a family of matrices $\{K_i\}_{i=1}^r \in M_q(R)$, the \textbf{Kraus application map} $\Phi: M_q(R) \to M_q(R)$ is defined as the completely positive map:
+\begin{equation}
+    \Phi(\rho) = \sum_{i=0}^{r-1} K_i \rho K_i^\dagger
+\end{equation}
+where $K_i^\dagger$ denotes the conjugate transpose of the $i$-th Kraus operator $K_i$.
 \end{definition}
 
-\begin{lemma}\label{posSemidef_of_isStarProjection}
+\begin{lemma}[Kraus Map Preserves PSD]\label{posSemidef_of_isStarProjection}
 \lean{posSemidef_of_isStarProjection}
 \leanok
-Each projective is PSD.
+Let $\rho \in M_q(R)$ be a positive semi-definite matrix ($\rho \ge 0$). Then for any Kraus operators $\{K_i\}$, the result of the map 
+\[ \Phi(\rho) = \sum_{i} K_i \rho K_i^\dagger \]
+is also positive semi-definite.
 \end{lemma}
+
+\begin{proof}
+For each $i$, since $\rho \ge 0$, the conjugation $K_i \rho K_i^\dagger$ is positive semi-definite. Because the sum of positive semi-definite matrices is also positive semi-definite, it follows that $\sum_{i} K_i \rho K_i^\dagger \ge 0$.
+\end{proof}
+
+\section*{Quantum State and Operation Definitions}
+
+% 1. Quantum Channel (TP condition)
+\begin{definition}[Quantum Channel / TP Condition]
+A set of Kraus operators $\{K_i\}_{i=1}^r \subset M_q(\mathbb{C})$ defines a \textbf{quantum channel} (or a trace-preserving map) if they satisfy the completeness relation:
+\begin{equation}
+    \sum_{i=1}^r K_i^\dagger K_i = I_q
+\end{equation}
+where $I_q$ is the $q \times q$ identity matrix.
+\end{definition}
+
+% 2. Quantum Operation (Trace-Non-Increasing)
+\begin{definition}[Quantum Operation]
+A set of Kraus operators $\{K_i\}_{i=1}^r \subset M_q(\mathbb{C})$ defines a \textbf{quantum operation} if they satisfy:
+\begin{equation}
+    \sum_{i=1}^r K_i^\dagger K_i \le I_q
+\end{equation}
+In this context, $\le$ denotes the Loewner order, meaning $I_q - \sum K_i^\dagger K_i$ is a positive semi-definite matrix.
+\end{definition}
+
+% 3. Density Matrix
+\begin{definition}[Density Matrix]
+A matrix $\rho \in M_q(\mathbb{C})$ is a \textbf{density matrix} (or a normalized state) if it satisfies:
+\begin{enumerate}
+    \item $\rho \ge 0$ (Positive semi-definite)
+    \item $\operatorname{Tr}(\rho) = 1$ (Normalization)
+\end{enumerate}
+\end{definition}
+
+% 4. Sub-normalized Density Matrix
+\begin{definition}[Sub-normalized Density Matrix]
+A matrix $\rho \in M_q(\mathbb{C})$ is a \textbf{sub-normalized density matrix} if it satisfies:
+\begin{enumerate}
+    \item $\rho \ge 0$ (Positive semi-definite)
+    \item $\operatorname{Tr}(\rho) \le 1$
+\end{enumerate}
+These often represent states after a non-deterministic measurement.
+\end{definition}
+
+\begin{lemma}[Trace Preservation of Quantum Channels]
+Let $\Phi: M_q(\mathbb{C}) \to M_q(\mathbb{C})$ be a map defined by a set of Kraus operators $\{K_i\}_{i=1}^r$ satisfying the quantum channel condition $\sum_i K_i^\dagger K_i = I_q$. Then for any $\rho \in M_q(\mathbb{C})$, the trace is preserved:
+\begin{equation}
+    \operatorname{Tr}(\Phi(\rho)) = \operatorname{Tr}(\rho)
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By the linearity and cyclic property of the trace, $\operatorname{Tr}(\sum_i K_i \rho K_i^\dagger) = \sum_i \operatorname{Tr}(K_i^\dagger K_i \rho) = \operatorname{Tr}((\sum_i K_i^\dagger K_i) \rho) = \operatorname{Tr}(I_q \rho) = \operatorname{Tr}(\rho)$.
+\end{proof}
+
+\begin{proposition}[Trace-Preserving Property]
+Let $\Phi$ be a quantum channel defined by Kraus operators $\{K_i\}$ such that $\sum_i K_i^\dagger K_i = I$. If $\rho$ is a normalized matrix with $\operatorname{Tr}(\rho) = 1$, then the output of the channel is also normalized:
+\begin{equation}
+    \operatorname{Tr}(\Phi(\rho)) = 1
+\end{equation}
+\end{proposition}
+
+\begin{definition}[Quantum Channel Map on Density Matrices]
+Let $\mathcal{D}_q$ denote the set of $q \times q$ density matrices (positive semi-definite matrices with unit trace). A quantum channel $\Phi$ induces a well-defined map:
+\begin{equation}
+    \Phi: \mathcal{D}_q \to \mathcal{D}_q
+\end{equation}
+mapping $\rho \mapsto \sum_i K_i \rho K_i^\dagger$. This map is well-defined because it preserves both the positive semi-definite property and the unit trace of the input state.
+\end{definition}
+
+
+\begin{definition}[Quantum Word Map]
+Let $\Sigma$ be an alphabet and $\mathcal{K} : \Sigma \to (\text{Fin } r \to M_q(R))$ be a function mapping each symbol to a Kraus family. For a word $w$ of length $n$, the iterated application map $\delta^* : (\text{Fin } n \to \Sigma) \to M_q(R) \to M_q(R)$ is defined recursively by:
+\begin{equation}
+    \delta^*(w, \rho) = 
+    \begin{cases} 
+      \rho & \text{if } n = 0 \\
+      \Phi_{w(n-1)} \left( \delta^*(\text{init}(w), \rho) \right) & \text{if } n > 0
+    \end{cases}
+\end{equation}
+where $\Phi_{a}(\sigma) = \sum_{i \in \text{Fin } r} K_{a,i} \sigma K_{a,i}^\dagger$ is the completely positive map associated with the symbol $a \in \Sigma$, and $\text{init}(w)$ denotes the prefix of the word of length $n-1$.
+\end{definition}
+
+\begin{theorem}[Stability of Quantum Word Processing]
+Let $\Sigma$ be an alphabet where each symbol $a \in \Sigma$ is associated with a quantum channel $\Phi_a$ (satisfying $\sum_i K_{a,i}^\dagger K_{a,i} = I$). For any word $w \in \Sigma^n$ and any initial density matrix $\rho$, the state after processing the word, $\rho_w = \delta^*(w, \rho)$, satisfies:
+\begin{enumerate}
+    \item $\rho_w \ge 0$ (Positive Semi-definiteness)
+    \item $\operatorname{Tr}(\rho_w) = 1$ (Trace Preservation)
+\end{enumerate}
+In other words, $\delta^*(w, \cdot)$ is a well-defined map from $\mathcal{D}_q$ to $\mathcal{D}_q$.
+\end{theorem}
+
+\begin{proof}
+By induction on the length of the word $n$:
+\begin{itemize}
+    \item \textbf{Base case ($n=0$):} $\delta^*(\epsilon, \rho) = \rho$, which is a density matrix by hypothesis.
+    \item \textbf{Inductive step:} Assume $\rho_{w'}$ is a density matrix for a word of length $m$. For a word $w = w'a$, $\rho_w = \Phi_a(\rho_{w'})$. Since $\Phi_a$ is a quantum channel, it preserves both the PSD property and the unit trace of $\rho_{w'}$.
+\end{itemize}
+\end{proof}
+
+Proceeding this way, eventually we get to defining positive operator valued measure in terms of a PMF (probability mass function) where the probability of outcome $e_i$ is the trace of the product of the density matrix and the corresponding pure state:
+
+\begin{definition}[Computational Basis Measurement PMF]
+Let $\rho \in M_k(\mathbb{C})$ be a density matrix ($\rho \ge 0$ and $\operatorname{Tr}(\rho) = 1$). 
+Let $\{\mathbf{e}_i\}_{i=1}^k$ be the standard basis vectors in $\mathbb{C}^k$, where $\mathbf{e}_i$ has a 1 at index $i$ and 0 elsewhere. 
+The \textbf{pure state projection} associated with outcome $i$ is defined as:
+\begin{equation}
+    P_i = \mathbf{e}_i \mathbf{e}_i^\top
+\end{equation}
+The resulting probability mass function (PMF) over the set of outcomes $\{1, \dots, k\}$ is defined by the assignment:
+\begin{equation}
+    \text{Prob}(i) = \operatorname{Re}(\operatorname{Tr}(P_i \rho))
+\end{equation}
+\end{definition}
+
+Next we turn this into a Bernoulli probability measure by declaring that a specific $e_{\text{acc}}$ is the accepted subspace:
+
+\begin{definition}[Binary Acceptance PMF]\label{PVM_of_word_of_channel}
+	\lean{PVM_of_word_of_channel}
+	\leanok
+Let $\rho \in M_k(\mathbb{R})$ be a density matrix, and let $\text{acc} \in \{1, \dots, k\}$ be the designated acceptance index. The probability distribution over the outcomes $\{0, 1\}$ (Reject, Accept) is given by the PMF:
+\begin{equation}
+    \text{Pr}(i) = 
+    \begin{cases} 
+      \operatorname{Tr}(P_{\text{acc}} \rho) & \text{if } i = 1 \text{ (Accept)} \\
+      \operatorname{Tr}((I - P_{\text{acc}}) \rho) & \text{if } i = 0 \text{ (Reject)}
+    \end{cases}
+\end{equation}
+where $P_{\text{acc}} = \mathbf{e}_{\text{acc}} \mathbf{e}_{\text{acc}}^\top$ is the projection onto the accepting basis state.
+\end{definition}
+
+Finally we get to the measure-once language accepted by our quantum finite automaton, with cutpoint 1/2:
+
+\begin{definition}[MO-QFA Language Acceptance]\label{MOlanguageAcceptedBy}
+	\lean{MOlanguageAcceptedBy}
+	\leanok
+Let $\mathcal{A} = (\Sigma, \mathcal{K}, \rho_0, P_{\text{acc}})$ be a Measure-Once Quantum Finite Automaton. The \textbf{language accepted} by $\mathcal{A}$ with cutpoint $\lambda = \frac{1}{2}$ is the set of words:
+\begin{equation}
+    L(\mathcal{A}) = \left\{ w \in \Sigma^* \mid \operatorname{Tr}(P_{\text{acc}} \, \delta^*(w, \rho_0)) > \frac{1}{2} \right\}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\delta^*(w, \rho_0)$ is the state after processing word $w$. % (using \texttt{krausApplyWord}).
+    \item $P_{\text{acc}} = \mathbf{e}_{\text{acc}} \mathbf{e}_{\text{acc}}^\top$ is the projection onto the accepting state.
+    \item The index $1$ in the probability mass function represents the ``Accept'' outcome.
+\end{itemize}
+\end{definition}
+
 
 \begin{lemma}\label{PMF_of_state}
 	\lean{PMF_of_state}
@@ -48,6 +330,8 @@ with measure equal to the trace of the density matrix $\rho$ times the projectio
 	  where each symbol is mapped to a completely positive map in Kraus form,
 	  of rank at most $r$.
 \end{definition}
+
+Some other formal lemmas, that we only describe stenographically, include:
 
 \begin{lemma}\label{PVM_of_state}
 	\lean{PVM_of_state}
@@ -113,20 +397,101 @@ A projection-valued measure, with measure equal to the trace of the density matr
 	A pure state is PSD.
 \end{lemma}
 
-\begin{definition}\label{PVM_of_word_of_channel}
-	\lean{PVM_of_word_of_channel}
-	\leanok
-	\uses{PVM,quantumChannel,PVM_of_state,krausApplyWord_densityMatrix,pureState_psd,basisState_trace_one,krausApplyWord}
-The projection-valued measure corresponding to a word belonging to the measure-once language of the KOA $\mathcal K$.
+\section{Stinespring dilation}
+We now switch gears to consider the Stinespring dilation, in matrix form.
+
+\section*{Stinespring Dilation and Partial Trace}
+
+\begin{definition}[Partial Trace]
+Let $\rho \in M_{mn}(\mathbb{C})$ be a density matrix on a composite system $\mathcal{H}_A \otimes \mathcal{H}_B$. The \textbf{partial trace} over the right subsystem ($\mathcal{H}_B$) is the map $\text{Tr}_B : M_{mn}(\mathbb{C}) \to M_m(\mathbb{C})$ defined by the components:
+\begin{equation}
+    [\text{Tr}_B(\rho)]_{ij} = \sum_{k=1}^n \rho_{(i,k),(j,k)}
+\end{equation}
 \end{definition}
 
-\begin{definition}\label{MOlanguageAcceptedBy}
-	\lean{MOlanguageAcceptedBy}
-	\leanok
-	\uses{PVM_of_word_of_channel}
-	We accept a word if starting in $e_0$ we end up in $e_1$ with probability at least 1/2.
-
+\begin{definition}[Stinespring Operator]
+Given a Kraus family $\{K_i\}_{i=1}^r \subset M_m(\mathbb{C})$, the \textbf{Stinespring operator} $V \in M_{mr \times m}(\mathbb{C})$ is defined as:
+\begin{equation}
+    V = \sum_{i=1}^r K_i \otimes \mathbf{e}_i
+\end{equation}
+where $\mathbf{e}_i$ are the standard basis vectors of the environment space $\mathbb{C}^r$.
 \end{definition}
+
+\begin{definition}[Stinespring Dilation]
+The \textbf{Stinespring dilation} of a state $\rho$ relative to the operator $V$ is the matrix in the enlarged space:
+\begin{equation}
+    \text{Stinespring}(\rho, V) = V \rho V^\dagger
+\end{equation}
+It follows that the original Kraus map is recovered by $\Phi(\rho) = \text{Tr}_B(V \rho V^\dagger)$.
+\end{definition}
+
+Here is the main result towards answering Question \#54 of David and Palsberg.
+\begin{theorem}[Equivalence of Kraus and Stinespring Forms]
+Let $\{K_i\}_{i=1}^r \subset M_m(\mathbb{C})$ be a family of Kraus operators and $\rho \in M_m(\mathbb{C})$ be a density matrix. Let $V = \sum_{i} K_i \otimes \mathbf{e}_i$ be the Stinespring operator. Then:
+\begin{equation}
+    \operatorname{Tr}_B(V \rho V^\dagger) = \sum_{i=1}^r K_i \rho K_i^\dagger
+\end{equation}
+where $\operatorname{Tr}_B$ denotes the partial trace over the environment space $\mathbb{C}^r$.
+\end{theorem}
+
+\begin{proof}
+By the definition of the Stinespring operator $V$, we have:
+\[ V \rho V^\dagger = \left( \sum_i K_i \otimes \mathbf{e}_i \right) \rho \left( \sum_j K_j^\dagger \otimes \mathbf{e}_j^\top \right) = \sum_{i,j} (K_i \rho K_j^\dagger) \otimes (\mathbf{e}_i \mathbf{e}_j^\top) \]
+Applying the partial trace $\operatorname{Tr}_B$ to each term in the sum:
+\[ \operatorname{Tr}_B((K_i \rho K_j^\dagger) \otimes (\mathbf{e}_i \mathbf{e}_j^\top)) = (K_i \rho K_j^\dagger) \operatorname{Tr}(\mathbf{e}_i \mathbf{e}_j^\top) \]
+Since $\operatorname{Tr}(\mathbf{e}_i \mathbf{e}_j^\top) = \delta_{ij}$ (the Kronecker delta), the double sum collapses to:
+\[ \sum_{i} K_i \rho K_i^\dagger \]
+which is exactly the Kraus representation $\Phi(\rho)$.
+\end{proof}
+
+We end with a sophisticated construction addressing a common problem in quantum information: if you have a Quantum Operation (which is trace-decreasing, $\sum K_i^\dagger K_i \le I$), how do you ``complete'' it into a full Quantum Channel (which is trace-preserving, $\sum K_j^\dagger K_j = I$)?
+
+\begin{definition}[Kraus Completion]
+Let $\{K_i\}_{i=1}^r \subset M_m(\mathbb{C})$ be a family of operators satisfying the trace-non-increasing (TNI) condition $\sum_i K_i^\dagger K_i \le I$. The \textbf{orthogonal CPTP completion} is the operator $V_{comp} \in M_{m(r+1) \times m}(\mathbb{C})$ defined block-wise as:
+\begin{equation}
+    V_{comp} = \begin{pmatrix} 
+    K_1 \\ \vdots \\ K_r \\ \Delta
+    \end{pmatrix} 
+    \quad \text{where} \quad 
+    \Delta = \sqrt{I - \sum_{i=1}^r K_i^\dagger K_i}
+\end{equation}
+In Lean notation, this is represented by branching on the index $x.2$: using the Stinespring operator for the first $r$ indices and the deficit root $\Delta$ for the last index.
+\end{definition}
+
+\begin{theorem}[Isometry Property]
+If the initial operators satisfy $\sum_i K_i^\dagger K_i \le I$, then the completion $V_{comp}$ is an isometry, i.e.,
+\begin{equation}
+    V_{comp}^\dagger V_{comp} = I
+\end{equation}
+\end{theorem}
+% \begin{definition}\label{PVM_of_word_of_channel}
+% 	\lean{PVM_of_word_of_channel}
+% 	\leanok
+% 	\uses{PVM,quantumChannel,PVM_of_state,krausApplyWord_densityMatrix,pureState_psd,basisState_trace_one,krausApplyWord}
+% The projection-valued measure corresponding to a word belonging to the measure-once language of the KOA $\mathcal K$.
+% \end{definition}
+
+% \begin{definition}\label{MOlanguageAcceptedBy}
+% 	\lean{MOlanguageAcceptedBy}
+% 	\leanok
+% 	\uses{PVM_of_word_of_channel}
+% 	We accept a word if starting in $e_0$ we end up in $e_1$ with probability at least 1/2.
+%
+% \end{definition}
+\section{Conclusion}
+	We have chosen a somewhat concrete approach to formalization of quantum information theory using matrices.
+	This has the advantage that it is reasonably feasible to construct examples (such as those used to obtain synchronizing words
+	in \cite{kjoshanssen2026unboundedlengthminimalsynchronizing}).
+	On the other hand, for eventual inclusion in Lean's Mathlib, a higher level of generality is needed.
+	A natural next step for the Stinespring dilation is to formalize the unitary extension, also known as ``going to the church of the larger Hilbert space''.
+	For quantum finite automata there is a lot that can be done including formalizing a version of quantum automatic complexity.
+
+\section*{Acknowledgments}
+This work was partially supported by grants from the Simons Foundation (\#704836
+to Bj{\o}rn Kjos-Hanssen) and Majesco Inc.~(University of Hawai\textquoteleft i Foundation
+Account \#129-4770-4).
+\newpage
+
 
 \bibliographystyle{plain}
 \bibliography{kraus}

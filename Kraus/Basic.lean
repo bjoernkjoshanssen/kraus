@@ -47,7 +47,7 @@ def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
 
 
 
-/-- 1/24/26. Kraus operator preserves PSD property. -/
+/-- Kraus operator preserves PSD property. -/
 lemma krausApply_psd {R : Type*} [Ring R] [PartialOrder R] [StarRing R]
 [AddLeftMono R]
   {q r : ℕ}
@@ -88,8 +88,6 @@ def quantum_channel
     {R : Type*} [Ring R] [PartialOrder R] [StarRing R] (q r : ℕ) :=
   {K : Fin r → Matrix (Fin q) (Fin q) R // ∑ i : Fin r, (K i)ᴴ * K i = 1 }
 
-/-- This proves a claim by ChatGPT
-in the chat Kraus operator conditions. -/
 lemma quantumChannel_preserves_trace
     {R : Type*} [CommRing R] [PartialOrder R] [StarRing R]
   {q r : ℕ}
@@ -157,6 +155,8 @@ def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
 | Nat.succ m => krausApply (𝓚 (word ⟨m,by simp⟩))
         (krausApplyWord (Fin.init word) 𝓚 ρ)
 
+/-- As long as we have a quantum channel,
+we can iterate over a word and stay within the density matrices. -/
 theorem krausApplyWord_densityMatrix {α : Type*}
  {R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
 {n q r : ℕ} (word : Fin n → α)
@@ -1612,7 +1612,7 @@ lemma PMF_of_state.sum_one_general_general {R : Type*} [RCLike R]
   rw [sub_mul]
   rw [trace_sub]
   simp
-
+/-- Defining a Bernoulli probability measure by declaring that e_{acc} is the accepted subspace. -/
 def PMF_of_state {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PMF (Fin 2) := by
   apply PMF.ofFintype (fun i => ofNNReal <| ite (i = 0)

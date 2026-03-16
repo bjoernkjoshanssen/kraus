@@ -1,15 +1,15 @@
 # Fdb version 3
-["bibtex ../print/print"] 1773518743 "../print/print.aux" "../print/print.bbl" "../print/print" 1773518744
-  "../print/print.aux" 1773518744 2268 44d82d8fd009a40fc7f75f11848b1c34 ""
+["bibtex ../print/print"] 1773640802 "../print/print.aux" "../print/print.bbl" "../print/print" 1773640912
+  "../print/print.aux" 1773640912 2971 dda9ff12f646634ca2b094b79473a6a3 ""
   "/usr/local/texlive/2018/texmf-dist/bibtex/bst/base/plain.bst" 1480098433 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
-  "kraus.bib" 1773518341 12508 432e65834acdd21944a1245ff8793167 ""
+  "kraus.bib" 1773640193 12559 af355b79d7a2aabe9c5222316d7f5cd3 ""
   (generated)
   "../print/print.blg"
   "../print/print.bbl"
-["pdflatex"] 1773518743 "print.tex" "../print/print.pdf" "print" 1773518744
-  "../print/print.aux" 1773518744 2268 44d82d8fd009a40fc7f75f11848b1c34 ""
-  "../print/print.bbl" 1773518743 1840 a44911a423d6b63c11928fd644f7eb27 "bibtex ../print/print"
-  "../print/print.out" 1773518743 0 d41d8cd98f00b204e9800998ecf8427e ""
+["pdflatex"] 1773640911 "print.tex" "../print/print.pdf" "print" 1773640912
+  "../print/print.aux" 1773640912 2971 dda9ff12f646634ca2b094b79473a6a3 ""
+  "../print/print.bbl" 1773640802 1891 c28dad3bde6fb3ac2945f825c4c8d801 "bibtex ../print/print"
+  "../print/print.out" 1773640912 468 c1c3222fcdc4d5cf0560dd4165aaf11e ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1480098689 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1480098698 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -80,6 +80,7 @@
   "/usr/local/texlive/2018/texmf-dist/tex/latex/oberdiek/kvoptions.sty" 1480098836 22417 1d9df1eb66848aa31b18a593099cf45c ""
   "/usr/local/texlive/2018/texmf-dist/tex/latex/oberdiek/rerunfilecheck.sty" 1480098836 9581 023642318cef9f4677efe364de1e2a27 ""
   "/usr/local/texlive/2018/texmf-dist/tex/latex/tools/calc.sty" 1523050425 10212 357072c1d20578a30d6387d8a22e72ab ""
+  "/usr/local/texlive/2018/texmf-dist/tex/latex/tools/multicol.sty" 1523050425 30628 652b36ef08363b32730b448cf0e44496 ""
   "/usr/local/texlive/2018/texmf-dist/tex/latex/unicode-math/unicode-math-table.tex" 1515368818 241329 5d909284ffda630a77ab06adf6bcf76b ""
   "/usr/local/texlive/2018/texmf-dist/tex/latex/unicode-math/unicode-math-xetex.sty" 1517526387 129725 21bbd5c50f7317d345462e4f26864982 ""
   "/usr/local/texlive/2018/texmf-dist/tex/latex/unicode-math/unicode-math.sty" 1517526387 1452 59129dd36f4bebbec0da1972f17bc741 ""
@@ -87,12 +88,12 @@
   "/usr/local/texlive/2018/texmf-dist/web2c/texmf.cnf" 1522066949 33362 cf75436e19743e94a92a6b1b9183c434 ""
   "/usr/local/texlive/2018/texmf-var/web2c/xetex/xelatex.fmt" 1523934532 3731946 97a69080a287fbc922a3cd699c6fd124 ""
   "/usr/local/texlive/2018/texmf.cnf" 1523934483 577 0b39adfd7c93507ff20c9c14c2f1a33f ""
-  "content.tex" 1773518291 5649 3b39fa1284b7a1d1a6819b0509f0ddd8 ""
+  "content.tex" 1773640907 25189 60c8dea7b7e3a6d17992b4824d5bac03 ""
   "macros/common.tex" 1769377786 820 60fafcc3aa944a5e60030581a943ef6b ""
   "macros/print.tex" 1769377786 1101 87627b2ec24fef68edc71c13f43f7bab ""
-  "print.tex" 1773518724 1205 e211bdfbc8e5dd216f4a9b7e09c6e549 ""
+  "print.tex" 1773639899 1214 1c11aa3d5741fc7fb7897f5413f3a87d ""
   (generated)
   "../print/print.pdf"
   "../print/print.out"
-  "../print/print.log"
   "../print/print.aux"
+  "../print/print.log"

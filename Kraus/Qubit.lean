@@ -500,9 +500,6 @@ lemma blah (A) :
     unfold prod_sum sum_prod split'
     ext i j
     rw [Matrix.mul_apply]
-    repeat
-      rw [Fintype.sum_prod_type]
-      repeat rw [Fin.sum_univ_two]
     fin_cases j
     all_goals
       fin_cases i
