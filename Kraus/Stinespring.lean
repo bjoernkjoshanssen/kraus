@@ -82,33 +82,68 @@ lemma stinespringForm_CPTP_isometry {m r : ℕ}
   rw [← this]
   congr
 
-/-- Proving the columns of `V = stinespringOp K` are independent is a step
-on the way to constructing the unitary dilation.
- -/
-lemma stinespringColumnsIndep {m r : ℕ}
+lemma hz (z : ℂ) : star z * z = ‖z‖^2 := by
+  rw [← Complex.ofReal_pow]
+  rw [norm_sq_eq_def]
+  have : z = z.re + z.im * Complex.I := by exact Eq.symm (Complex.re_add_im z)
+  nth_rw 1 [this]
+  nth_rw 3 [this]
+  have : star (↑z.re + ↑z.im * Complex.I)
+    =  (↑z.re - ↑z.im * Complex.I) := by
+      refine Eq.symm ((fun {z w} ↦ Complex.ext_iff.mpr) ?_)
+      constructor <;> simp
+  rw [this]
+  ring_nf
+  simp
+
+/--
+Mar 16, 2026
+
+Proving the columns of `V = stinespringOp K` are independent is a step
+on the way to constructing the unitary dilation. -/
+lemma stinespringColumnsOrthonormal {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
     (hK : ∑ i, (K i)ᴴ * K i = 1) :
-  @Orthonormal (ι := Fin m × Fin r) (E := PiLp 2 (fun _ : Fin m => ℂ)) (𝕜 := ℂ)
-    _ _ _ (fun j => WithLp.toLp 2 <| stinespringOp K j) := by
-  have := @stinespringForm_CPTP_isometry m r K hK
-  simp
-  have h : @Orthonormal (ι := Fin m × Fin r) (E := PiLp 2 (fun _ : Fin m => ℂ)) (𝕜 := ℂ)
-    _ _ _ (fun j => WithLp.toLp 2 <| stinespringOp K j) := by
+  Orthonormal (𝕜 := ℂ)
+      fun j : Fin m => WithLp.toLp 2 fun i : Fin m × Fin r => stinespringOp K i j := by
+    have h₀ := @stinespringForm_CPTP_isometry m r K hK
     refine orthonormal_iff_ite.mpr ?_
     intro i j
+    have h₁ : (((stinespringOp K)ᴴ * stinespringOp K) i j)
+      = ((1 : Matrix (Fin m) (Fin m) ℂ) i j) := by
+      rw [h₀]
+    rw [mul_apply] at h₁
     split_ifs with g₀
     · subst i
-      unfold stinespringOp kronecker kroneckerMap single
-      simp
-      left
-      have (j : Fin m × Fin 1) : (0 = j.2) = True := by sorry
-      simp_rw [this]
-      simp
-      sorry
-    · sorry
-    --(𝕜 := ℂ) (v := fun j => stinespringOp K j)
-  -- show they're orthonormal!
-  sorry
+      simp only [conjTranspose_apply, star_def, one_apply_eq] at h₁
+      rw [← h₁]
+      simp only [inner_self_eq_norm_sq_to_K, Complex.coe_algebraMap]
+      generalize stinespringOp K = α
+      set β := (fun i => α i j)
+      have hz := hz
+      simp only [star_def] at hz
+      simp_rw [hz]
+      rw [← Complex.ofReal_pow]
+      simp_rw [← Complex.ofReal_pow]
+      rw [← Complex.ofReal_sum]
+      congr
+      exact EuclideanSpace.norm_sq_eq (WithLp.toLp 2 β)
+    · have : (1 : Matrix (Fin m) (Fin m) ℂ) i j = 0 := by
+        exact one_apply_ne' fun a ↦ g₀ (id (Eq.symm a))
+      rw [this] at h₁
+      rw [← h₁]
+      -- same as before:
+      generalize stinespringOp K = α
+      set β := (fun x => α x i)
+      set γ := (fun x => α x j)
+      have hz := hz
+      simp only [star_def] at hz
+      change _ = ∑ x, ((star β) x) * γ x
+      rw [PiLp.inner_apply] -- !!
+      simp only [inner_apply, Pi.star_apply, star_def]
+      congr
+      ext x
+      ring_nf
 
 
 
