@@ -224,72 +224,72 @@ open Finset in
 lemma unitary_dilation_unitary {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1) :
     unitary_dilation hK ∈ unitary _ := by
+  have h₁ (a b : ℂ) (h : star a = star b) : a = b := by
+    rw [Complex.ext_iff] at h
+    simp only [star_def, Complex.conj_re, Complex.conj_im, neg_inj] at h
+    exact Complex.ext_iff.mpr h
   have h₀ : Orthonormal ℂ (fun i => WithLp.toLp 2 <| unitary_dilation hK i) := by
     apply unitary_dilation_orthonormal
-  constructor
-  · ext i j
+  have H₀ : unitary_dilation hK * star (unitary_dilation hK) = 1 := by
+    ext i j
     unfold Orthonormal at h₀
     by_cases H : i = j
     · subst i
-      simp
       have := h₀.1 j
-      -- should be fine!
-      sorry
-    · have : (1 : Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ) i j = 0 :=
-        one_apply_ne' fun a ↦ H (id (Eq.symm a))
+      simp only at this
+      generalize unitary_dilation hK = α at *
+      rw [mul_apply]
+      apply h₁
+      simp only [star_apply, star_def, star_sum, star_mul', RingHomCompTriple.comp_apply,
+        RingHom.id_apply, one_apply_eq, star_one]
+      generalize α j = β at *
+      refine Eq.symm ((fun {z w} ↦ Complex.ext_iff.mpr) ?_)
+      constructor
+      · simp only [Complex.one_re, Complex.re_sum, Complex.mul_re, Complex.conj_re,
+        Complex.conj_im, neg_mul, sub_neg_eq_add]
+        have h₂ : (1 : ℝ) = 1^2 := by simp
+        rw [h₂]
+        rw [← this]
+        have (x : Fin m × Fin r) :
+            ((β x).re * (β x).re + ((β x).im * (β x).im)) =
+                ‖β x‖^2
+                 := by
+            ring_nf
+            generalize β x = γ
+            symm
+            refine Eq.symm ((fun {x y} hx hy ↦ (Real.sqrt_eq_iff_eq_sq hx hy).mp) ?_ ?_ ?_)
+            · positivity
+            · positivity
+            · exact Eq.symm (Complex.norm_eq_sqrt_sq_add_sq γ)
+        simp_rw [this]
+        exact EuclideanSpace.norm_sq_eq (WithLp.toLp 2 β)
+      · simp only [Complex.one_im, Complex.im_sum, Complex.mul_im, Complex.conj_re,
+        Complex.conj_im, neg_mul]
+        have (x : Fin m × Fin r) :
+            ((β x).re * (β x).im + -((β x).im * (β x).re)) = 0 := by
+            ring_nf
+        simp_rw [this]
+        simp
+    · have : (1 : Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ) i j = 0 := by
+        apply one_apply_ne'
+        contrapose! H
+        rw [H]
       rw [this]
       have := h₀.2
-      unfold Pairwise at this
+      rw [mul_apply]
+      apply h₁
       specialize this H
       convert this
-      generalize unitary_dilation hK = α
+      · simp only [star_apply, star_def, star_sum, star_mul', RingHomCompTriple.comp_apply,
+        RingHom.id_apply, inner]
+        congr
+        ext l
+        nth_rw 1 [mul_comm]
       simp
-      rw [mul_apply]
-      symm
-      show inner ℂ (WithLp.toLp 2 (α i)) (WithLp.toLp 2 (α j))
-        = ∑ j_1, star α i j_1 * α j_1 j
-      simp [inner]
-      congr
-      ext l
-      nth_rw 1 [mul_comm]
-
-      -- need α to be symmetric?
-      sorry
-  unfold unitary_dilation
-  let b : OrthonormalBasis (Fin m × Fin r) ℂ (WithLp 2 (Fin m × Fin r → ℂ)) := by
-    apply OrthonormalBasis.mk h₀
-
-    sorry
-
-    -- refine {
-    --   repr := by
-
-    --     refine {
-    --       toFun := by sorry
-    --       map_add' := sorry
-    --       map_smul' := sorry
-    --       invFun := sorry
-    --       norm_map' := sorry
-    --       left_inv := sorry
-    --       right_inv := sorry        }
-    -- }
-  have h₂ := @OrthonormalBasis.toMatrix_orthonormalBasis_mem_unitary
-      (𝕜 := ℂ) (E := WithLp 2 <| Fin m × Fin r → ℂ)
-      (ι := Fin m × Fin r)
-      -- (ι := (stinespringOrtho
-      --   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose)
-      _ _ _ _ _
-  unfold unitaryGroup at h₂
-
-
-  simp
-  have h₁ := (stinespringOrtho
-        hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
-
-    -- this is very opaque, need to use `choose_spec`
-
-
-  sorry
+  constructor
+  · generalize unitary_dilation hK = α at *
+    exact (mul_eq_one_comm_of_card_eq (Fin m × Fin r) (Fin m × Fin r) ℂ rfl).mp H₀
+  · exact H₀
 
 /-- Mar 14, 2026 -/
 lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
