@@ -103,8 +103,8 @@ Mar 16, 2026
 
 Proving the columns of `V = stinespringOp K` are independent is a step
 on the way to constructing the unitary dilation. -/
-lemma stinespringColumnsOrthonormal {m r : ℕ}
-    (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
+lemma stinespringOrtho {m r : ℕ}
+    {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1) :
   Orthonormal (𝕜 := ℂ)
       fun j : Fin m => WithLp.toLp 2 fun i : Fin m × Fin r => stinespringOp K i j := by
@@ -147,36 +147,74 @@ lemma stinespringColumnsOrthonormal {m r : ℕ}
       ext x
       ring_nf
 
+/-- `m` will of course be finite and bounded by `n` here,
+but no need to assume or prove that.
+-/
+lemma basisCard {n m : Type*} [Fintype n] {s : Matrix n m ℂ}
+    (hh : Orthonormal ℂ fun j ↦ WithLp.toLp 2 fun i ↦ s i j) :
+    Fintype.card n =
+    hh.toSubtypeRange.exists_orthonormalBasis_extension.choose.card := by
+  set α := hh.toSubtypeRange.exists_orthonormalBasis_extension
+  let h₀ := rank_eq_card_basis α.choose_spec.choose.toBasis
+  have h := (rank_eq_card_basis <| PiLp.basisFun _ _ _).symm.trans h₀
+  rw [← Fintype.card_coe]
+  rw [Nat.cast_inj] at h
+  exact h
 
-example {m r : ℕ} (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
-    (hK : ∑ i, (K i)ᴴ * K i = 1) : ∃ M : Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ,
-      M ≠ M := by
-  have := @stinespringColumnsOrthonormal m r K hK
-  have ⟨u,b,hub⟩ := @Orthonormal.exists_orthonormalBasis_extension ℂ _
-    (WithLp 2 (Fin m × Fin r → ℂ)) _ _
-    (Set.range (fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j))
-    _ this.toSubtypeRange
-  have := b.toBasis
-  have hr := @rank_eq_card_basis (ι := u) (R := ℂ)
-    (M := (WithLp 2 (Fin m × Fin r → ℂ))) _ _ _ _ _ b.toBasis
-  simp at hr
-  have :  Module.rank ℂ (WithLp 2 (Fin m × Fin r → ℂ)) =
-    Fintype.card (Fin m × Fin r) := by
-    refine rank_eq_card_basis ?_
-    exact PiLp.basisFun 2 ℂ (Fin m × Fin r)
-  rw [this] at hr
-  -- so now we can get a bijection... not clear that
-  -- it would naturally be the identity on Fin m × Fin r.
+lemma stinespringCard {m r : ℕ}
+    {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    Fintype.card (Fin m × Fin r) =
+    (stinespringOrtho
+    hK).toSubtypeRange.exists_orthonormalBasis_extension.choose.card :=
+  basisCard <| stinespringOrtho hK
 
-  let A : Matrix ↥u (Fin m × Fin r) ℂ := by
-    intro v₀
-    exact (b v₀).1
-  let A_dag := (Aᴴ * A)⁻¹ * Aᴴ
-  let M := A * A_dag * A
+open Finset in
+/-- Mar 16, 2026
+Not very constructive but works.
+Extend to a unitary (m×r) × (m×r) matrix.
+-/
+noncomputable def unitary_dilation {m r : ℕ}
+    {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) : Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ :=
+  fun x => (stinespringOrtho
+  hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
+  (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
+open Finset in
+lemma unitary_dilation_unitary {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    unitary_dilation hK ∈ unitary _ := by
 
-  -- this M has the right type but it's not the right matrix
-  -- unfortunately ↥u ≠ (Fin m × Fin r)
-  sorry
+  have : Orthonormal ℂ (fun i => WithLp.toLp 2 <| unitary_dilation hK i) := by
+    unfold unitary_dilation
+    have : Orthonormal ℂ
+      (stinespringOrtho hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
+      := (stinespringOrtho
+  hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose.orthonormal
+    let α := (stinespringOrtho
+      hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
+    change Orthonormal ℂ α at this
+    let f (x : Fin m × Fin r) := α (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
+    change Orthonormal ℂ f
+    let u := (stinespringOrtho
+  hK).toSubtypeRange.exists_orthonormalBasis_extension.choose
+    let g : u → WithLp 2 (Fin m × Fin r → ℂ) := DFunLike.coe α
+    have : ∀ v, g v = v := by
+      intro v
+      unfold g α
+      simp
+      have := α.repr.2
+      sorry
+    -- should maybe prove that `u` literally is Finset.univ
+    sorry
+
+  unfold unitary unitary_dilation
+  simp
+  constructor
+  · -- this is very opaque, need to use `choose_spec`
+
+    sorry
+  · sorry
 
 /-- Mar 14, 2026 -/
 lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
