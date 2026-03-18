@@ -180,41 +180,116 @@ noncomputable def unitary_dilation {m r : ℕ}
   fun x => (stinespringOrtho
   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
   (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
-open Finset in
-lemma unitary_dilation_unitary {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    unitary_dilation hK ∈ unitary _ := by
 
-  have : Orthonormal ℂ (fun i => WithLp.toLp 2 <| unitary_dilation hK i) := by
+open Finset in
+theorem unitary_dilation_orthonormal {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) : Orthonormal ℂ fun i ↦ WithLp.toLp 2 (unitary_dilation hK i) := by
     unfold unitary_dilation
-    have : Orthonormal ℂ
+    have hα : Orthonormal ℂ
       (stinespringOrtho hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
       := (stinespringOrtho
   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose.orthonormal
     let α := (stinespringOrtho
       hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
-    change Orthonormal ℂ α at this
-    let f (x : Fin m × Fin r) := α (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
+    change Orthonormal ℂ α at hα
+    let f (x : Fin m × Fin r) := ⇑α (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
     change Orthonormal ℂ f
     let u := (stinespringOrtho
   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose
-    let g : u → WithLp 2 (Fin m × Fin r → ℂ) := DFunLike.coe α
-    have : ∀ v, g v = v := by
-      intro v
-      unfold g α
-      simp
-      have := α.repr.2
-      sorry
+    -- let g : u → WithLp 2 (Fin m × Fin r → ℂ) := DFunLike.coe α
+    -- have : ∀ v, g v = v := by
+    --   intro v
+    --   unfold g α
+    --   simp
+    --   have := α.repr.2
+    --   have := α.repr.1
+    --   let β := (stinespringOrtho
+    --   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose_spec.2
+    --   simp at β
+    --   rw [β]
     -- should maybe prove that `u` literally is Finset.univ
-    sorry
+    have := @Orthonormal.comp (v := α) ℂ _ _ _ _
+      (f := fun x => equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
+    specialize this hα (by
+      show Function.Injective fun x => (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
+      have := (equivOfCardEq (stinespringCard hK)).3
+      refine Function.HasLeftInverse.injective ?_
+      unfold Function.HasLeftInverse
+      use fun x => (equivOfCardEq (stinespringCard hK)).2 x
+      intro
+      simp)
+    exact this
 
-  unfold unitary unitary_dilation
-  simp
+open Finset in
+lemma unitary_dilation_unitary {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    unitary_dilation hK ∈ unitary _ := by
+  have h₀ : Orthonormal ℂ (fun i => WithLp.toLp 2 <| unitary_dilation hK i) := by
+    apply unitary_dilation_orthonormal
   constructor
-  · -- this is very opaque, need to use `choose_spec`
+  · ext i j
+    unfold Orthonormal at h₀
+    by_cases H : i = j
+    · subst i
+      simp
+      have := h₀.1 j
+      -- should be fine!
+      sorry
+    · have : (1 : Matrix (Fin m × Fin r) (Fin m × Fin r) ℂ) i j = 0 :=
+        one_apply_ne' fun a ↦ H (id (Eq.symm a))
+      rw [this]
+      have := h₀.2
+      unfold Pairwise at this
+      specialize this H
+      convert this
+      generalize unitary_dilation hK = α
+      simp
+      rw [mul_apply]
+      symm
+      show inner ℂ (WithLp.toLp 2 (α i)) (WithLp.toLp 2 (α j))
+        = ∑ j_1, star α i j_1 * α j_1 j
+      simp [inner]
+      congr
+      ext l
+      nth_rw 1 [mul_comm]
+
+      -- need α to be symmetric?
+      sorry
+  unfold unitary_dilation
+  let b : OrthonormalBasis (Fin m × Fin r) ℂ (WithLp 2 (Fin m × Fin r → ℂ)) := by
+    apply OrthonormalBasis.mk h₀
 
     sorry
-  · sorry
+
+    -- refine {
+    --   repr := by
+
+    --     refine {
+    --       toFun := by sorry
+    --       map_add' := sorry
+    --       map_smul' := sorry
+    --       invFun := sorry
+    --       norm_map' := sorry
+    --       left_inv := sorry
+    --       right_inv := sorry        }
+    -- }
+  have h₂ := @OrthonormalBasis.toMatrix_orthonormalBasis_mem_unitary
+      (𝕜 := ℂ) (E := WithLp 2 <| Fin m × Fin r → ℂ)
+      (ι := Fin m × Fin r)
+      -- (ι := (stinespringOrtho
+      --   hK).toSubtypeRange.exists_orthonormalBasis_extension.choose)
+      _ _ _ _ _
+  unfold unitaryGroup at h₂
+
+
+  simp
+  have h₁ := (stinespringOrtho
+        hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
+
+    -- this is very opaque, need to use `choose_spec`
+
+
+  sorry
 
 /-- Mar 14, 2026 -/
 lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
