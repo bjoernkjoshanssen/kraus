@@ -60,51 +60,6 @@ example : Unit := by
   -- have : (grudka_C 0 0 0).toLin'.IsPositive := by sorry
   sorry
 
-def Matrix.kronecker_map_right {m n : ℕ} {R : Type*} [RCLike R]
-  (A : Matrix (Fin n) (Fin n) R) : Matrix ((Fin m) × (Fin n)) ((Fin m) × (Fin n)) R :=
-Matrix.kronecker (1 : Matrix (Fin m) (Fin m) R) A
-
-lemma kronecker_map_right_apply {m n : ℕ} {R : Type*} [RCLike R]
-  (A : Matrix (Fin n) (Fin n) R) (e₁ : Matrix (Fin m) (Fin 1) R) (e₂ : Matrix (Fin n) (Fin 1) R)
-  (hm : m = 2) (hn : n = 2)
-  :
-  Matrix.kronecker_map_right A * Matrix.kronecker e₁ e₂
-    =
-  Matrix.kronecker e₁ (A * e₂) := by
-  change (A.kronecker_map_right) * (e₁ ⊗ₖ e₂) = e₁ ⊗ₖ (A * e₂)
-  unfold kronecker_map_right kroneckerMap kronecker
-  unfold kroneckerMap
-  simp only
-  ext i j
-  simp only [of_apply]
-  rw [Matrix.mul_apply]
-  rw [Matrix.mul_apply]
-  subst hm hn
-  simp only [of_apply, Fin.sum_univ_two, Fin.isValue]
-  rw [Fintype.sum_prod_type]
-  simp only [Fin.sum_univ_two, Fin.isValue]
-  fin_cases j
-  simp
-  ring_nf
-  by_cases H : i.1 = 0
-  · rw [H]
-    generalize A i.2 0 = a
-    generalize A i.2 1 = b
-    generalize e₁ 0 0 = c
-    generalize e₂ 0 0 = d
-    generalize e₂ 1 0 = f
-    generalize e₁ 1 0 = g
-    simp
-    ring_nf
-  · have : i.1 = 1 := Fin.eq_one_of_ne_zero i.1 H
-    rw [this]
-    generalize A i.2 0 = a
-    generalize A i.2 1 = b
-    generalize e₁ 0 0 = c
-    generalize e₂ 0 0 = d
-    generalize e₂ 1 0 = f
-    generalize e₁ 1 0 = g
-    simp
 
 def transl₂ : Fin 2 × Fin 2 → Fin 4
 | (0,0) => 0
