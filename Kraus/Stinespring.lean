@@ -148,132 +148,148 @@ noncomputable def unitary_dilation {m r : ℕ}
         hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
         (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
 
-set_option maxHeartbeats 0 in
 open Finset in
-/-- Mar 20, 2026, pm
+theorem complCard {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    let 𝓞 := fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j;
+    let theRange := Submodule.span ℂ (Set.range 𝓞);
+    let u' := (exists_orthonormalBasis ℂ theRangeᗮ).choose;
+      Fintype.card (Fin m × Fin r) = #u' := by
+    intro 𝓞 theRange u'
+    let u : Finset theRange :=
+        (Set.range fun i => (⟨𝓞 i, Submodule.subset_span ⟨i, rfl⟩⟩)).toFinset
+    have hind := (stinespringOrtho hK).linearIndependent
+    have hinj := hind.injective
+    have h₀ : #u = m := by
+        simp only [u, Nat.succ_eq_add_one, Set.toFinset_range]
+        have : m = #(Finset.univ : Finset (Fin m)) := by simp
+        simp_rw [this]
+        apply card_image_of_injective
+        intro i j h
+        apply hinj
+        simp only [Nat.succ_eq_add_one, Subtype.mk.injEq, WithLp.toLp.injEq, 𝓞] at h ⊢
+        exact h
+    have h₁ : m * (r + 1) = #u + #u' := by
+        have := Submodule.finrank_add_finrank_orthogonal theRange
+        simp only [Nat.succ_eq_add_one, finrank_euclideanSpace, Fintype.card_prod,
+          Fintype.card_fin] at this
+        rw [← this]
+        congr
+        all_goals apply Module.finrank_eq_card_finset_basis
+        · simp only [theRange, u, Set.toFinset_range, mem_image, mem_univ, true_and]
+          apply (Module.Basis.span hind).reindex
+          apply Equiv.ofBijective
+            fun i => ⟨⟨𝓞 i, Submodule.mem_span_of_mem <| by simp [𝓞]⟩, by use i⟩
+          constructor
+          · intro i j h
+            exact hinj (by aesop)
+          · intro x
+            have ⟨a,ha⟩ := x.2
+            use a
+            simp_rw [ha]
+        · exact (exists_orthonormalBasis ℂ _).choose_spec.choose.toBasis
+    simp
+    linarith
+
+
+noncomputable def onbPart {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r.succ) (hx : ¬x.2 = 0) :
+  -- if we make it `r+2` then the `x.2≠0` becomes unused.
+  Fin m × Fin r.succ → ℂ := by
+    let theRange := Submodule.span ℂ <| Set.range
+        fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
+    have (z : Fin m × Fin r) :=
+        ((exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose
+        (Finset.equivOfCardEq (complCard hK) ⟨z, Finset.mem_univ _⟩)).1.1
+    apply this
+    exact (x.1, ⟨x.2.1 - 1, by omega⟩)
+
+/-- Mar 22, 2026.
 Intended to be a "traceable" version.
-Completed Mar 22, 2026.
 -/
 noncomputable def unitary_dilation_respecting_bot {m r : ℕ}
     {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1) : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ := by
   intro x
-  by_cases H : x.2 = 0
+  by_cases hx : x.2 = 0
   · intro y
     exact stinespringOp K y x.1
-  · let theRange := (Submodule.span ℂ (Set.range
-        (fun j : Fin m => WithLp.toLp 2 fun i : Fin m × Fin r.succ => stinespringOp K i j)))
-    let u_constructive : Finset theRange := by
-         exact (Set.range fun i : Fin m =>
-            (⟨WithLp.toLp 2 fun x ↦ stinespringOp K x i, Submodule.subset_span ⟨i, rfl⟩⟩ :
-            Submodule.span ℂ
-            (Set.range (fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j)))).toFinset
-    let theComplement := (Submodule.span ℂ (Set.range
-        (fun j : Fin m => WithLp.toLp 2 fun i : Fin m × Fin r.succ => stinespringOp K i j)))ᗮ
-    let u' := (@exists_orthonormalBasis ℂ _ theComplement _ _ _).choose
-    let b₀ := (stinespringOrtho
-        hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
-    have h₁constructive : #u_constructive + #u' = Fintype.card (Fin m × Fin r.succ) := by
-        have := @Submodule.finrank_add_finrank_orthogonal
-            ℂ (E := WithLp 2 <| Fin m × Fin r.succ → ℂ) _ _
-            _ _ (K := theRange)
-        simp only [Nat.succ_eq_add_one, finrank_euclideanSpace, Fintype.card_prod,
-          Fintype.card_fin] at this ⊢
-        rw [← this]
-        congr
-        · unfold theRange u_constructive
-          refine Eq.symm (Module.finrank_eq_card_finset_basis ?_)
+  · exact onbPart hK x hx
+ -- should prove this has orthonormal columns and is unitary, too, I suppose
+
+/-- This ANOTHER may be better
+in that it respects x,y order. -/
+noncomputable def unitary_dilation_respecting_botANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ := by
+  intro x y
+  by_cases hx : y.2 = 0
+  · exact stinespringOp K x y.1
+  · exact onbPart hK y hx x
 
 
-          simp only [Set.toFinset_range, mem_image, mem_univ, true_and]
-          set 𝓕 := (fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j)
+/-- Mar 24, 2026 -/
+noncomputable def unitary_dilation_respecting_botGENERALIZE {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ := by
+  intro x
+  by_cases hx : x.2 = 0
+  · intro y
+    exact stinespringOp K y x.1
+  · intro y; exact M y x -- or maybe x y
 
-          let ι := @Subtype ↥(Submodule.span ℂ (Set.range fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j)) fun x ↦
-                ∃ a, ⟨WithLp.toLp 2 fun x ↦ stinespringOp K x a, by
-                    simp
-                    apply Submodule.mem_span_of_mem
-                    simp⟩ = x
-          show Module.Basis ι _ _
-          set 𝓞 := (fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j)
-          have : Orthonormal ℂ 𝓞 := by exact stinespringOrtho hK
-          have : LinearIndependent ℂ 𝓞 := Orthonormal.linearIndependent this
-          simp
-          let bFin : Module.Basis (Fin m) ℂ (Submodule.span ℂ (Set.range 𝓞)) :=
-            by exact Module.Basis.span this
-          let φ : Fin m → ι :=
-            fun i => ⟨⟨𝓞 i, by
-                unfold 𝓞;simp
-                apply Submodule.mem_span_of_mem
-                simp
-                ⟩, by use i⟩
-          have hφ : Function.Bijective φ := by
-            constructor
-            · unfold φ
-              have := this.injective
-              intro i j h
-              simp at h
-              exact this (by aesop)
-            · intro x
-              have ⟨a,ha⟩ := x.2
-              unfold φ
-              use a;simp at ha;unfold 𝓞
-              simp_rw [ha]
-              simp
-          let e : Fin m ≃ ι :=
-            Equiv.ofBijective φ hφ
-          let b : Module.Basis ι ℂ (Submodule.span ℂ (Set.range 𝓞)) :=
-            bFin.reindex e
-          exact b
-        · refine Eq.symm (Module.finrank_eq_card_finset_basis ?_)
-          exact (exists_orthonormalBasis ℂ _).choose_spec.choose.toBasis
+noncomputable def unitary_dilation_respecting_botGENERALIZEANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ := by
+  intro x y
+  by_cases hy : y.2 = 0
+  · exact stinespringOp K x y.1
+  · exact M x y -- or maybe x y
 
-    have h₀ : Fintype.card (Fin m) = #u_constructive := by
-        unfold u_constructive
-        symm
-        simp only [Nat.succ_eq_add_one, Set.toFinset_range, Fintype.card_fin]
-        have : #(Finset.univ : Finset (Fin m)) = m := by simp
-        simp_rw [← this]
-        apply card_image_of_injective
-        set 𝓞 := (fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j)
-        have : Orthonormal ℂ 𝓞 := by exact stinespringOrtho hK
-        have : LinearIndependent ℂ 𝓞 := Orthonormal.linearIndependent this
-        have := this.injective
-        unfold 𝓞 at this
 
-        intro i j h
-        simp at h
-        exact @this i j (by simp;exact h)
+-- open Finset in
+-- theorem unitary_dilation_respecting_bot_orthonormal {m r : ℕ}
+--     {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ} (hK : ∑ i, (K i)ᴴ * K i = 1) :
+--     Orthonormal ℂ fun i ↦ WithLp.toLp 2 (unitary_dilation_respecting_bot hK i) := by
+--     unfold unitary_dilation_respecting_bot
+--     constructor
+--     · intro i
+--       by_cases hi : i.2 = 0
+--       · simp_rw [hi]
+--         simp
+--         unfold stinespringOp
+--         simp
+--         unfold kroneckerMap single
+--         simp
+--         have (j : Fin m × Fin 1) : (0 = j.2) = True := by
+--             simp
+--             have := j.2.2
+--             omega
+--         simp_rw [this]
+--         simp
 
-    have complCard : Fintype.card (Fin m × Fin r) = #u' := by
-        have : Fintype.card (Fin m × Fin r.succ) =
-               Fintype.card (Fin m × Fin r) + Fintype.card (Fin m) := by
-            simp;linarith
-        linarith
-    let b := (@exists_orthonormalBasis ℂ _ theComplement _ _ _).choose_spec.choose
-    have := fun x : Fin m × Fin r => b (equivOfCardEq complCard ⟨x, mem_univ _⟩)
-    specialize this (x.1, by
-        exact ⟨x.2.1 - 1, by omega⟩)
-    exact this.1.1
-
+--         sorry
+--       · sorry
+--     · sorry
 
 open Finset in
 theorem unitary_dilation_orthonormal {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
   (hK : ∑ i, (K i)ᴴ * K i = 1) : Orthonormal ℂ fun i ↦ WithLp.toLp 2 (unitary_dilation hK i) := by
     unfold unitary_dilation
-    have hα : Orthonormal ℂ
-      (stinespringOrtho hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
-      := (stinespringOrtho
-  hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose.orthonormal
     let α := (stinespringOrtho
-      hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
-    change Orthonormal ℂ α at hα
+        hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose
+    have hα : Orthonormal ℂ α := (stinespringOrtho
+          hK).toSubtypeRange.exists_orthonormalBasis_extension.choose_spec.choose.orthonormal
     let f (x : Fin m × Fin r) := ⇑α (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
     change Orthonormal ℂ f
     let u := (stinespringOrtho
-  hK).toSubtypeRange.exists_orthonormalBasis_extension.choose
+        hK).toSubtypeRange.exists_orthonormalBasis_extension.choose
     have := @Orthonormal.comp (v := α) ℂ _ _ _ _
       (f := fun x => equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
-    specialize this hα (by
+    exact this hα (by
       show Function.Injective fun x => (equivOfCardEq (stinespringCard hK) ⟨x, mem_univ _⟩)
       have := (equivOfCardEq (stinespringCard hK)).3
       refine Function.HasLeftInverse.injective ?_
@@ -281,7 +297,6 @@ theorem unitary_dilation_orthonormal {m r : ℕ} {K : Fin r → Matrix (Fin m) (
       use fun x => (equivOfCardEq (stinespringCard hK)).2 x
       intro
       simp)
-    exact this
 
 lemma Complex.norm_eq (γ : ℂ) : γ.re * γ.re + γ.im * γ.im = ‖γ‖ ^ 2 := by
     ring_nf
@@ -545,19 +560,373 @@ that it equals Φ(ρ) unless we take care of the bijections.
 noncomputable def stinespringUnitaryForm {m r : ℕ}
     {K : Fin r → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1)
-    (ρ : Matrix (Fin m) (Fin m) ℂ)
-    :
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
     (Matrix (Fin m) (Fin m) ℂ) := by
-    let U := @unitary_dilation m r K hK
+    let U := unitary_dilation hK
     exact partialTraceRight (U * (ρ ⊗ₖ 1) * Uᴴ)
+
+
+/-
+The projector
+| e₀ > < e₀ |
+-/
+def e₀Xe₀ {w : ℕ} : Matrix (Fin w.succ) (Fin w.succ) ℂ := by
+    intro x y
+    by_cases H : (x,y) = (0,0)
+    · exact 1
+    · exact 0
+
+lemma partialTraceRight_one {w m : ℕ} (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    partialTraceRight (ρ ⊗ₖ (1 : Matrix (Fin w) (Fin w) ℂ)) =
+        w • ρ := by
+        unfold partialTraceRight kroneckerMap
+        simp only [of_apply, one_apply_eq, mul_one, Finset.sum_const, Finset.card_univ,
+          Fintype.card_fin, nsmul_eq_mul]
+        ext i j
+        have (i j : Fin m) (w : ℕ) : (w : Matrix (Fin m) (Fin m) ℂ) i j = ite (i=j) w 0 :=
+            by exact natCast_apply
+        rw [mul_apply]
+        simp_rw [this]
+        simp
+
+lemma partialTraceRight_e₀Xe₀ {w m : ℕ} (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    partialTraceRight (ρ ⊗ₖ (e₀Xe₀ : Matrix (Fin w.succ) (Fin w.succ) ℂ)) =
+        ρ := by
+        unfold partialTraceRight kroneckerMap e₀Xe₀
+        simp
+
+-- noncomputable def stinespringUnitaryForm_respecting_bot___BAD
+--     {m r : ℕ}
+--     {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+--     (hK : ∑ i, (K i)ᴴ * K i = 1)
+--     (ρ : Matrix (Fin m) (Fin m) ℂ) :
+--     (Matrix (Fin m) (Fin m) ℂ) := by
+--     let U := unitary_dilation_respecting_bot hK
+--     exact partialTraceRight (U * (ρ ⊗ₖ 1) * Uᴴ)
+
 
 noncomputable def stinespringUnitaryForm_respecting_bot {m r : ℕ}
     {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1)
     (ρ : Matrix (Fin m) (Fin m) ℂ) :
     (Matrix (Fin m) (Fin m) ℂ) := by
-    let U := @unitary_dilation_respecting_bot m r K hK
-    exact partialTraceRight (U * (ρ ⊗ₖ 1) * Uᴴ)
+    let U := unitary_dilation_respecting_bot hK
+    exact partialTraceRight (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+
+noncomputable def stinespringUnitaryForm_respecting_botANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    (Matrix (Fin m) (Fin m) ℂ) := by
+    let U := unitary_dilation_respecting_botANOTHER hK
+    exact partialTraceRight (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+
+
+noncomputable def stinespringUnitaryForm_respecting_botGENERALIZE {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    (Matrix (Fin m) (Fin m) ℂ) := by
+    let U := @unitary_dilation_respecting_botGENERALIZE m r K M
+    exact partialTraceRight (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+
+noncomputable def stinespringUnitaryForm_respecting_botGENERALIZEANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    (Matrix (Fin m) (Fin m) ℂ) := by
+    let U := @unitary_dilation_respecting_botGENERALIZEANOTHER m r K M
+    exact partialTraceRight (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+
+lemma unitary_dilation_works₀₀ {m : ℕ}
+    {K : Fin 2 → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (h_adhoc : unitary_dilation_respecting_bot hK = 1)
+    (h_adhoc₂ : K = ![1, 0])
+    :
+    stinespringUnitaryForm_respecting_bot hK ρ
+    = krausApply K ρ := by
+    subst K
+    unfold stinespringUnitaryForm_respecting_bot
+    rw [h_adhoc]
+    have := @partialTraceRight_e₀Xe₀
+    simp only [Nat.succ_eq_add_one, Nat.reduceAdd, one_mul, conjTranspose_one, mul_one] at this ⊢
+    rw [this]
+    simp [krausApply]
+
+
+set_option linter.flexible false in
+/-- Mar 24, 2026.
+A small piece of evidence that our unitary dilation works.
+-/
+lemma unitary_dilation_worksGENERALIZE {m : ℕ}
+    {K : Fin 2 → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (M : Matrix (Fin m × Fin 2) (Fin m × Fin 2) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hm : m = 1)
+    (hU : M ∈ unitary _)
+    (h : (fun x y => M (x, 0) y) = fun x (y, i) => K i x y) :
+    @stinespringUnitaryForm_respecting_botGENERALIZE m 1 K M ρ
+    = krausApply K ρ := by
+    have getK (i : Fin 2) : K i = fun (x y : Fin m) => M (x,0) (y,i) := by
+        ext x y
+        rw [congrFun (congrFun h x) (y,i)]
+    unfold stinespringUnitaryForm_respecting_botGENERALIZE
+        krausApply unitary_dilation_respecting_botGENERALIZE
+        e₀Xe₀ partialTraceRight stinespringOp single
+        kroneckerMap
+    simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, kronecker, Fin.sum_univ_two,
+      add_apply, kroneckerMap_apply, of_apply, and_true, mul_ite, mul_one, mul_zero, Prod.mk.injEq,
+      dite_eq_ite]
+    ext a b
+    repeat rw [mul_apply]
+    simp only [Fin.isValue, conjTranspose_apply]
+    rw [Fintype.sum_prod_type]
+    simp only [Fin.isValue, ↓reduceIte, one_ne_zero, add_zero, star_def, Fin.sum_univ_two,
+      add_apply]
+    repeat rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    repeat rw [getK]
+    simp only [Fin.isValue, Fin.sum_univ_two, conjTranspose_apply, star_def]
+    subst m
+    have : a = 0 := by exact Fin.fin_one_eq_zero a
+    subst a
+    have : b = 0 := by exact Fin.fin_one_eq_zero b
+    subst b
+    congr
+    · ext c
+      repeat rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      simp
+      have : c = 0 := by exact Fin.fin_one_eq_zero c
+      subst c
+      simp
+    · ext c
+      repeat rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      have : c = 0 := by exact Fin.fin_one_eq_zero c
+      subst c
+      simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, one_ne_zero, ↓reduceIte,
+        of_apply, and_true, mul_ite, mul_zero, Finset.sum_ite_eq', Finset.mem_univ,
+        Finset.sum_singleton, and_false, Finset.sum_const_zero, zero_mul, add_zero]
+
+/-- This is actually good: two operators,
+arbitrary mxm matrices, works. -/
+lemma unitary_dilation_worksGENERALIZEANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hr : r = 1)
+    (hU : M ∈ unitary _)
+    (h : (fun x y => M x (y, 0)) = fun (x, i) y => K i x y) :
+    @stinespringUnitaryForm_respecting_botGENERALIZEANOTHER m r K M ρ
+    = krausApply K ρ := by
+    unfold stinespringUnitaryForm_respecting_botGENERALIZEANOTHER
+        unitary_dilation_respecting_botGENERALIZEANOTHER
+        krausApply partialTraceRight e₀Xe₀ stinespringOp single
+    ext a b
+    rw [sum_apply]
+    congr
+    ext c
+    rw [mul_apply]
+    rw [mul_apply]
+    simp
+    rw [Fintype.sum_prod_type]
+    congr
+    ext d
+    rw [mul_apply]
+    simp
+    subst r
+    simp
+    rw [mul_apply]
+    fin_cases c
+    all_goals
+    · simp
+      rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      simp
+
+lemma unitary_dilation_worksANOTHER {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hr : r = 1)
+    (hU : M ∈ unitary _)
+    (h : (fun x y => M x (y, 0)) = fun (x, i) y => K i x y) :
+    @stinespringUnitaryForm_respecting_botANOTHER m r K hK ρ
+    = krausApply K ρ := by
+  have := @unitary_dilation_worksGENERALIZEANOTHER m r K hK
+    (unitary_dilation_respecting_botANOTHER hK) ρ hr
+    (by
+    -- can presumably prove...
+    sorry) (by
+    -- this proof doesn't use hr
+    clear hr
+    simp [unitary_dilation_respecting_botANOTHER, stinespringOp, single]
+    ext x y
+    have (j' : Fin 1) : (0 = j') = True := by
+        simp only [Fin.isValue, eq_iff_iff, iff_true];exact Eq.symm (Fin.fin_one_eq_zero j')
+    simp_rw [this]
+    simp [kroneckerMap]
+    change (∑ x, fun i j ↦ if x = i.2 then K x i.1 j.1 else 0) x (y, 0) = K x.2 x.1 y
+    simp
+    )
+  -- and now we prove the vindication of the
+  -- GENERALIZE approach
+  clear hr
+  rw [← this]
+  unfold
+    stinespringUnitaryForm_respecting_botANOTHER
+    partialTraceRight
+    unitary_dilation_respecting_botANOTHER
+    stinespringUnitaryForm_respecting_botGENERALIZEANOTHER
+    unitary_dilation_respecting_botGENERALIZEANOTHER
+  simp
+  unfold partialTraceRight
+  ext a b
+  congr
+  ext c
+  rw [mul_apply]
+  rw [mul_apply]
+  repeat rw [Fintype.sum_prod_type]
+  congr
+  simp
+  ext d
+  congr
+  repeat rw [Fintype.sum_prod_type]
+  congr
+  ext e
+  rw [mul_apply]
+  rw [mul_apply]
+  simp
+  repeat rw [Fintype.sum_prod_type]
+  congr
+  simp
+  ext f
+  congr
+  repeat rw [Fintype.sum_prod_type]
+  congr
+  ext g
+  simp
+  intro hg
+  subst g
+  intro h
+  simp at h
+  ext i
+  simp
+  tauto
+
+
+/--
+Mar 24, 2026
+Best so far:
+three operators, arbitrary mxm.
+But we still want to prove that `onbPart` is such an `M`.
+-/
+lemma unitary_dilation_worksGENERALIZEANOTHER₃ {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hr : r = 2)
+    (hU : M ∈ unitary _)
+    (h : (fun x y => M x (y, 0)) = fun (x, i) y => K i x y) :
+    @stinespringUnitaryForm_respecting_botGENERALIZEANOTHER m r K M ρ
+    = krausApply K ρ := by
+    unfold stinespringUnitaryForm_respecting_botGENERALIZEANOTHER
+        unitary_dilation_respecting_botGENERALIZEANOTHER
+        krausApply partialTraceRight e₀Xe₀ stinespringOp single
+    ext a b
+    rw [sum_apply]
+    congr
+    ext c
+    rw [mul_apply]
+    rw [mul_apply]
+    simp
+    rw [Fintype.sum_prod_type]
+    congr
+    ext d
+    rw [mul_apply]
+    simp
+    subst r
+    simp
+    fin_cases c
+    all_goals
+    · simp
+      rw [Fin.sum_univ_three]
+      simp
+      rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      simp
+      rw [Fin.sum_univ_three]
+      simp
+      rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      simp
+      rw [mul_apply]
+      rw [Fintype.sum_prod_type]
+      simp
+
+
+
+lemma unitary_dilation_worksGENERALIZE_ormaybe {m : ℕ}
+    {K : Fin 2 → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (M : Matrix (Fin m × Fin 2) (Fin m × Fin 2) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hm : m = 1)
+    (hU : M ∈ unitary _)
+    (h : (fun x y => M (x, 0) y) = fun x (y, i) => K i y x)
+    -- or maybe K i y x
+    :
+    @stinespringUnitaryForm_respecting_botGENERALIZE m 1 K M ρ
+    = krausApply K ρ := by sorry
+
+/-- Interestingly, the *not swapped* version allows us to
+prove an assumption needed for the GENERALIZE version,
+for
+unitary_dilation_worksGENERALIZE_ormaybe
+and
+unitary_dilation_worksGENERALIZE equally.
+-/
+lemma unitary_dilation_works_using_GENERALIZE {m : ℕ}
+    {K : Fin 2 → Matrix (Fin m) (Fin m) ℂ}
+    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (ρ : Matrix (Fin m) (Fin m) ℂ)
+    (hm : m = 1)
+    :
+    @stinespringUnitaryForm_respecting_bot m 1 K hK ρ
+    = krausApply K ρ := by
+    have := @unitary_dilation_worksGENERALIZE m K hK
+        (unitary_dilation_respecting_bot hK) ρ hm
+        (by
+        -- can prove this, no harder than before
+        sorry) (by
+        unfold unitary_dilation_respecting_bot stinespringOp
+        simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, ↓reduceDIte, kronecker,
+          Fin.sum_univ_two, add_apply, kroneckerMap_apply]
+        ext a b
+        subst m
+        have : a = 0 := by exact Fin.fin_one_eq_zero a
+        subst a
+        have : b.1 = 0 := by exact Fin.fin_one_eq_zero b.1
+        rw [this]
+        simp only [Fin.isValue, single, of_apply, and_true, mul_ite, mul_one, mul_zero]
+        split_ifs with g₀ g₁ g₂
+        · exfalso
+          have := g₀.trans g₁.symm
+          simp at this
+        · rw [← g₀]
+          simp
+        · rw [← g₂]
+          simp
+        · fin_cases b <;> simp_all)
+    sorry
+
 
 /-- Works when `m = 0` (any `r`): -/
 lemma unitary_dilation_works₀ {r : ℕ}
@@ -570,142 +939,7 @@ lemma unitary_dilation_works₀ {r : ℕ}
     have := z₀.2
     simp at this
 
-/-- Works when `m = 1` (with `r=0` i.e. `r.succ=1`): -/
-lemma unitary_dilation_works₁
-    {K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-    (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
-    stinespringUnitaryForm_respecting_bot hK ρ
-    = krausApply K ρ := by
-          unfold
-            stinespringUnitaryForm_respecting_bot
-            unitary_dilation_respecting_bot
-          unfold partialTraceRight krausApply
-          ext z₀ z₁
-          have : z₀ = 0 := by exact Fin.fin_one_eq_zero z₀
-          subst z₀
-          have : z₁ = 0 := by exact Fin.fin_one_eq_zero z₁
-          subst z₁
-          unfold stinespringOp
-          simp only [Nat.succ_eq_add_one, Nat.reduceAdd, Finset.univ_unique, Fin.default_eq_zero,
-            Fin.isValue, kronecker, Finset.sum_singleton, kroneckerMap_apply, kronecker.eq_1,
-            Fin.val_eq_zero, zero_tsub]
-          rw [mul_apply]
-          rw [Fintype.sum_prod_type]
-          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, conjTranspose_apply,
-            ↓reduceDIte, star_mul', star_def, Finset.sum_singleton, single_apply_same, map_one,
-            mul_one]
-          rw [mul_apply]
-          rw [Fintype.sum_prod_type]
-          rw [mul_apply]
-          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, ↓reduceDIte,
-            kroneckerMap_apply, Finset.sum_singleton, single_apply_same, mul_one, one_apply_eq,
-            conjTranspose_apply, star_def, mul_eq_mul_right_iff, map_eq_zero]
-          left
-          repeat rw [mul_apply]
-          simp
 
--- set_option maxHeartbeats 0 in
--- /-- Works when `m = 1` (with `r=1` i.e. `r.succ=2`): -/
--- lemma unitary_dilation_works₁₁
---     {K : Fin 2 → Matrix (Fin 1) (Fin 1) ℂ}
---     (hK : ∑ i, (K i)ᴴ * K i = 1)
---     (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
---     stinespringUnitaryForm_respecting_bot hK ρ
---     = krausApply K ρ := by
---           unfold
---             stinespringUnitaryForm_respecting_bot
---             unitary_dilation_respecting_bot
---           unfold partialTraceRight krausApply
---           simp
---           ext z₀ z₁
---           have : z₀ = 0 := by exact Fin.fin_one_eq_zero z₀
---           subst z₀
---           have : z₁ = 0 := by exact Fin.fin_one_eq_zero z₁
---           subst z₁
---           unfold stinespringOp
---           simp
---           rw [mul_apply]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           rw [mul_apply]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           rw [mul_apply]
---           simp
---           repeat rw [mul_apply]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           repeat rw [mul_apply]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           rw [Fintype.sum_prod_type]
---           simp
---           generalize ρ 0 0 = z
---           ring_nf
---           unfold WithLp.ofLp
---           by_cases hz : z = 0
---           · subst z
---             simp
---           have : ∀ f : Fin 1 × Fin 2 → ℂ,
---             f (0,0) * star (f (0,0))
---             + f (0,1) * star (f (0, 1)) = 0 →
-
---             f (0,0) * z * star (f (0,0))
---             + z * f (0,1) * star (f (0, 1)) = 0 := by
---                 intro f h
---                 nth_rw 2 [mul_comm]
---                 rw [mul_assoc]
---                 rw [mul_assoc]
---                 have (z a b : ℂ) :
---                      z * a + z * b = z * (a + b) :=
---                        Eq.symm (LeftDistribClass.left_distrib z a b)
---                 rw [this]
---                 rw [h]
---                 simp
---           apply this
---           simp
---           have : ∀ f : Fin 1 × Fin 2 → ℂ,
---             f (0,0) = 0 ∧ f (0,1) = 0 →
---             f (0,0) * star (f (0,0))
---             + f (0,1) * star (f (0, 1)) = 0 := by
---             intro f h
---             rw [h.1, h.2];simp
---           apply this
---           have : ∀ f : Fin 1 × Fin 2 → ℂ,
---             f = 0 → f (0,0) = 0 ∧ f (0,1) = 0 := by
---                 intro f h; rw [h];simp
---           apply this
---           by_cases H : K = 0
---           · subst K
---             simp at hK
---           by_cases H : K = ![!![1], !![0]]
---           subst K
---           simp_all
---           sorry
---           sorry
-
-
-
-set_option maxHeartbeats 0 in
--- now prove this equals Φ! can it be true?
-lemma unitary_dilation_works {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-    (ρ : Matrix (Fin m) (Fin m) ℂ) :
-    stinespringUnitaryForm_respecting_bot hK ρ
-    = krausApply K ρ := by
-    unfold
-        stinespringUnitaryForm_respecting_bot
-        unitary_dilation_respecting_bot
-    simp
-    sorry
 
 /-- The "orthogonal" CPTP completion of a CPTNI map.
 `Vtilde` is an alternative name for `krausCompletion`.
