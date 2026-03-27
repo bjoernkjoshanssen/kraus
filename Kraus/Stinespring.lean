@@ -206,20 +206,22 @@ lemma onbPart_inner {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
     let theRange := Submodule.span ℂ <| Set.range
         fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
     have := (exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose.orthonormal.2
-    simp [Pairwise] at this
+    simp only [Pairwise, Nat.succ_eq_add_one, ne_eq, Submodule.coe_inner, Subtype.forall,
+      Subtype.mk.injEq] at this
     have h₁ := this (WithLp.toLp 2 <| onbPart hK y hy)
         (by simp [onbPart]) (by
-            simp [onbPart]
+            simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
             rw [(exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose_spec]
             simp)
         (WithLp.toLp 2 <| onbPart hK z hz)
         (by simp [onbPart]) (by
-            simp [onbPart]
+            simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
             rw [(exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose_spec]
             simp) (by
-                simp [onbPart]
+                simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, SetLike.coe_eq_coe]
                 rw [(exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose_spec]
-                simp
+                simp only [Nat.succ_eq_add_one, SetLike.coe_eq_coe, EmbeddingLike.apply_eq_iff_eq,
+                  Subtype.mk.injEq, Prod.mk.injEq, Fin.mk.injEq, not_and]
                 intro hyz
                 contrapose! h
                 have : y.2.1 ≠ 0 := Fin.val_ne_zero_iff.mpr hy
@@ -227,7 +229,6 @@ lemma onbPart_inner {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
                 have : y.2.1 = z.2.1 := by omega
                 have : y.2 = z.2 := by omega
                 exact Prod.ext hyz this)
-    simp at h₁
     rw [← h₁]
     simp_rw [(exists_orthonormalBasis ℂ theRangeᗮ).choose_spec.choose_spec]
 
@@ -318,7 +319,6 @@ theorem unitaryDilation_orthonormal₂ {m r : ℕ} {K : Fin r.succ → Matrix (F
     Orthonormal ℂ fun y ↦
       WithLp.toLp 2 fun i ↦ if hy : y.2 = 0 then stinespringOp K i y.1 else onbPart hK y hy i := by
     have := unitaryDilation_orthonormal₁ hK
-    simp at this ⊢
     constructor
     · intro i
       have := this.1 i
@@ -329,7 +329,7 @@ theorem unitaryDilation_orthonormal₂ {m r : ℕ} {K : Fin r.succ → Matrix (F
       split_ifs with g₀ <;> simp
     · intro i j hij
       have := this.2 hij
-      simp at this ⊢
+      simp only at this ⊢
       rw [← this]
       generalize stinespringOp K = α
       generalize onbPart hK = β
@@ -384,9 +384,8 @@ theorem unitary_of_orthonormal {m r : ℕ}
 lemma unitaryDilation_unitaryT {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
     (hK : ∑ i, (K i)ᴴ * K i = 1) :
     (unitaryDilation hK)ᵀ ∈ unitary _ := by
-  have h₁ := unitaryDilation_orthonormal₂ hK
-  have H₀ := unitary_of_orthonormal (unitaryDilation hK)ᵀ h₁
-  simp [transpose] at H₀ ⊢
+  have H₀ := unitary_of_orthonormal (unitaryDilation hK)ᵀ
+    <| unitaryDilation_orthonormal₂ hK
   constructor
   · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp H₀
   · exact H₀
@@ -447,6 +446,87 @@ noncomputable def stinespringUnitaryForm {m r : ℕ}
     (Matrix (Fin m) (Fin m) ℂ) :=
     let U := unitaryDilation hK
     partialTraceRight (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+
+open TensorProduct
+-- Let's try to get the trace-free version of the Stinespring Dilation Theorem:
+theorem tracefree_version {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+  let K' := fun i x y => star <| K i y x
+  let U := (stinespringOp K');
+    Uᴴ * (ρ ⊗ₖ (1 : Matrix (Fin r.succ) (Fin r.succ) ℂ)) * U = stinespringForm K ρ := by
+  have := ρ ⊗ₖ (1 : Matrix (Fin r.succ) (Fin r.succ) ℂ)
+  intro K' U
+  -- trying to mirror https://chatgpt.com/c/69b329a6-8788-8325-9a82-5789b0b7c453:
+  have : Uᴴ * (ρ ⊗ₖ (1 : Matrix (Fin r.succ) (Fin r.succ) ℂ)) * U = stinespringForm K ρ := by
+    unfold stinespringForm U stinespringOp partialTraceRight
+        stinespringDilation stinespringOp
+    simp [kroneckerMap, single]
+    ext i j
+    rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    rw [Finset.sum_comm]
+    congr
+    ext k
+    rw [mul_apply]
+    simp
+    congr
+    ext l
+    rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    rw [mul_apply]
+    simp
+    rw [Finset.sum_fn]
+    simp
+    conv =>
+        left
+        left
+        right
+        change (fun x ↦ ∑ x_1, (starRingEnd ℂ) (K' x_1 x i) * (ρ x l *
+        ((1 : Matrix (Fin r.succ) (Fin r.succ) ℂ) (x, x_1).2 (l, k).2)))
+        change (fun x ↦ ∑ x_1, (starRingEnd ℂ) (K' x_1 x i) * (ρ x l *
+        ((1 : Matrix (Fin r.succ) (Fin r.succ) ℂ) x_1 k)))
+        change (fun x ↦ ∑ x_1, (starRingEnd ℂ) (K' x_1 x i) * (ρ x l *
+        (ite (x_1 = k) 1 0)))
+    simp [K']
+    rw [Finset.sum_fn]
+    simp
+  exact this
+
+/- A version of the Stinespring Dilation Theorem. See Stinespring100.lean -/
+-- theorem stinespringForm_eq {m r : ℕ}
+--     (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
+--     (ρ : Matrix (Fin m) (Fin m) ℂ) :
+--     partialTraceRight (stinespringDilation K ρ) = krausApply K ρ := by
+--   unfold krausApply
+--   ext u v
+--   repeat rw [Finset.sum_apply]
+--   simp only [partialTraceRight, stinespringDilation, stinespringOp, kronecker, Fin.isValue]
+--   congr
+--   ext w
+--   simp only [kroneckerMap, single, Fin.isValue, of_apply,
+--     mul_ite, mul_one, mul_zero]
+--   repeat rw [Matrix.mul_apply]
+--   congr
+--   ext j
+--   repeat rw [Matrix.mul_apply]
+--   simp only [Fin.isValue, conjTranspose_apply, star_def]
+--   repeat rw [Finset.sum_apply]
+--   simp
+
+theorem heisenberg_schrõdinger {m r : ℕ}
+    {K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ}
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+  let K' := fun i x y => star <| K i y x
+  let U := (stinespringOp K'); let V := stinespringOp K
+  let schrõdinger := partialTraceRight (V * ρ * Vᴴ); -- evolve the state forward: V = V(t), ρ = ρ(0)
+  let heisenberg := Uᴴ * (ρ ⊗ₖ (1 : Matrix (Fin r.succ) (Fin r.succ) ℂ)) * U;
+  -- ρ ⊗ₖ 1 is an "observable"; evolve it backward
+    schrõdinger = heisenberg := by
+    intro K' U
+    rw [tracefree_version]
+    rfl
+
 
 noncomputable def stinespringGeneralForm {m r : ℕ}
     (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
@@ -532,11 +612,7 @@ lemma stinespringGeneralForm_works {m r : ℕ}
 /--
 Mar 25, 2026
 Behold...
-For good measure should also prove that
-`stinespringUnitaryForm`
-is actually unitary, but it might be similar to the
-proof for
-`stinespringUnitaryForm`.
+
 Notice that unitarity is a side property, it is not why
 the Stinespring form works.
 -/

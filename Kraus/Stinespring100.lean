@@ -31,6 +31,29 @@ theorem stinespringForm_eq {m r : ℕ}
   simp only [Fin.isValue, conjTranspose_apply, star_def]
   repeat rw [Finset.sum_apply]
   simp
+open Matrix MatrixOrder ComplexOrder RCLike
+
+open TensorProduct
+
+
+
+theorem heisenberg_schrõdinger_picture  {m r : ℕ}
+    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+  -- let K' := fun i x y => star <| K i y x
+  -- let U := stinespringOp K'
+  -- let V := stinespringOp K
+  -- Uᴴ * (ρ ⊗ₖ 1) * U = partialTraceRight (V * ρ * Vᴴ)
+    0 = 0 := by
+
+    have h₀ := @tracefree_version m r K ρ
+    have h₁ := @stinespringForm_eq m r.succ K ρ
+    have := h₀.trans h₁
+    simp at this
+
+    sorry
+
+
 
 lemma partialTraceRight_one_of_unital {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
