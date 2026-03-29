@@ -40,10 +40,10 @@ open Matrix MatrixOrder
 
 /-- Completely positive map given by a (not necessarily minimal) Kraus family. -/
 def krausApply {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
-  {q r : ℕ}
-  (K : Fin r → Matrix (Fin q) (Fin q) R)
-  (ρ : Matrix (Fin q) (Fin q) R) : Matrix (Fin q) (Fin q) R :=
-  ∑ i : Fin r, K i * ρ * (K i)ᴴ
+  {q r : Type*} [Fintype q] [Fintype r] [DecidableEq q] [DecidableEq r]
+  (K : r → Matrix q q R)
+  (ρ : Matrix q q R) : Matrix q q R :=
+  ∑ i : r, K i * ρ * (K i)ᴴ
 
 
 
