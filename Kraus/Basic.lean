@@ -1,6 +1,7 @@
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
-
+import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.ExpLog.Basic
+import Mathlib.Analysis.CStarAlgebra.CStarMatrix
 
 import Mathlib.Analysis.Complex.Order
 import Mathlib.Analysis.RCLike.Basic
@@ -152,7 +153,7 @@ def krausApplyWord {α : Type*} {R : Type*} [Mul R] [Star R] [AddCommMonoid R]
   (ρ : Matrix (Fin q) (Fin q) R) :
   Matrix (Fin q) (Fin q) R := match n with
 | 0 => ρ
-| Nat.succ m => krausApply (𝓚 (word ⟨m,by simp⟩))
+| Nat.succ m => krausApply (𝓚 (word (Fin.last m)))
         (krausApplyWord (Fin.init word) 𝓚 ρ)
 
 /-- As long as we have a quantum channel,
@@ -733,8 +734,78 @@ lemma pure_state_eq_C {R : Type*} [RCLike R] {k : ℕ} (i : Fin k) :
   rw [this]
   simp
 
-open MatrixOrder
+-- open MatrixOrder
 -- instance {n : ℕ} :   StarRing (Matrix (Fin n) (Fin n) ℝ) := by apply?
+
+
+-- This does not become a matrix! So a different kind of identity kicks in.
+example : ((fun _ _ => 1) : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
+    ext i j
+    simp
+
+noncomputable instance : NormedRing (Matrix (Fin 2) (Fin 2) ℂ) := frobeniusNormedRing
+
+noncomputable instance :  NormedAlgebra ℝ (Matrix (Fin 2) (Fin 2) ℂ) := frobeniusNormedAlgebra
+
+example : CFC.log (1 : Matrix (Fin 2) (Fin 2) ℂ) = 0 := by
+    have : IsSelfAdjoint ((0 : Fin 2 → Fin 2 → ℂ)) := by
+        simp
+    have := @CFC.log_exp (a := (0 : Fin 2 → Fin 2 → ℂ)) (ha := this)
+    rw [← this]
+    · simp only [CFC.log_one, NormedSpace.exp_zero]
+    · exact NormedAlgebra.complexToReal
+    · exact IsSelfAdjoint.instContinuousFunctionalCalculus
+
+-- example : CFC.log (!![1,0;0,0] : Matrix (Fin 2) (Fin 2) ℂ) =
+--     0 := by
+--     have := @CFC.log_eq_zero_iff
+--     have : IsSelfAdjoint ((0 : Fin 2 → Fin 2 → ℂ)) := by
+--         simp
+--     have := @CFC.log_exp (a := (0 : Fin 2 → Fin 2 → ℂ)) (ha := this)
+--     rw [← this]
+--     · simp only [CFC.log_one, NormedSpace.exp_zero];sorry
+--     · exact NormedAlgebra.complexToReal
+--     · exact IsSelfAdjoint.instContinuousFunctionalCalculus
+
+
+
+example : CFC.log ((fun _ _ => 1) : Matrix (Fin 2) (Fin 2) ℂ) =
+          0
+     := by
+    have : IsSelfAdjoint ((0 : Fin 2 → Fin 2 → ℂ)) := by
+        simp
+    have := @CFC.log_exp (a := (0 : Fin 2 → Fin 2 → ℂ)) (ha := this)
+    rw [← this]
+    · congr
+      simp only [NormedSpace.exp_zero]
+      ext i j
+      simp
+    · exact IsSelfAdjoint.instContinuousFunctionalCalculus
+
+-- example : CFC.log ((fun x y => ite (x=y) 1 0) : Matrix (Fin 2) (Fin 2) ℂ) =
+--           0
+--      := by
+--     have : IsSelfAdjoint ((0 : Fin 2 → Fin 2 → ℂ)) := by
+--         simp
+--     have := @CFC.log_exp (a := (0 : Fin 2 → Fin 2 → ℂ)) (ha := this)
+--     rw [← this]
+--     · congr
+--       simp
+--       ext i j
+--       simp
+--     · exact IsSelfAdjoint.instContinuousFunctionalCalculus
+
+example : NormedSpace.exp ((fun _ _ => 0) : Matrix (Fin 2) (Fin 2) ℂ) =
+          1
+     := by
+    have : IsSelfAdjoint ((1 : Fin 2 → Fin 2 → ℂ)) := by
+        simp
+
+    have := @CFC.log_exp (a := (1 : Fin 2 → Fin 2 → ℂ)) (ha := this)
+    rw [← this]
+    · sorry
+    · exact NormedAlgebra.complexToReal
+    · exact IsSelfAdjoint.instContinuousFunctionalCalculus
 
 /-- Jireh recommends this approach. -/
 theorem matrix_posSemidef_eq_star_mul_self' {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ)
