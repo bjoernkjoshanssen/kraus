@@ -128,33 +128,38 @@ lemma stinespringCard {R : Type*} [RCLike R]
 open Finset in
 /-- We need the 1 matrix, which we don't seem to have for an arbitrary
 `[Fintype m]`.
-Since we are comparing `Fin r` and `Fin r.succ` we also cannot too
+Since we are comparing `Fin r` and `Fin (r-1)` we also cannot too
 easily use an arbitrary `[Fintype r] [Zero r]`.
 -/
 theorem complCard {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
     let 𝓞 := fun j ↦ WithLp.toLp 2 fun i ↦ stinespringOp K i j;
     let theRange := Submodule.span R (Set.range 𝓞);
     let u' := (exists_orthonormalBasis R theRangeᗮ).choose;
-      Fintype.card (Fin m × Fin r) = #u' := by
+      Fintype.card (Fin m × Fin (r-1)) = #u' := by
+    obtain ⟨s,hs⟩ : ∃ s, r = s + 1 := by
+      refine Nat.exists_eq_succ_of_ne_zero ?_
+      have := z.2
+      omega
+    subst hs
     intro 𝓞 theRange u'
     let u : Finset theRange :=
         (Set.range fun i => (⟨𝓞 i, Submodule.subset_span ⟨i, rfl⟩⟩)).toFinset
     have hind := (stinespringOrtho hK).linearIndependent
     have hinj := hind.injective
     have h₀ : #u = m := by
-        simp only [u, Nat.succ_eq_add_one, Set.toFinset_range]
+        simp only [u, Set.toFinset_range]
         have : m = #(Finset.univ : Finset (Fin m)) := by simp
         simp_rw [this]
         apply card_image_of_injective
         intro i j h
         apply hinj
-        simp only [Nat.succ_eq_add_one, Subtype.mk.injEq, WithLp.toLp.injEq, 𝓞] at h ⊢
+        simp only [Subtype.mk.injEq, WithLp.toLp.injEq, 𝓞] at h ⊢
         exact h
-    have h₁ : m * (r + 1) = #u + #u' := by
+    have h₁ : m * (s + 1) = #u + #u' := by
         have := Submodule.finrank_add_finrank_orthogonal theRange
-        simp only [Nat.succ_eq_add_one, finrank_euclideanSpace, Fintype.card_prod,
+        simp only [finrank_euclideanSpace, Fintype.card_prod,
           Fintype.card_fin] at this
         rw [← this]
         congr
@@ -177,15 +182,15 @@ theorem complCard {R : Type*} [RCLike R] {m r : ℕ}
 /--
 See discussion at https://leanprover.zulipchat.com/#narrow/channel/217875-Is-there-code-for-X.3F/topic/succAbove.20and.20predAbove.20lemmas/with/584270574
 -/
-def Fin.predAbove_of_ne {n : ℕ} (k : Fin (n + 1)) (i : Fin (n + 1))
-    (h : i ≠ k) : Fin n := by
+def Fin.predAbove_of_ne {n : ℕ} {k i : Fin n}
+    (h : i ≠ k) : Fin (n - 1) := by
   by_cases H : i.1 > k.1
   · exact ⟨i.1 - 1, by omega⟩
   · exact ⟨i.1, by omega⟩
 
-lemma Fin.predAbove_of_ne_injective (n : ℕ) (k : Fin (n + 1)) (x y : Fin (n + 1))
+lemma Fin.predAbove_of_ne_injective (n : ℕ) (k x y : Fin n)
     (hx : x ≠ k) (hy : y ≠ k)
-    (heq : Fin.predAbove_of_ne k x hx = Fin.predAbove_of_ne k y hy) : x = y := by
+    (heq : Fin.predAbove_of_ne hx = Fin.predAbove_of_ne hy) : x = y := by
   unfold predAbove_of_ne at heq
   split_ifs at heq
   all_goals
@@ -193,128 +198,69 @@ lemma Fin.predAbove_of_ne_injective (n : ℕ) (k : Fin (n + 1)) (x y : Fin (n + 
     omega
 
 
-/-- The way this is written, `Fin r.succ` and `Fin r` both occur
+/-- The way this is written, `Fin r` and `Fin (r-1)` both occur
 so it is tricky to go to a general `Fintype`.
-If we want to truncate `Fin 5` to remove `2` for example the
-columns would be laid out like:
-0 => 0
-1 => 1
-2 => 3
-3 => 4
 -/
 noncomputable def onbPart {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r.succ) (hx : ¬x.2 = 0) :
+    {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r) {z : Fin r} (hx : ¬x.2 = z) :
   -- if we make it `r+2` then the `x.2≠0` becomes unused.
-  Fin m × Fin r.succ → R := by
+  Fin m × Fin r → R := by
     let theRange := Submodule.span R <| Set.range
         fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
-    have (z : Fin m × Fin r) :=
+    have (w : Fin m × Fin (r-1)) :=
         ((exists_orthonormalBasis R theRangeᗮ).choose_spec.choose
-        (Finset.equivOfCardEq (complCard hK) ⟨z, Finset.mem_univ _⟩)).1.1
+        (Finset.equivOfCardEq (complCard hK z) ⟨w, Finset.mem_univ _⟩)).1.1
     apply this
-    exact (x.1, by
-      apply Fin.predAbove_of_ne 0
-      exact hx)
+    exact (x.1, Fin.predAbove_of_ne hx)
 
-/-- The custom in quantum information theory is to use
-|e₁>< e₁| as ancillary, as in `onbPart`, but type-theoretically it is more convenient to use
-|e (Fin.last)>.
+/- The custom in quantum information theory is to use
+|e₁>< e₁| as ancillary; we allow an arbitrary (standard) basis vector.
 -/
-noncomputable def onbPart' {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r) :
-  Fin m × Fin r.succ → R := by
-    let theRange := Submodule.span R <| Set.range
-        fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
-    have (z : Fin m × Fin r) :=
-        ((exists_orthonormalBasis R theRangeᗮ).choose_spec.choose
-        (Finset.equivOfCardEq (complCard hK) ⟨z, Finset.mem_univ _⟩)).1.1
-    apply this
-    exact x
-
-
-lemma onbPart_inner {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-    {y : Fin m × Fin r.succ} (hy : ¬y.2 = 0)
-    {z : Fin m × Fin r.succ} (hz : ¬z.2 = 0)
-    (h : y ≠ z) :
+lemma onbPart_inner {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) {z : Fin r}
+    {y : Fin m × Fin r} (hy : ¬y.2 = z)
+    {x : Fin m × Fin r} (hx : ¬x.2 = z)
+    (h : y ≠ x) :
     inner R (WithLp.toLp 2 <| onbPart hK y hy)
-            (WithLp.toLp 2 <| onbPart hK z hz) = 0 := by
+            (WithLp.toLp 2 <| onbPart hK x hx) = 0 := by
     let theRange := Submodule.span R <| Set.range
         fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
     let α := (exists_orthonormalBasis R theRangeᗮ).choose_spec
     have := α.choose.orthonormal.2
-    simp only [Pairwise, Nat.succ_eq_add_one, ne_eq, Submodule.coe_inner, Subtype.forall,
+    simp only [Pairwise, ne_eq, Submodule.coe_inner, Subtype.forall,
       Subtype.mk.injEq] at this
     have h₁ := this (WithLp.toLp 2 <| onbPart hK y hy)
         (by simp [onbPart]) (by
-            simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
+            simp only [onbPart, WithLp.toLp_ofLp, Subtype.coe_eta]
             rw [α.choose_spec]
             simp)
-        (WithLp.toLp 2 <| onbPart hK z hz)
+        (WithLp.toLp 2 <| onbPart hK x hx)
         (by simp [onbPart]) (by
-            simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
+            simp only [onbPart, WithLp.toLp_ofLp, Subtype.coe_eta]
             rw [α.choose_spec]
             simp) (by
-                simp only [onbPart, Nat.succ_eq_add_one, WithLp.toLp_ofLp, SetLike.coe_eq_coe]
+                simp only [onbPart, WithLp.toLp_ofLp, SetLike.coe_eq_coe]
                 rw [α.choose_spec]
-                simp only [Nat.succ_eq_add_one, SetLike.coe_eq_coe, EmbeddingLike.apply_eq_iff_eq,
+                simp only [SetLike.coe_eq_coe, EmbeddingLike.apply_eq_iff_eq,
                   Subtype.mk.injEq, Prod.mk.injEq, not_and]
                 intro hyz
                 contrapose! h
-                have : y.2.1 ≠ 0 := Fin.val_ne_zero_iff.mpr hy
-                have : z.2.1 ≠ 0 := Fin.val_ne_zero_iff.mpr hz
-                have : y.2.1 = z.2.1 := by
-                    suffices y.2 = z.2 by rw [this]
+                have : y.2.1 ≠ z := Fin.val_ne_of_ne hy
+                have : x.2.1 ≠ z := Fin.val_ne_of_ne hx
+                have : y.2.1 = x.2.1 := by
+                    suffices y.2 = x.2 by rw [this]
                     apply Fin.predAbove_of_ne_injective
                     omega
-                have : y.2 = z.2 := by omega
+                have : y.2 = x.2 := by omega
                 exact Prod.ext hyz this)
     rw [← h₁]
     simp_rw [α.choose_spec]
 
-lemma onbPart_inner' {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-    {y : Fin m × Fin r}
-    {z : Fin m × Fin r}
-    (h : y ≠ z) :
-    inner R (WithLp.toLp 2 <| onbPart' hK y)
-            (WithLp.toLp 2 <| onbPart' hK z) = 0 := by
-    let theRange := Submodule.span R <| Set.range
-        fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
-    let α := (exists_orthonormalBasis R theRangeᗮ).choose_spec
-    have := α.choose.orthonormal.2
-    simp only [Pairwise, Nat.succ_eq_add_one, ne_eq, Submodule.coe_inner, Subtype.forall,
-      Subtype.mk.injEq] at this
-    have h₁ := this (WithLp.toLp 2 <| onbPart' hK y)
-        (by simp [onbPart']) (by
-            simp only [onbPart', Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
-            rw [α.choose_spec]
-            simp)
-        (WithLp.toLp 2 <| onbPart' hK z)
-        (by simp [onbPart']) (by
-            simp only [onbPart', Nat.succ_eq_add_one, WithLp.toLp_ofLp, Subtype.coe_eta]
-            rw [α.choose_spec]
-            simp) (by
-                simp only [onbPart', Nat.succ_eq_add_one, WithLp.toLp_ofLp, SetLike.coe_eq_coe]
-                rw [α.choose_spec]
-                simp only [Nat.succ_eq_add_one, SetLike.coe_eq_coe, EmbeddingLike.apply_eq_iff_eq,
-                  Subtype.mk.injEq]
-                exact h)
-    rw [← h₁]
-    simp_rw [α.choose_spec]
 
-lemma onbPart_norm' {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r) :
-  ‖WithLp.toLp 2 <| onbPart' hK x‖ = 1 :=
-    let theRange := Submodule.span R <| Set.range
-        fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
-    (exists_orthonormalBasis R theRangeᗮ).choose_spec.choose.orthonormal.1 _
-
-
-lemma onbPart_norm {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r.succ) (hx : ¬x.2 = 0) :
+lemma onbPart_norm {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) (x : Fin m × Fin r)
+  {z : Fin r} (hx : ¬x.2 = z) :
   ‖WithLp.toLp 2 <| onbPart hK x hx‖ = 1 :=
     let theRange := Submodule.span R <| Set.range
         fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
@@ -324,41 +270,30 @@ lemma onbPart_norm {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix
 
 /-- Also known as `unitaryDilation`. Respects x,y order. -/
 noncomputable def Ud {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) R := by
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
+    Matrix (Fin m × Fin r) (Fin m × Fin r) R := by
   intro x y
-  by_cases hy : y.2 = 0
+  by_cases hy : y.2 = z
   · exact stinespringOp K x y.1
   · exact onbPart hK y hy x
 
-noncomputable def Ud' {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) R := by
-  intro x y
-  by_cases hy : y.2 = Fin.last _
-  · exact stinespringOp K x y.1
-  · apply onbPart' hK ⟨y.1, ⟨y.2, Fin.val_lt_last hy⟩⟩ x
 
 
 /-- A general, not necessarily unitary, dilation. -/
 noncomputable def dilation {R : Type*} [RCLike R]
-    {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m] [Zero r]
-    (K : r → Matrix m m R) (M : Matrix (m × r) (m × r) R) :
+    {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
+    (K : r → Matrix m m R) (z : r) (M : Matrix (m × r) (m × r) R) :
     Matrix (m × r) (m × r) R := fun x y =>
-  ite (y.2 = 0) (stinespringOp K x y.1) (M x y)
+  ite (y.2 = z) (stinespringOp K x y.1) (M x y)
 
-noncomputable def dilation' {R : Type*} [RCLike R]
-    {m : Type*} {r : ℕ} [Fintype m] [DecidableEq m]
-    (K : Fin r.succ → Matrix m m R) (M : Matrix (m × Fin r.succ) (m × Fin r.succ) R) :
-    Matrix (m × Fin r.succ) (m × Fin r.succ) R := fun x y =>
-  ite (y.2 = Fin.last _) (stinespringOp K x y.1) (M x y)
 
 
 /-- One version of it. -/
-theorem Ud_orthonormal₁ {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) :
+theorem Ud_orthonormal₁ {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
   Orthonormal R fun y ↦
-    if hy : y.2 = 0 then WithLp.toLp 2 fun i ↦ stinespringOp K i y.1
+    if hy : y.2 = z then WithLp.toLp 2 fun i ↦ stinespringOp K i y.1
     else WithLp.toLp 2 fun i ↦ onbPart hK y hy i := by
     constructor
     · intro i
@@ -401,66 +336,14 @@ theorem Ud_orthonormal₁ {R : Type*} [RCLike R] {m r : ℕ} {K : Fin r.succ →
         exact inner_eq_zero_symm.mp (h₁ β h₀')
       · exact onbPart_inner hK g₀ g₂ h
 
-theorem Ud_orthonormal₁' {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) :
-  Orthonormal R fun y : Fin m × Fin r.succ ↦
-    if hy : y.2 = Fin.last _ then WithLp.toLp 2 fun i ↦ stinespringOp K i y.1
-    else WithLp.toLp 2 fun i ↦ onbPart' hK ⟨y.1, ⟨y.2, Fin.val_lt_last hy⟩⟩ i := by
-    constructor
-    · intro i
-      simp only
-      split_ifs with g₀
-      · apply (stinespringOrtho hK).1
-      · apply onbPart_norm'
-    · intro i j h
-      simp only
-      let theRange := Submodule.span R <| Set.range
-            fun j => WithLp.toLp 2 fun i ↦ stinespringOp K i j
-      split_ifs with g₀ g₁ g₂
-      · apply (stinespringOrtho hK).2
-        contrapose! h
-        refine Prod.ext_iff.mpr ?_
-        constructor
-        · tauto
-        · rw [g₀,g₁]
-      · -- use that they came from `theRange`, `theRangeᗮ` respectively.
-        have h₀ : (WithLp.toLp 2 fun i_1 ↦ stinespringOp K i_1 i.1) ∈ theRange := by
-            unfold theRange
-            generalize stinespringOp K = α
-            apply Submodule.mem_span_of_mem
-            simp
-        have h₁ : (WithLp.toLp 2 fun i ↦ onbPart' hK
-            ⟨j.1, ⟨j.2, Fin.val_lt_last g₁⟩⟩ i) ∈ theRangeᗮ := by
-            unfold theRange
-            simp [onbPart']
-        exact h₁ _ h₀
-      · have h₀' : (WithLp.toLp 2 fun i_1 ↦ stinespringOp K i_1 j.1) ∈ theRange := by
-            unfold theRange
-            generalize stinespringOp K = α
-            apply Submodule.mem_span_of_mem
-            simp
-        have h₁ :  (WithLp.toLp 2 fun t ↦ onbPart' hK
-            ⟨i.1, ⟨i.2, Fin.val_lt_last g₀⟩⟩ t) ∈ theRangeᗮ := by
-            unfold theRange
-            simp [onbPart']
-        have := h₁ _ h₀'
-        generalize (WithLp.toLp 2 fun i_1 ↦ onbPart' hK
-            ⟨i.1, ⟨i.2, Fin.val_lt_last g₀⟩⟩ i_1) = α at *
-        generalize (WithLp.toLp 2 fun i ↦ stinespringOp K i j.1) = β at *
-        exact inner_eq_zero_symm.mp (h₁ β h₀')
-      · apply onbPart_inner' hK  --g₀ g₂ h
-        contrapose! h
-        simp only [Nat.succ_eq_add_one, Prod.mk.injEq, Fin.mk.injEq] at h
-        refine Prod.ext_iff.mpr ⟨h.1, Fin.eq_of_val_eq h.2⟩
 
 
 theorem Ud_orthonormal₂ {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) :
+    {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+  (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
     Orthonormal R fun y ↦
-      WithLp.toLp 2 fun i ↦ if hy : y.2 = 0 then stinespringOp K i y.1 else onbPart hK y hy i := by
-    have := Ud_orthonormal₁ hK
+      WithLp.toLp 2 fun i ↦ if hy : y.2 = z then stinespringOp K i y.1 else onbPart hK y hy i := by
+    have := Ud_orthonormal₁ hK z
     constructor
     · intro i
       have := this.1 i
@@ -477,27 +360,6 @@ theorem Ud_orthonormal₂ {R : Type*} [RCLike R]
       generalize onbPart hK = β
       split_ifs at * with g₀ g₁ <;> rfl
 
-
-theorem Ud_orthonormal₂' {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-  (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    Orthonormal R fun y : Fin m × Fin r.succ ↦
-      WithLp.toLp 2 fun i ↦ if hy : y.2 = Fin.last _ then stinespringOp K i y.1
-        else onbPart' hK ⟨y.1, ⟨y.2, Fin.val_lt_last hy⟩⟩ i := by
-    have := Ud_orthonormal₁' hK
-    constructor
-    · intro i
-      have := this.1 i
-      rw [← this]
-      congr
-      ext y
-      simp
-      split_ifs with g₀ <;> simp
-    · intro i j hij
-      have := this.2 hij
-      simp only at this ⊢
-      rw [← this]
-      split_ifs at * with g₀ g₁ <;> rfl
 
 
 lemma RCLike.norm_eq {R : Type*} [RCLike R] (γ : R) :
@@ -541,33 +403,23 @@ theorem unitary_of_orthonormal {R : Type*} [RCLike R]
       nth_rw 1 [mul_comm]
 
 lemma Ud_unitaryT {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    (Ud hK)ᵀ ∈ unitary _ := by
-  have H₀ := unitary_of_orthonormal (Ud hK)ᵀ
-    <| Ud_orthonormal₂ hK
+    {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
+    (Ud hK z)ᵀ ∈ unitary _ := by
+  have H₀ := unitary_of_orthonormal (Ud hK z)ᵀ
+    <| Ud_orthonormal₂ hK z
   constructor
   · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp H₀
   · exact H₀
 
-lemma Ud_unitaryT' {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    (Ud' hK)ᵀ ∈ unitary _ := by
-  have H₀ := unitary_of_orthonormal (Ud' hK)ᵀ
-    <| Ud_orthonormal₂' hK
-  constructor
-  · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp H₀
-  · exact H₀
 
 /-- Well will you look at that... -/
 lemma Ud_unitary {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    (Ud hK) ∈ unitary _ := by
-     have := Ud_unitaryT hK
-     generalize Ud hK = U at *
-     clear hK K
+    {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
+    (Ud hK z) ∈ unitary _ := by
+     have := Ud_unitaryT hK z
+     generalize Ud hK z = U at *
      have :  star U * U = 1 := by
        have := this.2
        have : (Uᵀ * star Uᵀ)ᵀ = 1ᵀ := transpose_inj.mpr this
@@ -580,24 +432,6 @@ lemma Ud_unitary {R : Type*} [RCLike R]
      · exact this
      · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp this
 
-lemma Ud_unitary' {R : Type*} [RCLike R]
-    {m r : ℕ} {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    (Ud' hK) ∈ unitary _ := by
-     have := Ud_unitaryT' hK
-     generalize Ud' hK = U at *
-     clear hK K
-     have :  star U * U = 1 := by
-       have := this.2
-       have : (Uᵀ * star Uᵀ)ᵀ = 1ᵀ := transpose_inj.mpr this
-       simp at this
-       have : (star Uᵀ)ᵀ = star U := by
-         exact Eq.symm (Matrix.ext fun i ↦ congrFun rfl)
-       rw [← this]
-       tauto
-     constructor
-     · exact this
-     · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp this
 
 
 open Kronecker TensorProduct
@@ -609,10 +443,6 @@ def e₀Xe₀ {R : Type*} [RCLike R] {w : Type*} [Fintype w] [DecidableEq w] [Ze
     Matrix w w R :=
     fun x y => if (x,y) = (0,0) then 1 else 0
 
-/-- Also known as e₀Xe₀' I guess. -/
-def eXe {R : Type*} [RCLike R] {w : ℕ} :
-    Matrix (Fin w.succ) (Fin w.succ) R :=
-    fun x y => if (x,y) = (Fin.last w,Fin.last w) then 1 else 0
 
 
 example {w : ℕ} : e₀Xe₀ (w := Fin w.succ) (R := ℂ) = single 0 0 1 := by
@@ -645,42 +475,43 @@ lemma tr₂_e₀Xe₀ {R : Type*} [RCLike R]
 
 /-- The best version. -/
 noncomputable def stinespringUnitaryForm {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r)
     (ρ : Matrix (Fin m) (Fin m) R) :
     (Matrix (Fin m) (Fin m) R) :=
-    let U := Ud hK
-    tr₂ (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+    let U := Ud hK z
+    tr₂ (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ)
 
-noncomputable def stinespringUnitaryForm' {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-    (ρ : Matrix (Fin m) (Fin m) R) :
-    (Matrix (Fin m) (Fin m) R) :=
-    let U := Ud' hK
-    tr₂ (U * (ρ ⊗ₖ eXe) * Uᴴ)
+-- noncomputable def stinespringUnitaryForm' {R : Type*} [RCLike R] {m r : ℕ}
+--     {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
+--     (hK : ∑ i, (K i)ᴴ * K i = 1)
+--     (ρ : Matrix (Fin m) (Fin m) R) :
+--     (Matrix (Fin m) (Fin m) R) :=
+--     let U := Ud' hK
+--     tr₂ (U * (ρ ⊗ₖ eXe) * Uᴴ)
 
 noncomputable def stinespringUnitaryForm_e {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) (e : Matrix (Fin (r + 1)) (Fin (r + 1)) R)
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) (e : Matrix (Fin r) (Fin r) R)
     --(he : e.trace = 1)
     (ρ : Matrix (Fin m) (Fin m) R) :
     (Matrix (Fin m) (Fin m) R) :=
-    let U := Ud hK
+    let U := Ud hK z
     tr₂ (U * (ρ ⊗ₖ e) * Uᴴ)
 
 /-- Unitary dilation, processing a whole word -/
 noncomputable def UdWord {α : Type*} {R : Type*} [RCLike R]
   {n q r : ℕ}
-  {𝓚 : α → Fin r.succ → Matrix (Fin q) (Fin q) R}
+  {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R}
     (hK : ∀ s, ∑ i, (𝓚 s i)ᴴ * 𝓚 s i = (1 : Matrix (Fin q) (Fin q) R))
+    (z : Fin r)
    (word : Fin n → α)
-  (ρ : Matrix (Fin q × Fin r.succ) (Fin q × Fin r.succ) R) :
-  Matrix (Fin q × Fin r.succ) (Fin q × Fin r.succ) R := match n with
+  (ρ : Matrix (Fin q × Fin r) (Fin q × Fin r) R) :
+  Matrix (Fin q × Fin r) (Fin q × Fin r) R := match n with
 | 0 => ρ
 | Nat.succ m =>
-        let U := Ud (hK (word (Fin.last m)))
-        U * (UdWord hK (Fin.init word) ρ) * Uᴴ
+        let U := Ud (hK (word (Fin.last m))) z
+        U * (UdWord hK z (Fin.init word) ρ) * Uᴴ
 -- can generalize to arbitrary matrix in place of `Ud`
 
 
@@ -753,24 +584,18 @@ theorem heisenberg_schrõdinger {R : Type*} [RCLike R]
 
 
 noncomputable def stinespringGeneralForm {R : Type*} [RCLike R]
-    {m r : Type*} [Fintype r] [DecidableEq r] [Zero r] [Fintype m] [DecidableEq m]
-    (K : r → Matrix m m R)
+    {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
+    (K : r → Matrix m m R) (z : r)
     (M : Matrix (m × r) (m × r) R) :=
-    let U := dilation K M
-    fun ρ => tr₂ (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
+    let U := dilation K z M
+    fun ρ => tr₂ (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ)
 
-noncomputable def stinespringGeneralForm' {R : Type*} [RCLike R]
-    {r : ℕ} {m : Type*} [Fintype m] [DecidableEq m]
-    (K : Fin r.succ → Matrix m m R)
-    (M : Matrix (m × Fin r.succ) (m × Fin r.succ) R) :=
-    let U := dilation' K M
-    fun ρ => tr₂ (U * (ρ ⊗ₖ eXe) * Uᴴ)
 
 noncomputable def stinespringGeneralForm_e {R : Type*} [RCLike R]
-    {m r : Type*} [Fintype r] [DecidableEq r] [Zero r] [Fintype m] [DecidableEq m]
-    (K : r → Matrix m m R) (e : Matrix r r R)
+    {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
+    (K : r → Matrix m m R) (z : r) (e : Matrix r r R)
     (M : Matrix (m × r) (m × r) R) :=
-    let U := dilation K M
+    let U := dilation K z M
     fun ρ => tr₂ (U * (ρ ⊗ₖ e) * Uᴴ)
 
 
@@ -780,10 +605,10 @@ then we do get
 stinespringUnitaryForm hK
 -/
 theorem unitaryForm_of_general {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    stinespringGeneralForm K (Ud hK) =
-    stinespringUnitaryForm hK := by
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
+    stinespringGeneralForm K z (Ud hK z) =
+    stinespringUnitaryForm hK z := by
   unfold
     stinespringUnitaryForm tr₂ Ud
     stinespringGeneralForm dilation tr₂
@@ -797,7 +622,7 @@ theorem unitaryForm_of_general {R : Type*} [RCLike R] {m r : ℕ}
   congr
   ext e
   repeat rw [mul_apply]
-  simp only [Nat.succ_eq_add_one, kroneckerMap_apply, ite_mul, dite_mul,
+  simp only [kroneckerMap_apply, ite_mul, dite_mul,
     conjTranspose_apply, star_def]
   repeat rw [Fintype.sum_prod_type]
   congr
@@ -811,43 +636,12 @@ theorem unitaryForm_of_general {R : Type*} [RCLike R] {m r : ℕ}
     simp at h ⊢
   · split_ifs with g₀ <;> rfl
 
-theorem unitaryForm_of_general' {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    stinespringGeneralForm' K (Ud' hK) =
-    stinespringUnitaryForm' hK := by
-  unfold
-    stinespringUnitaryForm' tr₂ Ud'
-    stinespringGeneralForm' dilation' tr₂
-  ext a b
-  congr
-  ext c
-  repeat rw [mul_apply]
-  repeat rw [Fintype.sum_prod_type]
-  congr
-  ext d
-  congr
-  ext e
-  repeat rw [mul_apply]
-  simp only [Nat.succ_eq_add_one, kroneckerMap_apply, ite_mul, dite_mul,
-    conjTranspose_apply, star_def]
-  repeat rw [Fintype.sum_prod_type]
-  congr
-  · ext f
-    congr
-    ext g
-    simp only [ite_eq_right_iff, left_eq_dite_iff, mul_eq_mul_right_iff, mul_eq_zero]
-    intro hg
-    subst g
-    intro h
-    simp at h ⊢
-  · split_ifs with g₀ <;> rfl
 
 theorem unitaryForm_of_general_e {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) (e : Matrix (Fin (r + 1)) (Fin (r + 1)) R) :
-    stinespringGeneralForm_e K e (Ud hK) =
-    stinespringUnitaryForm_e hK e := by
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) (e : Matrix (Fin r) (Fin r) R) :
+    stinespringGeneralForm_e K z e (Ud hK z) =
+    stinespringUnitaryForm_e hK z e := by
   unfold
     stinespringUnitaryForm_e tr₂ Ud
     stinespringGeneralForm_e dilation tr₂
@@ -861,7 +655,7 @@ theorem unitaryForm_of_general_e {R : Type*} [RCLike R] {m r : ℕ}
   congr
   ext e
   repeat rw [mul_apply]
-  simp only [Nat.succ_eq_add_one, kroneckerMap_apply, ite_mul, dite_mul,
+  simp only [kroneckerMap_apply, ite_mul, dite_mul,
     conjTranspose_apply, star_def]
   repeat rw [Fintype.sum_prod_type]
   congr
@@ -884,11 +678,16 @@ Uses `Fin` types because of the use of
 `Fin.sum_univ_succAbove` in the proof.
 -/
 lemma stinespringGeneralForm_works {R : Type*} [RCLike R] {m r : ℕ}
-    (K : Fin r.succ → Matrix (Fin m) (Fin m) R)
-    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) R) :
-    stinespringGeneralForm K M = krausApply K := by
+    (K : Fin r → Matrix (Fin m) (Fin m) R) (z : Fin r)
+    (M : Matrix (Fin m × Fin r) (Fin m × Fin r) R) :
+    stinespringGeneralForm K z M = krausApply K := by
+    have ⟨r₀,hr₀⟩ : ∃ r₀ : ℕ, r = r₀.succ := by
+      refine Nat.exists_eq_succ_of_ne_zero ?_
+      have := z.2
+      omega
+    subst hr₀
     unfold stinespringGeneralForm dilation
-        krausApply tr₂ e₀Xe₀ stinespringOp single
+        krausApply tr₂ stinespringOp single
     ext a b
     rw [sum_apply]
     congr
@@ -898,91 +697,14 @@ lemma stinespringGeneralForm_works {R : Type*} [RCLike R] {m r : ℕ}
     congr
     ext d
     rw [mul_apply]
-    simp only [Nat.succ_eq_add_one, Fin.isValue, Prod.mk.injEq,
-      conjTranspose_apply, star_def]
-    rw [Finset.sum_fn, Fin.sum_univ_succAbove _ 0, mul_apply, Fintype.sum_prod_type]
+    simp only [Nat.succ_eq_add_one, Fin.isValue, conjTranspose_apply, star_def]
+    rw [Finset.sum_fn, Fin.sum_univ_succAbove _ z, mul_apply, Fintype.sum_prod_type]
     simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
       mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
-      add_eq_left]
+      Finset.sum_ite_eq, Fin.succAbove_ne, add_eq_left]
     rw [Finset.sum_eq_zero]
     simp_rw [mul_apply]
     simp
-
-/-- April 7: it works to not use e₀Xe₀ but "Fin.last" instead.
-`Fin.predAbove` would be the general construction to use an
-arbitrary basis vector (from the standard basis)
-instead of `0` or `Fin.last n` except that for some reason it
-does not permit `Fin.last n`.
--/
-lemma stinespringGeneralForm_works' {R : Type*} [RCLike R] {m r : ℕ}
-    (K : Fin r.succ → Matrix (Fin m) (Fin m) R)
-    (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) R) :
-    stinespringGeneralForm' K M = krausApply K := by
-    unfold stinespringGeneralForm' dilation'
-        krausApply tr₂ eXe stinespringOp single
-    ext a b
-    rw [sum_apply]
-    congr
-    ext c
-    repeat rw [mul_apply]
-    rw [Fintype.sum_prod_type]
-    congr
-    ext d
-    rw [mul_apply]
-    simp only [Nat.succ_eq_add_one, Fin.isValue, Prod.mk.injEq,
-      conjTranspose_apply, star_def]
-    rw [Finset.sum_fn, Fin.sum_univ_succAbove _ (Fin.last _), mul_apply, Fintype.sum_prod_type]
-    simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
-      mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
-      add_eq_left]
-    rw [Finset.sum_eq_zero]
-    simp_rw [mul_apply]
-    simp
-
-/- To see how much we can replace e₀Xe₀ by a general e,
-this comes up.
-Maybe instead generalize e₀Xe₀ with 0 replaced by an arbitrary
-element.
-April 7
-But it has to be e₀Xe₀ because K is in the 0th position,
-so the UCNC diagram is okay and the following result fails.
- -/
--- lemma stinespringGeneralForm_works_e {R : Type*} [RCLike R] {m r : ℕ}
---     (K : Fin r.succ → Matrix (Fin m) (Fin m) R)
---     (z : Fin (r + 1))
---     (M : Matrix (Fin m × Fin r.succ) (Fin m × Fin r.succ) R) :
---     stinespringGeneralForm_e K (eXe z) M = krausApply K := by
---     unfold stinespringGeneralForm_e
---     simp
---     unfold dilation
---     unfold eXe
---     simp
---     apply funext
---     intro ρ
---     unfold stinespringOp
---     simp [kroneckerMap]
---     unfold krausApply tr₂ single
---     ext a b
---     rw [sum_apply]
---     congr
---     ext c
---     repeat rw [mul_apply]
---     rw [Fintype.sum_prod_type]
---     congr
---     ext d
---     rw [mul_apply]
---     simp only [Nat.succ_eq_add_one, Fin.isValue, Prod.mk.injEq,
---       conjTranspose_apply, star_def]
---     rw [Finset.sum_fn, Fin.sum_univ_succAbove _ 0, mul_apply, Fintype.sum_prod_type]
---     simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
---       mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
---       add_eq_left]
---     rw [Finset.sum_eq_zero]
---     simp_rw [mul_apply]
---     simp
---     sorry
---     sorry
-
 
 
 /--
@@ -991,20 +713,16 @@ Behold...
 
 Notice that unitarity is a side property, it is not why
 the Stinespring form works.
+
+Here `z` is the coordinate used for the ancilla.
 -/
 lemma stinespringUnitaryForm_works {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    stinespringUnitaryForm hK = krausApply K := by
-  rw [← stinespringGeneralForm_works K (Ud hK) ]
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
+    stinespringUnitaryForm hK z = krausApply K := by
+  rw [← stinespringGeneralForm_works K z (Ud hK z) ]
   rw [unitaryForm_of_general]
 
-lemma stinespringUnitaryForm_works' {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) :
-    stinespringUnitaryForm' hK = krausApply K := by
-  rw [← stinespringGeneralForm_works' K (Ud' hK) ]
-  rw [unitaryForm_of_general']
 
 
 /- In order to prove `UdWord_eq`, this is the key. -/
@@ -1366,21 +1084,19 @@ To explain the diagram in UCNC paper...
 or it contradicts the diagram by looking at A^4?
 -/
 example {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m.succ) (Fin m.succ) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
-     (ρ : Matrix (Fin m.succ) (Fin m.succ) R)
-     (α : Matrix (Fin m.succ) (Fin m.succ) R)
-     (β : Matrix (Fin r.succ) (Fin r.succ) R)
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r)
+     (ρ : Matrix (Fin m) (Fin m) R)
+     (α : Matrix (Fin m) (Fin m) R)
+     (β : Matrix (Fin r) (Fin r) R)
      (hβ : β.trace = 1)
-     (h : (Ud hK) * (ρ ⊗ₖ e₀Xe₀) * (Ud hK)ᴴ = α ⊗ₖ β)
+     (h : (Ud hK z) * (ρ ⊗ₖ (single z z 1)) * (Ud hK z)ᴴ = α ⊗ₖ β)
     : krausApply K ρ = α := by
-    -- check if it generalizes beyond e₀Xe₀?
     rw [← stinespringUnitaryForm_works hK]
     unfold stinespringUnitaryForm
     simp only [Nat.succ_eq_add_one]
     rw [h]
     rw [partialTrace_tensor]
-    simp only [Nat.succ_eq_add_one]
     rw [hβ]
     simp
 
@@ -1389,22 +1105,23 @@ example {R : Type*} [RCLike R] {m r : ℕ}
 -- set_option maxHeartbeats 0 in
 lemma UdWord_eq {α : Type*} {R : Type*} [RCLike R]
   {n q r : ℕ} (word : Fin n → α)
-  (𝓚 : α → Fin r.succ → Matrix (Fin q) (Fin q) R)
+  (𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R)
     (hK : ∀ s, ∑ i, (𝓚 s i)ᴴ * 𝓚 s i = (1 : Matrix (Fin q) (Fin q) R))
+    (z : Fin r)
   (ρ : Matrix (Fin q) (Fin q) R) :
     krausApplyWord word 𝓚 ρ =
-    tr₂ (UdWord hK word (ρ ⊗ₖ e₀Xe₀)) := by
+    tr₂ (UdWord hK z word (ρ ⊗ₖ (single z z 1))) := by
     induction n with
     | zero =>
-        have : (UdWord hK word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ e₀Xe₀))
-            = (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ e₀Xe₀) := by rfl
+        have : (UdWord hK z word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1)))
+            = (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1)) := by rfl
         rw [this]
-        unfold krausApplyWord tr₂ e₀Xe₀
+        unfold krausApplyWord tr₂ single
         simp
     | succ n ih =>
-        have : (UdWord hK word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ e₀Xe₀)) =
-            let U := Ud (hK (word (Fin.last n)))
-            U * (UdWord hK (Fin.init word) (ρ ⊗ₖ e₀Xe₀)) * Uᴴ
+        have : (UdWord hK z word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1))) =
+            let U := Ud (hK (word (Fin.last n))) z
+            U * (UdWord hK z (Fin.init word) (ρ ⊗ₖ (single z z 1))) * Uᴴ
             := by rfl
         rw [this]
         specialize ih <| Fin.init word
@@ -1413,32 +1130,30 @@ lemma UdWord_eq {α : Type*} {R : Type*} [RCLike R]
         have := @stinespringUnitaryForm_works R _ q r (𝓚 (word (Fin.last n)))
             (hK (word (Fin.last n)))
         rw [← this]
-        unfold stinespringUnitaryForm
-        simp only [Nat.succ_eq_add_one]
         rw [ih]
-        set U := Ud (hK (word (Fin.last n)))
-        change tr₂ (U * (tr₂ (UdWord hK (Fin.init word) (ρ ⊗ₖ e₀Xe₀))) ⊗ₖ e₀Xe₀ * Uᴴ) =
-               tr₂ (U *       UdWord hK (Fin.init word) (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
-        set V := UdWord hK (Fin.init word)
-        change tr₂ (U * tr₂ (V (ρ ⊗ₖ e₀Xe₀)) ⊗ₖ e₀Xe₀ * Uᴴ) =
-               tr₂ (U *       V (ρ ⊗ₖ e₀Xe₀) * Uᴴ)
-        set τ :=  V (ρ ⊗ₖ e₀Xe₀)
-        set σ := (e₀Xe₀ : Matrix (Fin (r+1)) (Fin (r+1)) R)
+        set U := Ud (hK (word (Fin.last n))) z
+        change tr₂ (U * (tr₂ (UdWord hK z (Fin.init word)
+          (ρ ⊗ₖ (single z z 1)))) ⊗ₖ (single z z 1) * Uᴴ) =
+               tr₂ (U *       UdWord hK z (Fin.init word) (ρ ⊗ₖ (single z z 1)) * Uᴴ)
+        set V := UdWord hK z (Fin.init word)
+        change tr₂ (U * tr₂ (V (ρ ⊗ₖ (single z z 1))) ⊗ₖ (single z z 1) * Uᴴ) =
+               tr₂ (U *       V (ρ ⊗ₖ (single z z 1)) * Uᴴ)
+        set τ :=  V (ρ ⊗ₖ (single z z 1))
+        set σ := ((single z z 1) : Matrix (Fin r) (Fin r) R)
         change tr₂ (U * ((tr₂ τ) ⊗ₖ σ) * Uᴴ) =
                tr₂ (U *     τ          * Uᴴ)
         have : tr₂ (U *     τ          * Uᴴ) = tr₂ (Uᴴ * U * τ) := by
             sorry
         -- if (partial) trace_cycle holds it would suffice that
-        have : tr₂ ((tr₂ τ) ⊗ₖ (e₀Xe₀ : Matrix (Fin (r+1)) (Fin (r+1)) R)) = (tr₂ τ) := by
+        have : tr₂ ((tr₂ τ) ⊗ₖ ((single z z 1) : Matrix (Fin r) (Fin r) R)) = (tr₂ τ) := by
             generalize tr₂ τ = α
-            unfold tr₂ e₀Xe₀
+            unfold tr₂ single
             simp
 
         -- have := @partialTrace_tensor
         -- have : tr₂ (τ ⊗ₖ e₀Xe₀) = τ := by
         --     sorry
         -- rw [this]
-        simp
 
         -- nth_rw 1 [UdWord_eq₀]
 
@@ -1454,22 +1169,22 @@ lemma trace_tr₂ {R : Type*} [RCLike R] {m n : ℕ}
 
 example {R : Type*} [RCLike R] {m r : ℕ}
     {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1)
+    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r.succ)
     (ρ : Matrix (Fin m) (Fin m) R)
     (hρ : ρ.trace = 1) (i : Fin m)
     (hρ₀ : 0 ≤ ρ)
     : 0 = 0 := by
   let P := @POVM_PMF R _ m ρ hρ hρ₀
-  let D := stinespringUnitaryForm hK ρ
+  let D := stinespringUnitaryForm hK z ρ
   have := RCLike.re (pureState_C (e i) * ρ).trace
-  have : RCLike.re (pureState_C (e i) * (stinespringUnitaryForm hK ρ)).trace
+  have : RCLike.re (pureState_C (e i) * (stinespringUnitaryForm hK z ρ)).trace
     = RCLike.re (pureState_C (e i) * (krausApply K ρ)).trace := by
     rw [stinespringUnitaryForm_works]
   unfold stinespringUnitaryForm at this
 --   simp at this
   have h₀ := @trace_tr₂ R _ m r.succ
-    (let U := Ud hK
-    (U * (ρ ⊗ₖ e₀Xe₀) * Uᴴ))
+    (let U := Ud hK z
+    (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ))
   simp at h₀
 --   have := @partialTrace_tensor
   -- need that trace_mul type formula?
