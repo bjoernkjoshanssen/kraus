@@ -23,7 +23,233 @@ noncomputable def stinespringDilation {R : Type*} [Ring R] [StarRing R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
     (K : r → Matrix m m R)
     (ρ : Matrix m m R) :=
-  let V := stinespringOp K; V * ρ * Vᴴ
+  let V := stinespringOp K;
+  V * ρ * Vᴴ
+
+noncomputable def jlDilation {m r : ℕ}
+    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :=
+  let V := stinespringOp K;
+  (1 ⊗ₖ single 0 0 1) * (V * ρ * Vᴴ) * (1 ⊗ₖ single 0 0 1)ᴴ
+
+noncomputable def jDilation {m r : ℕ}
+    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :=
+  let V := stinespringOp K
+  let IHPiG := ((1 : Matrix (Fin m) (Fin m) ℂ)
+    ⊗ₖ (1 - (single (Fin.last r) (Fin.last r) 1)))
+  IHPiG * (V * ρ * Vᴴ) * IHPiGᴴ
+
+lemma test'
+    (K : Fin 2 → Matrix (Fin 1) (Fin 1) ℂ)
+    (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
+    tr₂ (jlDilation K ρ)
+    = K 0 * ρ * (K 0)ᴴ := by
+  simp [kroneckerMap, single, stinespringOp]
+  unfold tr₂
+  ext i j
+  simp [jlDilation, stinespringOp]
+  rw [mul_apply]
+  rw [mul_apply]
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [mul_apply]
+  rw [mul_apply]
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [mul_apply]
+  rw [mul_apply]
+  simp
+  fin_cases i
+  fin_cases j
+  simp
+  rw [mul_apply]
+  simp
+  ring_nf
+  conv =>
+    left
+    left
+    left
+    left
+    left
+    change 1
+  ring_nf
+  conv =>
+    left
+    right
+    right
+    change 1
+  ring_nf
+  simp
+
+lemma test₃
+    (K : Fin 3 → Matrix (Fin 1) (Fin 1) ℂ)
+    (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
+    tr₂ (jDilation K ρ)
+    = K 0 * ρ * (K 0)ᴴ + K 1 * ρ * (K 1)ᴴ := by
+  unfold jDilation
+  simp
+  simp [kroneckerMap, single, stinespringOp]
+  unfold tr₂
+  ext i j
+  simp [jlDilation, stinespringOp]
+  rw [mul_apply]
+  rw [mul_apply]
+  rw [Fin.sum_univ_three]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  rw [mul_apply]
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [mul_apply]
+  rw [mul_apply]
+  simp
+  fin_cases i
+  fin_cases j
+  simp
+  rw [mul_apply]
+  simp
+  ring_nf
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  simp
+  rw [mul_apply]
+  simp
+  ring_nf
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  simp
+  ring_nf
+  conv =>
+    left
+    left
+    left
+    right
+    change star 1
+  simp
+  conv =>
+    left
+    left
+    right
+    left
+    change star 1
+  simp
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  simp
+  rw [mul_apply]
+  simp
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [mul_apply]
+  simp
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [mul_apply]
+  simp
+  rw [Fintype.sum_prod_type]
+  simp
+  rw [Fin.sum_univ_three]
+  simp
+  generalize K 0 0 0 = K₀
+  generalize K 1 0 0 = K₁
+  generalize ρ 0 0 = R
+  left
+  ring_nf
+
+
+lemma jl {m r : ℕ}
+    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+    (ρ : Matrix (Fin m) (Fin m) ℂ) :
+    let K' : Fin r → Matrix (Fin m) (Fin m) ℂ :=
+        fun i => K ⟨i.1, by omega⟩
+    tr₂ (jlDilation K ρ) = krausApply K' ρ := by
+  let V := stinespringOp K;
+  let W := ((1 : Matrix (Fin m) (Fin m) ℂ) ⊗ₖ single (0 : Fin r.succ) (0 : Fin r.succ) 1) * V
+  by_cases hm : m = 0
+  · subst m
+    ext i j
+    have := i.2
+    simp at this
+  by_cases hm : m = 1
+  · sorry
+  by_cases hr : r = 0
+  · subst r
+    unfold jlDilation stinespringOp krausApply tr₂ single
+    simp
+    generalize K 0 = κ
+    ext i j
+    have (x : Fin m × Fin 1) : (0 = x.2) = True := sorry
+    simp_rw [this]
+    simp
+    have (x : Fin 1) : (0 = x) = True := sorry
+    simp_rw [this]
+    simp [kroneckerMap]
+    repeat rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    simp
+    rw [mul_apply]
+    congr
+    ext x
+    repeat rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    simp
+    repeat rw [mul_apply]
+    have : (@Prod.fst (Fin m) (Fin 1) (i, 0) : Fin m) = i := sorry
+    rw [this]
+    have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+    rw [this]
+    have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+    rw [this]
+    have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+    by_cases H : x = j
+    subst x
+    simp [conjTranspose, Matrix.map]
+    by_cases H : m = 1
+    subst m
+    simp
+    fin_cases i
+    fin_cases j
+    simp
+    rw [mul_apply]
+    simp
+    rw [mul_apply]
+    simp
+    generalize κ 0 0 = A
+    generalize ρ 0 0 = B
+    ring_nf
+    conv =>
+        left
+        left
+        left
+        left
+        change 1
+    simp
+    sorry
+    sorry
+  sorry
+  -- let W := ((1 : Matrix (Fin m) (Fin m) ℂ) ⊗ₖ single (0 : Fin r.succ) (0 : Fin r.succ) 1) * V
+  -- let output := W * ρ * Wᴴ
 
 noncomputable def stinespringForm {R : Type*} [Ring R] [StarRing R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
