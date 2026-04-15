@@ -15,11 +15,11 @@ open Matrix RCLike
 theorem stinespringForm_eq {R : Type*} [RCLike R] {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) R)
     (ρ : Matrix (Fin m) (Fin m) R) :
-    partialTraceRight (stinespringDilation K ρ) = krausApply K ρ := by
+    tr₂ (stinespringDilation K ρ) = krausApply K ρ := by
   unfold krausApply
   ext u v
   repeat rw [Finset.sum_apply]
-  simp only [partialTraceRight, stinespringDilation, stinespringOp, Fin.isValue]
+  simp only [tr₂, stinespringDilation, stinespringOp, Fin.isValue]
   congr
   ext w
   simp only [kroneckerMap, single, Fin.isValue, of_apply,
@@ -43,7 +43,7 @@ theorem heisenberg_schrõdinger_picture {m r : ℕ}
   -- let K' := fun i x y => star <| K i y x
   -- let U := stinespringOp K'
   -- let V := stinespringOp K
-  -- Uᴴ * (ρ ⊗ₖ 1) * U = partialTraceRight (V * ρ * Vᴴ)
+  -- Uᴴ * (ρ ⊗ₖ 1) * U = tr₂ (V * ρ * Vᴴ)
     0 = 0 := by
 
     have h₀ := @tracefree_version ℂ _ (Fin m) (Fin r.succ) _ _ _ _ _ K ρ
@@ -55,10 +55,10 @@ theorem heisenberg_schrõdinger_picture {m r : ℕ}
 
 
 
-lemma partialTraceRight_one_of_unital {m r : ℕ}
+lemma tr₂_one_of_unital {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) ℂ)
     (hu : unital K) :
-    partialTraceRight ((stinespringOp K) * (stinespringOp K)ᴴ) = 1 := by
+    tr₂ ((stinespringOp K) * (stinespringOp K)ᴴ) = 1 := by
       have := @stinespringForm_eq _ _ m r K 1
       simp only [stinespringDilation, krausApply, Matrix.mul_one] at this
       rw [this]
@@ -67,7 +67,7 @@ lemma partialTraceRight_one_of_unital {m r : ℕ}
 
   -- PROOF THAT WORKS IN 4.29.0-rc6 TOO:
   -- ext u v
-  -- simp only [partialTraceRight, stinespringDilation, V, kronecker, Fin.isValue, krausApply]
+  -- simp only [tr₂, stinespringDilation, V, kronecker, Fin.isValue, krausApply]
   -- have :  (∑ i, K i * ρ * (K i)ᴴ) u v =  ∑ i, (K i * ρ * (K i)ᴴ) u v := by
   --   exact sum_apply u v Finset.univ fun c ↦ K c * ρ * (K c)ᴴ
   -- rw [this]
