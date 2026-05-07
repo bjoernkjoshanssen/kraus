@@ -26,157 +26,157 @@ noncomputable def stinespringDilation {R : Type*} [Ring R] [StarRing R]
   let V := stinespringOp K;
   V * ρ * Vᴴ
 
-noncomputable def jlDilation {m r : ℕ}
-    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
-    (ρ : Matrix (Fin m) (Fin m) ℂ) :=
-  let V := stinespringOp K;
-  (1 ⊗ₖ single 0 0 1) * (V * ρ * Vᴴ) * (1 ⊗ₖ single 0 0 1)ᴴ
+-- noncomputable def jlDilation {m r : ℕ}
+--     (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+--     (ρ : Matrix (Fin m) (Fin m) ℂ) :=
+--   let V := stinespringOp K;
+--   (1 ⊗ₖ single 0 0 1) * (V * ρ * Vᴴ) * (1 ⊗ₖ single 0 0 1)ᴴ
 
-noncomputable def jDilation {m r : ℕ}
-    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
-    (ρ : Matrix (Fin m) (Fin m) ℂ) :=
-  let V := stinespringOp K
-  let IHPiG := ((1 : Matrix (Fin m) (Fin m) ℂ)
-    ⊗ₖ (1 - (single (Fin.last r) (Fin.last r) 1)))
-  IHPiG * (V * ρ * Vᴴ) * IHPiGᴴ
-
-
-lemma jDilation₃
-    (K : Fin 3 → Matrix (Fin 1) (Fin 1) ℂ)
-    (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
-    tr₂ (jDilation K ρ)
-    = K 0 * ρ * (K 0)ᴴ + K 1 * ρ * (K 1)ᴴ := by
-  unfold jDilation
-  simp
-  simp [kroneckerMap, single, stinespringOp]
-  unfold tr₂
-  ext i j
-  simp [jlDilation, stinespringOp]
-  rw [mul_apply]
-  rw [mul_apply]
-  rw [Fin.sum_univ_three]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  rw [mul_apply]
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [mul_apply]
-  rw [mul_apply]
-  simp
-  fin_cases i
-  fin_cases j
-  simp
-  rw [mul_apply]
-  simp
-  ring_nf
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  simp
-  rw [mul_apply]
-  simp
-  ring_nf
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  simp
-  ring_nf
-  conv =>
-    left
-    left
-    left
-    right
-    change star 1
-  simp
-  conv =>
-    left
-    left
-    right
-    left
-    change star 1
-  simp
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  simp
-  rw [mul_apply]
-  simp
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [mul_apply]
-  simp
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [mul_apply]
-  simp
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [Fin.sum_univ_three]
-  simp
-  generalize K 0 0 0 = K₀
-  generalize K 1 0 0 = K₁
-  generalize ρ 0 0 = R
-  left
-  ring_nf
+-- noncomputable def jDilation {m r : ℕ}
+--     (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+--     (ρ : Matrix (Fin m) (Fin m) ℂ) :=
+--   let V := stinespringOp K
+--   let IHPiG := ((1 : Matrix (Fin m) (Fin m) ℂ)
+--     ⊗ₖ (1 - (single (Fin.last r) (Fin.last r) 1)))
+--   IHPiG * (V * ρ * Vᴴ) * IHPiGᴴ
 
 
-lemma jDilation₂
-    (K : Fin 2 → Matrix (Fin 1) (Fin 1) ℂ)
-    (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
-    tr₂ (jlDilation K ρ)
-    = K 0 * ρ * (K 0)ᴴ := by
-  simp [kroneckerMap, single, stinespringOp]
-  unfold tr₂
-  ext i j
-  simp [jlDilation, stinespringOp]
-  rw [mul_apply]
-  rw [mul_apply]
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [mul_apply]
-  rw [mul_apply]
-  rw [Fintype.sum_prod_type]
-  simp
-  rw [mul_apply]
-  rw [mul_apply]
-  simp
-  fin_cases i
-  fin_cases j
-  rw [mul_apply]
-  simp
-  ring_nf
-  conv =>
-    left
-    left
-    left
-    left
-    left
-    change 1
-  ring_nf
-  conv =>
-    left
-    right
-    right
-    change 1
-  ring_nf
-  simp
+-- lemma jDilation₃
+--     (K : Fin 3 → Matrix (Fin 1) (Fin 1) ℂ)
+--     (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
+--     tr₂ (jDilation K ρ)
+--     = K 0 * ρ * (K 0)ᴴ + K 1 * ρ * (K 1)ᴴ := by
+--   unfold jDilation
+--   simp
+--   simp [kroneckerMap, single, stinespringOp]
+--   unfold tr₂
+--   ext i j
+--   simp [jlDilation, stinespringOp]
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   simp
+--   fin_cases i
+--   fin_cases j
+--   simp
+--   rw [mul_apply]
+--   simp
+--   ring_nf
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   ring_nf
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   ring_nf
+--   conv =>
+--     left
+--     left
+--     left
+--     right
+--     change star 1
+--   simp
+--   conv =>
+--     left
+--     left
+--     right
+--     left
+--     change star 1
+--   simp
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [mul_apply]
+--   simp
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [Fin.sum_univ_three]
+--   simp
+--   generalize K 0 0 0 = K₀
+--   generalize K 1 0 0 = K₁
+--   generalize ρ 0 0 = R
+--   left
+--   ring_nf
+
+
+-- lemma jDilation₂
+--     (K : Fin 2 → Matrix (Fin 1) (Fin 1) ℂ)
+--     (ρ : Matrix (Fin 1) (Fin 1) ℂ) :
+--     tr₂ (jlDilation K ρ)
+--     = K 0 * ρ * (K 0)ᴴ := by
+--   simp [kroneckerMap, single, stinespringOp]
+--   unfold tr₂
+--   ext i j
+--   simp [jlDilation, stinespringOp]
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   rw [Fintype.sum_prod_type]
+--   simp
+--   rw [mul_apply]
+--   rw [mul_apply]
+--   simp
+--   fin_cases i
+--   fin_cases j
+--   rw [mul_apply]
+--   simp
+--   ring_nf
+--   conv =>
+--     left
+--     left
+--     left
+--     left
+--     left
+--     change 1
+--   ring_nf
+--   conv =>
+--     left
+--     right
+--     right
+--     change 1
+--   ring_nf
+--   simp
 
 
 -- lemma jl {m r : ℕ}
@@ -506,13 +506,22 @@ noncomputable def Ud {R : Type*} [RCLike R] {m r : ℕ}
   · exact onbPart hK y hy x
 
 
+/-- This generalization of Stinespring dilation has the right
+"shape" but otherwise nothing specific to it. -/
+noncomputable def general_dilation {R : Type*}
+    {m r : Type*} [DecidableEq r]
+    (z : r)
+    (S : Matrix (m × r) m R)
+    (M : Matrix (m × r) (m × r) R) :
+    Matrix (m × r) (m × r) R := fun x y =>
+  ite (y.2 = z) (S x y.1) (M x y)
+
 
 /-- A general, not necessarily unitary, dilation. -/
-noncomputable def dilation {R : Type*} [RCLike R]
+noncomputable def dilation {R : Type*} [Ring R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
     (K : r → Matrix m m R) (z : r) (M : Matrix (m × r) (m × r) R) :
-    Matrix (m × r) (m × r) R := fun x y =>
-  ite (y.2 = z) (stinespringOp K x y.1) (M x y)
+    Matrix (m × r) (m × r) R := general_dilation z (stinespringOp K) (M)
 
 
 
@@ -570,21 +579,19 @@ theorem Ud_orthonormal₂ {R : Type*} [RCLike R]
   (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r) :
     Orthonormal R fun y ↦
       WithLp.toLp 2 fun i ↦ if hy : y.2 = z then stinespringOp K i y.1 else onbPart hK y hy i := by
-    have := Ud_orthonormal₁ hK z
+    have h₀ := Ud_orthonormal₁ hK z
     constructor
     · intro i
-      have := this.1 i
+      have := h₀.1 i
       rw [← this]
       congr
       ext y
       simp
       split_ifs with g₀ <;> simp
-    · intro i j hij
-      have := this.2 hij
+    · intro _ _ hij
+      have := h₀.2 hij
       simp only at this ⊢
       rw [← this]
-      generalize stinespringOp K = α
-      generalize onbPart hK = β
       split_ifs at * with g₀ g₁ <;> rfl
 
 
@@ -809,6 +816,14 @@ theorem heisenberg_schrõdinger {R : Type*} [RCLike R]
     rw [tracefree_version]
     rfl
 
+/-- A further generalization of `stinespringGeneralForm`. -/
+noncomputable def generalForm {R : Type*} [RCLike R]
+    {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
+    (z : r)
+    (S : Matrix (m × r) m R)
+    (M : Matrix (m × r) (m × r) R) :=
+    let U := general_dilation z S M
+    fun ρ => tr₂ (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ)
 
 noncomputable def stinespringGeneralForm {R : Type*} [RCLike R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
@@ -838,7 +853,7 @@ theorem unitaryForm_of_general {R : Type*} [RCLike R] {m r : ℕ}
     stinespringUnitaryForm hK z := by
   unfold
     stinespringUnitaryForm tr₂ Ud
-    stinespringGeneralForm dilation tr₂
+    stinespringGeneralForm dilation general_dilation tr₂
   ext a b
   congr
   ext c
@@ -871,7 +886,7 @@ theorem unitaryForm_of_general_e {R : Type*} [RCLike R] {m r : ℕ}
     stinespringUnitaryForm_e hK z e := by
   unfold
     stinespringUnitaryForm_e tr₂ Ud
-    stinespringGeneralForm_e dilation tr₂
+    stinespringGeneralForm_e dilation general_dilation tr₂
   ext a b
   congr
   ext c
@@ -913,7 +928,7 @@ lemma stinespringGeneralForm_works {R : Type*} [RCLike R] {m r : ℕ}
       have := z.2
       omega
     subst hr₀
-    unfold stinespringGeneralForm dilation
+    unfold stinespringGeneralForm dilation general_dilation
         krausApply tr₂ stinespringOp single
     ext a b
     rw [sum_apply]
