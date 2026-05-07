@@ -1073,6 +1073,85 @@ def subPMF.ofFintype (α : Type*) [Fintype α] (f : α → ℝ≥0∞) (h : ∑ 
     intro a ha
     simp at ha
 
+lemma one_eq_sum_pureState {R : Type*} [RCLike R] {k : ℕ} :
+    ∑ i : Fin k, pureState_C (e i) (R := R) = 1 := by
+  unfold pureState_C e
+  ext i j
+  simp only [Fin.isValue, conjTranspose_single, star_one, mulᵣ_eq, single_mul_single_same, mul_one]
+  symm
+  by_cases H : i = j
+  · subst H
+    simp only [one_apply_eq, single]
+    rw [Finset.sum_apply] -- !
+    simp
+  · simp only [single]
+    rw [Finset.sum_apply] -- !
+    symm
+    rw [one_apply_ne' fun a ↦ H ((Eq.symm a))]
+    simp only [Finset.sum_apply, of_apply, Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero,
+      Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq]
+    exact H
+
+lemma sum_one_sub₀ {R : Type*} [Ring R] {k : ℕ} (acc : Fin k)
+    (f : Fin k → Matrix (Fin k) (Fin k) R) :
+    ∑ i, f i - f acc = ∑ i, if i = acc then 0 else f i := by
+  suffices  ∑ i, f i = (∑ i, if i = acc then 0 else f i) + f acc
+      by rw [this];simp
+  rw [← Finset.sum_add_sum_compl (s := {i | i ≠ acc})]
+  simp only [ne_eq, Finset.compl_filter, Decidable.not_not]
+  have : ∑ i with i = acc, f i =
+      f acc := by
+      have :  ∑ i with i = acc, f i
+          =  ∑ i ∈ {acc}, f i := by
+          congr
+          ext;simp
+      rw [this]
+      rw [@Finset.sum_singleton]
+  rw [this]
+  simp only [_root_.add_left_inj]
+  refine Finset.sum_congr_of_eq_on_inter ?_ ?_ ?_
+  · simp
+  · intro i _
+    simp
+    tauto
+  · intro i hi _
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
+    rw [if_neg hi]
+
+lemma trace_one_sub_C {R : Type*} [RCLike R]
+    {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
+    (hPS : ρ.PosSemidef) : 0 ≤ ((1 - pureState_C (e acc)) * ρ).trace := by
+  rw [← one_eq_sum_pureState]
+  rw [sum_one_sub₀]
+  refine trace_mul_posSemidef_nonneg_general (by exact nonneg_iff_posSemidef.mpr hPS) ?_
+  suffices (∑ i, if i = acc then
+      (0 : Matrix (Fin k) (Fin k) R) else pureState_C (e i)).PosSemidef by
+      exact nonneg_iff_posSemidef.mpr this
+  refine posSemidef_sum Finset.univ ?_
+  intro i _
+  by_cases H : i = acc
+  · subst H
+    simp only [↓reduceIte]
+    exact PosSemidef.zero
+  · rw [if_neg H]
+    refine posSemidef_of_isStarProjection_C (pureState_C (e i)) ?_
+    exact pureState_projection_C i
+
+theorem pure_trace_one_sub_re {R : Type*} [RCLike R] {k : ℕ} (acc : Fin k)
+    {ρ : Matrix (Fin k) (Fin k) R} (hPS : ρ.PosSemidef) :
+    0 ≤ RCLike.re ((1 - pureState_C (e acc)) * ρ).trace := by
+  have := @trace_one_sub_C R _ k acc ρ hPS
+  have := @RCLike.le_iff_re_im R _ 0 ((1 - pureState_C (e acc)) * ρ).trace
+  simp at this
+  tauto
+
+theorem pure_trace_nonneg_re {R : Type*} [RCLike R] {k : ℕ} (acc : Fin k)
+    {ρ : Matrix (Fin k) (Fin k) R} (hPS : ρ.PosSemidef) :
+    0 ≤ RCLike.re (pureState_C (e acc) * ρ).trace := by
+  have := (nonneg_trace_of_posSemidef_C hPS acc)
+  have := @RCLike.le_iff_re_im R _ 0 ((pureState_C (e acc)) * ρ).trace
+  simp at this
+  tauto
 
 /-- Positive operator (or projection) valued measure
 as a probability mass function.
@@ -1090,12 +1169,8 @@ def POVM_PMF {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
     (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) : PMF (Fin k) := by
   apply PMF.ofFintype (
-    fun i => ofNNReal ⟨RCLike.re (pureState_C (e i) * ρ).trace, by
-      have : 0 ≤ (pureState_C (e i) * ρ).trace := by
-          convert nonneg_trace_of_posSemidef_C hPS i
-          simp
-      refine (RCLike.re_nonneg_of_nonneg ?_).mpr this
-      exact LE.le.isSelfAdjoint this⟩)
+    fun i => ofNNReal ⟨RCLike.re (pureState_C (e i) * ρ).trace,
+      pure_trace_nonneg_re _ hPS.posSemidef⟩)
   apply ((toReal_eq_toReal_iff' (by simp) (by simp))).mp
   simp only [toReal_one]
   have := congrArg (RCLike.re) <| standard_basis_probability_one_C hUT
@@ -1179,24 +1254,6 @@ def PVM_PMF₂₃ {ρ : Matrix (Fin 3) (Fin 3) ℝ}
   simp
   rfl
 
-lemma one_eq_sum_pureState {R : Type*} [RCLike R] {k : ℕ} :
-    ∑ i : Fin k, pureState_C (e i) (R := R) = 1 := by
-  unfold pureState_C e
-  ext i j
-  simp only [Fin.isValue, conjTranspose_single, star_one, mulᵣ_eq, single_mul_single_same, mul_one]
-  symm
-  by_cases H : i = j
-  · subst H
-    simp only [one_apply_eq, single]
-    rw [Finset.sum_apply] -- !
-    simp
-  · simp only [single]
-    rw [Finset.sum_apply] -- !
-    symm
-    rw [one_apply_ne' fun a ↦ H ((Eq.symm a))]
-    simp only [Finset.sum_apply, of_apply, Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero,
-      Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq]
-    exact H
 
 lemma one_eq_sum_pureState_R {k : ℕ} :
     1 = ∑ i : Fin k, pureState (e i) (R := ℝ) := by
@@ -1218,50 +1275,7 @@ lemma one_eq_sum_pureState_R {k : ℕ} :
       Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq, ne_eq]
     exact H
 
-lemma sum_one_sub₀ {R : Type*} [Ring R] {k : ℕ} (acc : Fin k)
-    (f : Fin k → Matrix (Fin k) (Fin k) R) :
-    ∑ i, f i - f acc = ∑ i, if i = acc then 0 else f i := by
-  suffices  ∑ i, f i = (∑ i, if i = acc then 0 else f i) + f acc
-      by rw [this];simp
-  rw [← Finset.sum_add_sum_compl (s := {i | i ≠ acc})]
-  simp only [ne_eq, Finset.compl_filter, Decidable.not_not]
-  have : ∑ i with i = acc, f i =
-      f acc := by
-      have :  ∑ i with i = acc, f i
-          =  ∑ i ∈ {acc}, f i := by
-          congr
-          ext;simp
-      rw [this]
-      rw [@Finset.sum_singleton]
-  rw [this]
-  simp only [_root_.add_left_inj]
-  refine Finset.sum_congr_of_eq_on_inter ?_ ?_ ?_
-  · simp
-  · intro i _
-    simp
-    tauto
-  · intro i hi _
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
-    rw [if_neg hi]
 
-lemma trace_one_sub_C {R : Type*} [RCLike R]
-    {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
-    (hPS : ρ.PosSemidef) : 0 ≤ ((1 - pureState_C (e acc)) * ρ).trace := by
-  rw [← one_eq_sum_pureState]
-  rw [sum_one_sub₀]
-  refine trace_mul_posSemidef_nonneg_general (by exact nonneg_iff_posSemidef.mpr hPS) ?_
-  suffices (∑ i, if i = acc then
-      (0 : Matrix (Fin k) (Fin k) R) else pureState_C (e i)).PosSemidef by
-      exact nonneg_iff_posSemidef.mpr this
-  refine posSemidef_sum Finset.univ ?_
-  intro i _
-  by_cases H : i = acc
-  · subst H
-    simp only [↓reduceIte]
-    exact PosSemidef.zero
-  · rw [if_neg H]
-    refine posSemidef_of_isStarProjection_C (pureState_C (e i)) ?_
-    exact pureState_projection_C i
 
 lemma trace_one_sub {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) ℝ}
     (hPS : ρ.PosSemidef) : 0 ≤ ((1 - pureState (e acc)) * ρ).trace := by
@@ -1325,21 +1339,15 @@ theorem RCLike.sub_re {R : Type*} [RCLike R] (z w : R) :
     RCLike.re (z - w) = RCLike.re z - RCLike.re w :=
   AddMonoidHom.map_sub re z w
 
-theorem pure_trace_one_sub_re {R : Type*} [RCLike R] {k : ℕ} (acc : Fin k)
-    {ρ : Matrix (Fin k) (Fin k) R} (hPS : ρ.PosSemidef) :
-    0 ≤ RCLike.re ((1 - pureState_C (e acc)) * ρ).trace := by
-  have := @trace_one_sub_C R _ k acc ρ hPS
-  have := @RCLike.le_iff_re_im R _ 0 ((1 - pureState_C (e acc)) * ρ).trace
-  simp at this
-  tauto
-
-theorem pure_trace_nonneg_re {R : Type*} [RCLike R] {k : ℕ} (acc : Fin k)
-    {ρ : Matrix (Fin k) (Fin k) R} (hPS : ρ.PosSemidef) :
-    0 ≤ RCLike.re (pureState_C (e acc) * ρ).trace := by
-  have := (nonneg_trace_of_posSemidef_C hPS acc)
-  have := @RCLike.le_iff_re_im R _ 0 ((pureState_C (e acc)) * ρ).trace
-  simp at this
-  tauto
+theorem Finset.sum_erase_sub {k : ℕ} (c : Fin k)
+       (J : Fin k → ℝ) : ∑ i : Fin k, J i - J c
+      = ∑ i : Fin k with i ≠ c, J i := by
+    suffices ∑ i, J i = ∑ i with i ≠ c, J i + J c by linarith
+    rw [← Finset.sum_erase_add (a := c)]
+    · congr
+      ext
+      simp
+    · simp
 
 lemma PMF_of_state.sum_one_general {R : Type*} [RCLike R]
     {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
@@ -1359,64 +1367,30 @@ lemma PMF_of_state.sum_one_general {R : Type*} [RCLike R]
     have (j : Fin k) : pureState_C (e j) = (pureState_C ∘ e (R := R)) j := by
         simp
     simp_rw [this] at *
-    have hnn (a : Fin k) :  0 ≤ RCLike.re ((pureState_C ∘ e (R := R)) a * ρ).trace := by
+    have hnn (a : Fin k) : 0 ≤ RCLike.re ((pureState_C ∘ e (R := R)) a * ρ).trace := by
         have := (@nonneg_trace_of_posSemidef_C R _ k ρ hPS a)
         have := @RCLike.le_iff_re_im R _ 0 ((pureState_C (e a)) * ρ).trace
         simp at this
         tauto
     generalize (pureState_C ∘ e (R := R)) = f at *
-    have := @RCLike.re_sum R _ (f := fun i : Fin k => (f i * ρ).trace)
-        (s := Finset.univ)
-    rw [this]
+    rw [RCLike.re_sum]
     simp_rw [sub_mul, trace_sub]
-    have h₁ : (∑ a, ofNNReal ⟨RCLike.re (f a * ρ).trace,
-      hnn _⟩ ).toReal
-           = ∑ a,          RCLike.re (f a * ρ).trace := by
-        rw [toReal_sum]
-        · simp
-        · simp
+    have h₁ : (∑ a, ofNNReal ⟨RCLike.re (f a * ρ).trace, hnn _⟩ ).toReal
+             = ∑ a,           RCLike.re (f a * ρ).trace := by
+        rw [toReal_sum] <;> simp
     rw [← h₁]
-    have h₀ : ((∑ i, f i - f acc) * ρ).trace
-                                   + (f acc * ρ).trace =
-                                  ∑ a, (f a * ρ).trace := by
-      rw [sub_mul, trace_sub, sub_add_cancel, ← trace_sum]
-      congr
-      apply Matrix.sum_mul
     congr
     rw [← coe_finset_sum]
     ring_nf
-    set c := acc
-    have := @Matrix.sum_mul (M := ρ) (f := f) (s := Finset.univ)
-    simp_rw [this]
-    simp_rw [RCLike.sub_re, trace_sum, RCLike.re_sum]
-    let J : Fin k → ℝ := fun a => RCLike.re (f a * ρ).trace
-    conv => left; left; right; left; right; change J c
-    conv => left; right; right; change ⟨J c, _⟩
-    conv => right; right; change ∑ a, ⟨J a, _⟩
-    conv => left; left; right; left; left; change ∑ i, J i
-    have : ∑ i, J i - J c = ∑ i with i ≠ c, J i := by
-        suffices ∑ i, J i = ∑ i with i ≠ c, J i + J c by linarith
-        rw [← Finset.sum_erase_add (a := c)]
-        · congr
-          ext
-          simp
-        · simp
-    simp_rw [this]
-    have (u v : NNReal) : ofNNReal u + ofNNReal v = ofNNReal (u + v) := by
-        exact Eq.symm (coe_add u v)
-    rw [this]
+    simp_rw [Matrix.sum_mul Finset.univ f ρ,
+      RCLike.sub_re, trace_sum, RCLike.re_sum,
+      Finset.sum_erase_sub acc (fun a => RCLike.re (f a * ρ).trace)]
+    rw [← coe_add]
     congr
-    have (a b : ℝ) (ha : a ≥ 0) (hb : b ≥ 0) :
-        (⟨a,ha⟩ : NNReal) + (⟨b,hb⟩ : NNReal) =
-        (⟨a+b, by linarith⟩) := Nonneg.mk_add_mk ha hb
-    rw [this]
-    have (J : Fin k → ℝ) (hnn : ∀ a, J a ≥ 0) : ∑ a, (⟨J a, hnn a⟩ : NNReal) =
-        ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
-            apply ofReal_inj_aux
-    rw [this]
+    rw [Nonneg.mk_add_mk, ofReal_inj_aux]
     congr
     apply add_eq_of_eq_sub
-    tauto
+    rw [Finset.sum_erase_sub]
   · simp
   · simp
 
