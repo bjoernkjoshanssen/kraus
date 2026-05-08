@@ -1536,8 +1536,7 @@ We accept `word` if starting in `e₀` we end up in `e₁` with probability at l
 def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
-  {word | (PVM_of_word_of_channel acc (h𝓚) word).p
-    (by simp only [PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
+  {word | (PVM_of_word_of_channel acc (h𝓚) word).p (1 : Fin 2) > 1/2}
 
 def MOlanguageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
