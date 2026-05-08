@@ -2,6 +2,8 @@ import Mathlib.Analysis.Matrix.Normed
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Kraus.Basic
+import Kraus.Real
+import Kraus.DimensionThree
 /-!
 
 # Kraus operator automata and projection-valued measures: examples from Grudka et al.
@@ -176,7 +178,7 @@ lemma grudka_quantumChannel (θ : ℝ) (i : Fin 2) : quantumChannel (grudka_R θ
 
 /-- Grudka et al. map does indeed map density matrices to density matrices. -/
 noncomputable def grudka_map (θ : ℝ) {n : ℕ} (word : Fin n → Fin 2) :
-  densityMatrix 3 (R := ℝ) → densityMatrix 3 (R := ℝ) :=
+  densityMatrix (Fin 3) (R := ℝ) → densityMatrix (Fin 3) (R := ℝ) :=
   krausApplyWord_map word _ fun i ↦ grudka_quantumChannel θ i
 
 
