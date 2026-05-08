@@ -1,5 +1,5 @@
 import Kraus.Basic
-import Kraus.Sintespring
+import Kraus.Stinespring
 import Kraus.Stinespring100
 import Kraus.DimensionThree
 import Kraus.Real
