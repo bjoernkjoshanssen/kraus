@@ -1141,3 +1141,23 @@ def MOlanguageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc 
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel_C acc (h𝓚) word).p (1 : Fin 2) > 1/2}
+
+/-- If the start and accept states are the same then
+the empty string is accepted in the measure-once setting. -/
+lemma MO_language_nonempty_C {α : Type*} {r k : ℕ}
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℂ}
+    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) :
+  MOlanguageAcceptedBy_C 0 h𝓚 ≠ ∅ := by
+  refine Set.nonempty_iff_ne_empty'.mp ?_
+  refine nonempty_subtype.mpr ?_
+  use ⟨0,![]⟩
+  unfold MOlanguageAcceptedBy_C PVM_of_word_of_channel_C
+  unfold PVM_of_state_C PMF_of_state_general
+  simp only [Nat.succ_eq_add_one, Fin.isValue, Lean.Elab.WF.paramLet, PMF.ofFintype_apply,
+    one_ne_zero, ↓reduceIte, one_div, gt_iff_lt, Set.mem_setOf_eq]
+  unfold krausApplyWord
+  have : pureState_C (e (0 : Fin k.succ)) * pureState_C (e 0) (R := ℂ) = pureState_C (e 0) :=
+    (pureState_projection_C (0 : Fin k.succ) (R := ℂ)).1
+  simp_rw [this]
+  simp_rw [basisState_trace_one_C]
+  simp
