@@ -12,6 +12,7 @@ import Mathlib.LinearAlgebra.PiTensorProduct
 
 import Mathlib.Analysis.InnerProductSpace.Positive
 import Kraus.Basic
+import Kraus.GrudkaExamples
 
 import Mathlib.Data.PEquiv
 import Mathlib.Data.Matrix.PEquiv

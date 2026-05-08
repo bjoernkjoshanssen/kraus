@@ -184,7 +184,7 @@ lemma krausCompletion_I' (z : ℂ) (hz : star z * z ≤ 1) :
   ext a b
   rw [Matrix.mul_apply, Fintype.sum_prod_type, Fin.fin_one_eq_zero a, Fin.fin_one_eq_zero b]
   simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
-    Fin.val_eq_zero_iff, kronecker, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
+    Fin.val_eq_zero_iff, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
     star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
     single_apply_same, mul_one, one_ne_zero, one_apply_eq]
   rw [Iff.symm eq_sub_iff_add_eq']
@@ -282,7 +282,7 @@ lemma krausCompletion_I
   rw [Fin.fin_one_eq_zero a]
   rw [Fin.fin_one_eq_zero b]
   simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
-    Fin.val_eq_zero_iff, kronecker, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
+    Fin.val_eq_zero_iff, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
     star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
     single_apply_same, mul_one, one_ne_zero, one_apply_eq]
   generalize K 0 = L at *
