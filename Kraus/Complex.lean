@@ -325,15 +325,10 @@ lemma krausCompletion_I
         rw [Fin.fin_one_eq_zero j]
         rw [Matrix.mul_apply]
         simp
-  rw [this]
-  have (a b : ℂ) : a + b = 1 ↔ b = 1 - a := by
-    exact Iff.symm eq_sub_iff_add_eq'
-  rw [this]
-  rw [h₁]
+  rw [this, ← eq_sub_iff_add_eq', h₁]
   have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
-    (CFC.sqrt A) * (CFC.sqrt A) = A  := by
-    have : A ≥ 0 := by exact nonneg_iff_posSemidef.mpr hA
-    exact CFC.sqrt_mul_sqrt_self A this -- PosSemidef.sqrt_mul_self hA
+    (CFC.sqrt A) * (CFC.sqrt A) = A  :=
+    CFC.sqrt_mul_sqrt_self A <| nonneg_iff_posSemidef.mpr hA
   have (A : (Matrix (Fin 1) (Fin 1) ℂ)) ( i j : Fin 1)
     (hA : A.PosSemidef) :
     (CFC.sqrt A i j) * (CFC.sqrt A i j)

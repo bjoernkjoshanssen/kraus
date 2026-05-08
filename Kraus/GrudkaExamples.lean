@@ -245,7 +245,7 @@ hence ![] is in the corresponding measure-once language.
 This can be generalized to any quantum channel.
 -/
 lemma MO_grudka0_language_nonempty :
-  MOlanguageAcceptedBy 0 (grudka_R (θ := 0))
+  MOlanguageAcceptedBy 0
     (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
   apply MO_language_nonempty
 
@@ -366,7 +366,7 @@ lemma grudka_basic_operation₂ : krausApply (grudka_R₀ 0 (R := ℝ))
 /- If now the 2nd basis state is the accept state, we should still be able
 to accept something... -/
 lemma MO_grudka1_language_nonempty :
-  MOlanguageAcceptedBy 1 (grudka_R (θ := 0))
+  MOlanguageAcceptedBy 1
     (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
   refine Set.nonempty_iff_ne_empty'.mp <| nonempty_subtype.mpr ?_
   use ⟨1,![0]⟩

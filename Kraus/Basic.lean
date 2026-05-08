@@ -1524,7 +1524,7 @@ noncomputable def PVM_of_word_of_channel_C
       this.2 this.1
 
 def getPVM₃ {α : Type*} {r : ℕ}
-    (𝓚 : α → Fin r → Matrix (Fin (Nat.succ 2)) (Fin (Nat.succ 2)) ℝ)
+    {𝓚 : α → Fin r → Matrix (Fin (Nat.succ 2)) (Fin (Nat.succ 2)) ℝ}
     (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM :=
   PVM_of_word_of_channel 2 h𝓚 word
 
@@ -1534,25 +1534,23 @@ def getPVM₃ {α : Type*} {r : ℕ}
 We accept `word` if starting in `e₀` we end up in `e₁` with probability at least 1/2.
 -/
 def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
-    (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ)
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel acc (h𝓚) word).p
     (by simp only [PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
 
 def MOlanguageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc : Fin k.succ)
-    (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R)
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
-  {word | (PVM_of_word_of_channel_C acc (h𝓚) word).p
-    (by simp only [PVM_of_word_of_channel_C, PVM_of_state_C]; exact 1) > 1/2}
+  {word | (PVM_of_word_of_channel_C acc (h𝓚) word).p (1 : Fin 2) > 1/2}
 
 
 /-- If the start and accept states are the same then
 the empty string is accepted in the measure-once setting. -/
 lemma MO_language_nonempty {α : Type*} {r k : ℕ}
-    (𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ)
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) :
-  MOlanguageAcceptedBy 0 𝓚
-    h𝓚 ≠ ∅ := by
+  MOlanguageAcceptedBy 0 h𝓚 ≠ ∅ := by
   refine Set.nonempty_iff_ne_empty'.mp ?_
   refine nonempty_subtype.mpr ?_
   use ⟨0,![]⟩
@@ -1577,13 +1575,13 @@ lemma MO_language_nonempty {α : Type*} {r k : ℕ}
 def MOlanguageAcceptedBy₃ {α : Type*} {r : ℕ}
     (𝓚 : α → Fin r → Matrix (Fin 3) (Fin 3) ℝ)
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
-  MOlanguageAcceptedBy 2 𝓚 h𝓚
+  MOlanguageAcceptedBy 2 h𝓚
 
 
-
+/-- A word is measure-once accepted if after processing it,
+the probability of being in state `1 : Fin 2`, is greater than `1/2`. -/
 def MOlanguageAcceptedBy' {α : Type*} {r : ℕ}
     (𝓚 : α → quantum_channel 3 r (R := ℝ)) : Set ((n : ℕ) × (Fin n → α)) :=
-  {word | (getPVM₃ (fun a => (𝓚 a).1) (fun a => (𝓚 a).2) word).p
-  (by simp only [getPVM₃, PVM_of_word_of_channel, PVM_of_state]; exact 1) > 1/2}
+  {word | (getPVM₃ (fun a => (𝓚 a).2) word).p (1 : Fin 2) > 1/2}
 
 -- Now `pureState e₁`, `pureState e₂`, `pureState e₃` form a POVM.
