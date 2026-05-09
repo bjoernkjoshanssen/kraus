@@ -819,85 +819,80 @@ example {α} (s : Finset α) (f : α → NNReal) :
       = ∑ x ∈ s, ENNReal.ofNNReal (f x) := by
   exact coe_finset_sum
 
-/-- May 8, 2026. Way too hard for what it is! -/
-def POVM_PMF_withTop {R : Type*} [RCLike R]
+/-- Probability measure with "lost" trace in the last outcome. -/
+def p {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
-    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : PMF (Fin (k+1)) := by
-  let p (i : Fin (k + 1)) : ℝ≥0∞ := by
+    (hPS : 0 ≤ ρ) (i : Fin (k + 1)) : ℝ≥0∞ := by
     by_cases H : i = Fin.last _
     · exact some (1 - RCLike.re ρ.trace).toNNReal -- the "missing probability" is 1 - the trace
     · let i : Fin k := Fin.castPred i H
       exact ofNNReal ⟨RCLike.re (pureState_C (e i) * ρ).trace,
           pure_trace_nonneg_re _ hPS.posSemidef⟩
-  apply PMF.ofFintype p
-  apply ((toReal_eq_toReal_iff' (by
-    simp only [p, some_eq_coe, ne_eq, sum_eq_top, Finset.mem_univ, true_and, not_exists]
-    intro x
-    split_ifs <;> simp) (by simp))).mp
-  simp only [toReal_one]
-  have := standard_basis_probability_le_one_C hUT
-  have : (1 : ENNReal).toReal = 1 := by simp
-  convert this
-  have : (1 : ENNReal) = (1 - RCLike.re ρ.trace).toNNReal + (RCLike.re ρ.trace).toNNReal := by
-    norm_cast
-    rw [← Real.toNNReal_add]
-    · simp
-    · have him : RCLike.im ρ.trace = 0 :=
-        RCLike.im_eq_zero_iff_isSelfAdjoint.mpr
-          hPS.posSemidef.trace_nonneg.isSelfAdjoint
-      generalize ρ.trace = A at *
-      rw [← (RCLike.re_add_im_ax A)] at hUT
-      rw [him] at hUT
-      simp only [map_zero, zero_mul, add_zero] at hUT
-      rw [← RCLike.ofReal_le_ofReal (K := R)]
-      simp only [map_zero, map_sub, map_one, sub_nonneg]
-      exact hUT
-    refine (RCLike.re_nonneg_of_nonneg ?_).mpr ?_
-    · refine hPS.posSemidef.trace_nonneg.isSelfAdjoint
-    · refine hPS.posSemidef.trace_nonneg
-  rw [this]
-  rw [Finset.sum_dite] --!!
+
+lemma p.ne_top
+    {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hPS : 0 ≤ ρ) : ∑ a, p hPS a ≠ ⊤ := by
+  simp only [p, some_eq_coe, ne_eq, sum_eq_top, Finset.mem_univ, true_and, not_exists]
+  intro x
+  split_ifs <;> simp
+
+lemma trace_arithmetic {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) :
+    (1 : ENNReal) = ↑(1 - RCLike.re ρ.trace).toNNReal + ↑(RCLike.re ρ.trace).toNNReal := by
+  norm_cast
+  rw [← Real.toNNReal_add]
+  · simp
+  · have him : RCLike.im ρ.trace = 0 :=
+      RCLike.im_eq_zero_iff_isSelfAdjoint.mpr hPS.posSemidef.trace_nonneg.isSelfAdjoint
+    generalize ρ.trace = A at *
+    rw [← (RCLike.re_add_im_ax A)] at hUT
+    rw [him] at hUT
+    simp only [map_zero, zero_mul, add_zero] at hUT
+    rw [← RCLike.ofReal_le_ofReal (K := R)]
+    simp only [map_zero, map_sub, map_one, sub_nonneg]
+    exact hUT
+  refine (RCLike.re_nonneg_of_nonneg ?_).mpr ?_
+  · refine hPS.posSemidef.trace_nonneg.isSelfAdjoint
+  · refine hPS.posSemidef.trace_nonneg
+
+/-- May 8, 2026.
+When applying this, make sure that the accept state is not `Fin.last k`,
+since that is where the "lost" trace goes.
+-/
+def POVM_PMF_withTop {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : PMF (Fin (k+1)) := by
+  apply PMF.ofFintype (p hPS)
+  apply (toReal_eq_toReal_iff' (p.ne_top _) one_ne_top).mp
+  convert toReal_one
+  unfold p
+  rw [trace_arithmetic hUT hPS, Finset.sum_dite] --!!
   congr
   · rw [Finset.sum_subtype (p := fun x => x.1 = Fin.last k)]
     · rw [← toReal_eq_toReal_iff']
       · simp only [some_eq_coe, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, toReal_mul,
         toReal_natCast, coe_toReal, Real.coe_toNNReal']
         convert one_mul _
-        simp only [Nat.cast_eq_one]
-        refine Fintype.card_eq_one_iff.mpr ?_
-        simp
-      · refine sum_ne_top.mpr ?_
-        simp
+        rw [Nat.cast_eq_one]
+        refine Fintype.card_eq_one_iff.mpr <| by simp
+      · refine sum_ne_top.mpr <| by simp
       · simp
     · simp
-  · rw [← standard_basis_probability_C, Finset.sum_subtype (p := fun x => x.1 ≠ Fin.last k)]
-    · have :
-        ofNNReal (∑ x, RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
-        =
-        ∑ x, ofNNReal (RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
-        := by
+  · rw [← standard_basis_probability_C,
+        Finset.sum_subtype (p := fun x => x.1 ≠ Fin.last k)]
+    · have : ofNNReal (∑ x, RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
+           = ∑ x, ofNNReal (RCLike.re (pureState_C (e x) * ρ).trace).toNNReal := by
         rw [← coe_finset_sum]
         congr
-        refine Real.toNNReal_sum_of_nonneg ?_
-        intro i _
-        apply pure_trace_nonneg_re
-        exact LE.le.posSemidef hPS
+        refine Real.toNNReal_sum_of_nonneg fun _ _ => pure_trace_nonneg_re _ hPS.posSemidef
       simp only [ne_eq, map_sum]
       rw [this]
-      apply Function.Bijective.finset_sum (e := by
-        intro ⟨x,hx⟩
-        exact ⟨x.1.1, by
-          suffices x.1.1 ≠ k by exact Fin.val_lt_last hx
-          contrapose! hx
-          exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm hx)))⟩)
+      apply Function.Bijective.finset_sum
+        (e := fun ⟨x,hx⟩ => ⟨x.1.1, Fin.val_lt_last hx⟩)
       · constructor
         · intro ⟨x,hx⟩
           simp only [Fin.mk.injEq, Subtype.forall, Subtype.mk.injEq, Finset.mem_filter,
             Finset.mem_univ, true_and, forall_self_imp]
-          intro a ha he
-          refine SetLike.coe_eq_coe.mp ?_
-          simp only
-          exact Fin.eq_of_val_eq he
+          exact fun _ _ => SetLike.coe_eq_coe.mp ∘ Fin.eq_of_val_eq
         · intro x
           simp only [Subtype.exists, Finset.mem_filter, Finset.mem_univ, true_and, exists_idem]
           use Fin.castSucc x
@@ -907,7 +902,7 @@ def POVM_PMF_withTop {R : Type*} [RCLike R]
         rw [max_eq_left (pure_trace_nonneg_re _ hPS.posSemidef)]
         congr
     · simp
-    · apply Subtype.fintype
+    · exact Subtype.fintype _
 
 
 /-- Feb 1, 2026 -/
