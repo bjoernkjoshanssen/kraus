@@ -1,6 +1,8 @@
 import Mathlib.Analysis.Matrix.Normed
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Mathlib.Data.Fintype.WithTopBot
+
 /-!
 
 # Kraus operator automata and projection-valued measures
@@ -445,7 +447,7 @@ theorem trace_mul_posSemidef_nonneg_general {R : Type*} [RCLike R]
         _ (B * ρ * Bᴴ) (by apply LE.le.posSemidef;tauto)
 
 /-- Feb 1, 2026 -/
-lemma quantumOperation_reduces_trace {R : Type*} [RCLike R] {q r : ℕ}
+lemma quantumOperation.trace_le {R : Type*} [RCLike R] {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
     {ρ : Matrix (Fin q) (Fin q) R} (hρ : 0 ≤ ρ) :
     (krausApply K ρ).trace ≤ ρ.trace := by
@@ -474,11 +476,11 @@ lemma quantumOperation_preserves_trace_le_one
     {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
     {ρ : Matrix (Fin q) (Fin q) R} (hρ : 0 ≤ ρ)
     (hρ₁ : ρ.trace ≤ 1) : (krausApply K ρ).trace ≤ 1 :=
-  le_trans (quantumOperation_reduces_trace hK hρ) hρ₁
+  le_trans (hK.trace_le hρ) hρ₁
 
 /--
 Feb 1, 2026
-Realizing a quantumChannel as a map on densityMatrices. -/
+Realizing a quantumOperation as a map on subnormalized density matrices. -/
 def krausApply_subNormalizedDensityMatrix {R : Type*} [RCLike R] {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
     (ρ : subNormalizedDensityMatrix (Fin q) (R := R)) :
@@ -627,9 +629,47 @@ open ENNReal
 
 
 /-- Unlike `standard_basis_probability_one` this one does not require PSD. -/
+lemma standard_basis_probability_C {R : Type*} [RCLike R] {k : ℕ}
+  (ρ : Matrix (Fin k) (Fin k) R) :
+  ∑ a, (pureState_C (e a) * ρ).trace = ρ.trace := by
+    unfold pureState_C e
+    simp_rw [pure_state_eq_C]
+    simp_rw [single_row]
+    rw [← sum_rows_C ρ]
+    rw [← trace_sum]
+    congr
+    ext a b c
+    simp only [of_apply]
+    repeat simp only [Function.update, eq_rec_constant, Pi.zero_apply, dite_eq_ite]
+    split_ifs with g
+    · subst b
+      simp only [row_apply]
+      unfold Function.update
+      simp only [eq_rec_constant, Pi.zero_apply, dite_eq_ite]
+      simp only [sum_apply, of_apply]
+      simp only [row]
+      suffices ∑ x, (if a = x then ρ x else 0) = ρ a by
+        rw [← this]
+        simp
+      exact Fintype.sum_ite_eq a ρ
+    · simp
+
+
+/-- Unlike `standard_basis_probability_one` this one does not require PSD. -/
 lemma standard_basis_probability_one_C {R : Type*} [RCLike R] {k : ℕ}
   {ρ : Matrix (Fin k) (Fin k) R} (hUT : ρ.trace = 1) :
   ∑ a, (pureState_C (e a) * ρ).trace = 1 := by
+    unfold pureState_C e
+    simp_rw [pure_state_eq_C]
+    simp_rw [single_row]
+    rw [← sum_rows_C ρ] at hUT
+    rw [← trace_sum]
+    exact hUT
+
+/-- Unlike `standard_basis_probability_one` this one does not require PSD. -/
+lemma standard_basis_probability_le_one_C {R : Type*} [RCLike R] {k : ℕ}
+  {ρ : Matrix (Fin k) (Fin k) R} (hUT : ρ.trace ≤ 1) :
+  ∑ a, (pureState_C (e a) * ρ).trace ≤ 1 := by
     unfold pureState_C e
     simp_rw [pure_state_eq_C]
     simp_rw [single_row]
@@ -771,6 +811,105 @@ def POVM_PMF {R : Type*} [RCLike R]
   apply toReal_sum
   simp
 
+
+open scoped BigOperators
+
+example {α} (s : Finset α) (f : α → NNReal) :
+    ENNReal.ofNNReal (∑ x ∈ s, f x)
+      = ∑ x ∈ s, ENNReal.ofNNReal (f x) := by
+  exact coe_finset_sum
+
+/-- May 8, 2026. Way too hard for what it is! -/
+def POVM_PMF_withTop {R : Type*} [RCLike R]
+    {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : PMF (Fin (k+1)) := by
+  let p (i : Fin (k + 1)) : ℝ≥0∞ := by
+    by_cases H : i = Fin.last _
+    · exact some (1 - RCLike.re ρ.trace).toNNReal -- the "missing probability" is 1 - the trace
+    · let i : Fin k := Fin.castPred i H
+      exact ofNNReal ⟨RCLike.re (pureState_C (e i) * ρ).trace,
+          pure_trace_nonneg_re _ hPS.posSemidef⟩
+  apply PMF.ofFintype p
+  apply ((toReal_eq_toReal_iff' (by
+    simp only [p, some_eq_coe, ne_eq, sum_eq_top, Finset.mem_univ, true_and, not_exists]
+    intro x
+    split_ifs <;> simp) (by simp))).mp
+  simp only [toReal_one]
+  have := standard_basis_probability_le_one_C hUT
+  have : (1 : ENNReal).toReal = 1 := by simp
+  convert this
+  have : (1 : ENNReal) = (1 - RCLike.re ρ.trace).toNNReal + (RCLike.re ρ.trace).toNNReal := by
+    norm_cast
+    rw [← Real.toNNReal_add]
+    · simp
+    · have him : RCLike.im ρ.trace = 0 :=
+        RCLike.im_eq_zero_iff_isSelfAdjoint.mpr
+          hPS.posSemidef.trace_nonneg.isSelfAdjoint
+      generalize ρ.trace = A at *
+      rw [← (RCLike.re_add_im_ax A)] at hUT
+      rw [him] at hUT
+      simp only [map_zero, zero_mul, add_zero] at hUT
+      rw [← RCLike.ofReal_le_ofReal (K := R)]
+      simp only [map_zero, map_sub, map_one, sub_nonneg]
+      exact hUT
+    refine (RCLike.re_nonneg_of_nonneg ?_).mpr ?_
+    · refine hPS.posSemidef.trace_nonneg.isSelfAdjoint
+    · refine hPS.posSemidef.trace_nonneg
+  rw [this]
+  rw [Finset.sum_dite] --!!
+  congr
+  · rw [Finset.sum_subtype (p := fun x => x.1 = Fin.last k)]
+    · rw [← toReal_eq_toReal_iff']
+      · simp only [some_eq_coe, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, toReal_mul,
+        toReal_natCast, coe_toReal, Real.coe_toNNReal']
+        convert one_mul _
+        simp only [Nat.cast_eq_one]
+        refine Fintype.card_eq_one_iff.mpr ?_
+        simp
+      · refine sum_ne_top.mpr ?_
+        simp
+      · simp
+    · simp
+  · rw [← standard_basis_probability_C, Finset.sum_subtype (p := fun x => x.1 ≠ Fin.last k)]
+    · have :
+        ofNNReal (∑ x, RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
+        =
+        ∑ x, ofNNReal (RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
+        := by
+        rw [← coe_finset_sum]
+        congr
+        refine Real.toNNReal_sum_of_nonneg ?_
+        intro i _
+        apply pure_trace_nonneg_re
+        exact LE.le.posSemidef hPS
+      simp only [ne_eq, map_sum]
+      rw [this]
+      apply Function.Bijective.finset_sum (e := by
+        intro ⟨x,hx⟩
+        exact ⟨x.1.1, by
+          suffices x.1.1 ≠ k by exact Fin.val_lt_last hx
+          contrapose! hx
+          exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm hx)))⟩)
+      · constructor
+        · intro ⟨x,hx⟩
+          simp only [Fin.mk.injEq, Subtype.forall, Subtype.mk.injEq, Finset.mem_filter,
+            Finset.mem_univ, true_and, forall_self_imp]
+          intro a ha he
+          refine SetLike.coe_eq_coe.mp ?_
+          simp only
+          exact Fin.eq_of_val_eq he
+        · intro x
+          simp only [Subtype.exists, Finset.mem_filter, Finset.mem_univ, true_and, exists_idem]
+          use Fin.castSucc x
+          simp
+      · intro ⟨x,hx⟩
+        congr
+        rw [max_eq_left (pure_trace_nonneg_re _ hPS.posSemidef)]
+        congr
+    · simp
+    · apply Subtype.fintype
+
+
 /-- Feb 1, 2026 -/
 noncomputable def POVM_subPMF {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
@@ -816,7 +955,7 @@ noncomputable def POVM_subPMF {R : Type*} [RCLike R]
 def POVM_PMF' {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
     (hUT : ρ.trace = 1) (hPS : ρ.PosSemidef) : PMF (Fin k) :=
-  POVM_PMF (R := R) hUT (by exact nonneg_iff_posSemidef.mpr hPS)
+  POVM_PMF (R := R) hUT (nonneg_iff_posSemidef.mpr hPS)
 
 def POVM_subPMF' {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
@@ -1019,6 +1158,43 @@ structure PVM where
       apply trace_mul_nonneg hρ
       apply pf⟩
 
+/-- Projection-valued measure. In this version we allow non-probability measures. -/
+structure PVMeas where
+-- The dimension
+  k : ℕ
+-- The PSD state we're in
+  ρ : Matrix (Fin k) (Fin k) ℝ
+  hρ : ρ.PosSemidef
+-- The projections (states)
+  t : ℕ
+  op : Fin t → Matrix (Fin k) (Fin k) ℝ
+  pf : ∀ i, IsStarProjection (op i)
+-- The measure
+  p : MeasureTheory.Measure (Fin t)
+  pf' : ∀ i, p {i} = ofNNReal ⟨(op i * ρ).trace, by
+      apply trace_mul_nonneg hρ
+      apply pf⟩
+
+/-- Projection-valued measure. In this version we allow non-probability measures. -/
+structure PVMeas_C {R : Type*} [RCLike R] where
+-- The dimension
+  k : ℕ
+-- The PSD state we're in
+  ρ : Matrix (Fin k) (Fin k) R
+  hρ : ρ.PosSemidef
+-- The projections (states)
+  t : ℕ
+  op : Fin t → Matrix (Fin k) (Fin k) R
+  pf : ∀ i, IsStarProjection (op i)
+-- The measure
+  p : MeasureTheory.Measure (Fin t)
+  pf' : ∀ i, p {i} = ofNNReal ⟨RCLike.re (op i * ρ).trace, by
+    have h₀ := (trace_mul_nonneg_C hρ (pf i))
+    have := @RCLike.le_iff_re_im R _ 0 ((op i * ρ).trace)
+    simp at this
+    tauto
+⟩
+
 structure PVM_C {R : Type*} [RCLike R] where
   k : ℕ -- the dimension
   ρ : Matrix (Fin k) (Fin k) R          -- the state we're in
@@ -1072,7 +1248,29 @@ noncomputable def myPVM_C {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) 
   pf' := by intro i; rfl
 }
 
+noncomputable def myPVMeas_C_trace_one {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 1) (hPS : Matrix.PosSemidef ρ) : PVMeas_C (R := R) := {
+  k := k
+  t := k
+  p := (POVM_PMF' hUT hPS).toMeasure
+  ρ := ρ
+  hρ := hPS
+  op := fun i : Fin k => pureState_C (e i)
+  pf := by exact fun i ↦ pureState_projection_C i
+  pf' := by intro i; simp; rfl
+}
 
+noncomputable def myPVMeas_C {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PVMeas_C (R := R) := {
+  k := k
+  t := k
+  p := sorry --(POVM_PMF' hUT hPS).toMeasure
+  ρ := ρ
+  hρ := hPS
+  op := fun i : Fin k => pureState_C (e i)
+  pf := by exact fun i ↦ pureState_projection_C i
+  pf' := by sorry --intro i; simp; rfl
+}
 
 
 noncomputable def PVM_of_state_C {R : Type*} [RCLike R]
