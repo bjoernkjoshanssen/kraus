@@ -446,7 +446,8 @@ theorem trace_mul_posSemidef_nonneg_general {R : Type*} [RCLike R]
       exact @PosSemidef.trace_nonneg (Fin n) R _ _ _ _
         _ (B * ρ * Bᴴ) (by apply LE.le.posSemidef;tauto)
 
-/-- Feb 1, 2026 -/
+/-- Feb 1, 2026.
+And almost again May 9, 2026. -/
 lemma quantumOperation.trace_le {R : Type*} [RCLike R] {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
     {ρ : Matrix (Fin q) (Fin q) R} (hρ : 0 ≤ ρ) :
@@ -856,10 +857,9 @@ lemma trace_arithmetic {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fi
   · refine hPS.posSemidef.trace_nonneg
 
 /-- May 8, 2026.
-When applying this, make sure that the accept state is not `Fin.last k`,
-since that is where the "lost" trace goes.
+Used to construct `POVM_PMF_withTop`.
 -/
-def POVM_PMF_withTop {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+def POVM_PMF_withTop₀ {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
     (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : PMF (Fin (k+1)) := by
   apply PMF.ofFintype (p hPS)
   apply (toReal_eq_toReal_iff' (p.ne_top _) one_ne_top).mp
@@ -904,8 +904,49 @@ def POVM_PMF_withTop {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin 
     · simp
     · exact Subtype.fintype _
 
+/-- A PMF where the probability of `none` is the probability lost due
+to trace decrease. -/
+def POVM_PMF_withTop {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : PMF (Option (Fin k)) :=
+  PMF.map (f := fun (i : Fin (k + 1)) => dite (i = Fin.last k) (fun _ => none)
+    fun hi => some <| Fin.castPred i hi)
+  <| POVM_PMF_withTop₀ hUT hPS
 
-/-- Feb 1, 2026 -/
+
+/-- POVM_PMF_withTop API, part 1:
+The lost probability is 1 - the trace. -/
+lemma POVM_PMF_withTop_none {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) :
+    POVM_PMF_withTop hUT hPS none = (RCLike.re ((1:R) - ρ.trace)).toNNReal := by
+  unfold POVM_PMF_withTop POVM_PMF_withTop₀ p
+  simp only [some_eq_coe, PMF.map_ofFintype, PMF.ofFintype_apply, dite_eq_left_iff, reduceCtorEq,
+    imp_false, Decidable.not_not]
+  have : Finset.univ.filter (fun a => a = Fin.last k) = {Fin.last k} := by
+    ext
+    simp
+  rw [this]
+  simp
+
+/-- POVM_PMF_withTop API, part 2:
+If the trace is one then no probability is lost. -/
+lemma POVM_PMF_withTop_none₀ {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) :
+    POVM_PMF_withTop (ge_of_eq hUT.symm) hPS none = 0 := by
+  rw [POVM_PMF_withTop_none, hUT]
+  simp
+
+/-- POVM_PMF_withTop API, part 3.
+If the trace is zero then all probability is lost.
+-/
+lemma POVM_PMF_withTop_none₁ {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 0) (hPS : 0 ≤ ρ) :
+    POVM_PMF_withTop (by rw [hUT];simp) hPS none = 1 := by
+  rw [POVM_PMF_withTop_none, hUT]
+  simp
+
+
+
+/-- Feb 1, 2026. An analogous construction from May 8, 2026 uses `PMF (Fin (k+1))`. -/
 noncomputable def POVM_subPMF {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
     (hUT : ρ.trace ≤ 1) (hPS : 0 ≤ ρ) : subPMF (Fin k) := by
@@ -1086,6 +1127,44 @@ noncomputable def PMF_of_state_general {R : Type*} [RCLike R]
       ⟩)
   apply PMF_of_state.sum_one_general _ hUT hPS
 
+/-- May 9, 2026 -/
+noncomputable def PMF_of_state_CPTNI {R : Type*} [RCLike R]
+    {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PMF (Option (Fin 2)) := by
+  -- 3 cases: accept, not accept, and `none`
+  apply PMF.ofFintype (fun i : Option (Fin 2) => ofNNReal <|
+    ite (i = some 0)
+      ⟨RCLike.re ((1 - pureState_C (e acc)) * ρ).trace,
+        pure_trace_one_sub_re acc hPS⟩
+   (ite (i = some 1)
+      ⟨RCLike.re ((pureState_C (e acc)) * ρ).trace,
+        pure_trace_nonneg_re acc hPS
+      ⟩
+   (RCLike.re (1 - ρ.trace)).toNNReal))
+  have h₀ := @PMF_of_state.sum_one_general_general R _ k acc ρ hPS
+  rw [Fin.sum_univ_two] at h₀
+  have (f : Option (Fin 2) → ENNReal) :
+    ∑ i, f i = f none + (f (some 0) + f (some 1)) := by
+      rw [Fintype.sum_option]
+      congr
+      exact Fin.sum_univ_two fun i ↦ f (some i)
+  rw [this]; clear this
+  simp_all only [Fin.isValue, ↓reduceIte, one_ne_zero, reduceCtorEq, map_sub, one_re,
+    Option.some.injEq]
+  have h₀ :  0 ≤ 1 - re ρ.trace := by
+    have h₁ : ρ.trace = RCLike.re ρ.trace + RCLike.im ρ.trace * RCLike.I   := by
+      exact Eq.symm (re_add_im_ax ρ.trace)
+    rw [conj_eq_iff_im.mp hPS.trace_nonneg.isSelfAdjoint] at h₁
+    rw [h₁] at hUT
+    simp at hUT ⊢
+    norm_cast at hUT ⊢
+  rw [Real.toNNReal_of_nonneg h₀]
+  norm_cast
+  rw [Nonneg.mk_add_mk]
+  simp
+
+  -- apply PMF_of_state.sum_one_general _ hUT hPS
+
 /-- To use conditional computability here we would need to know the state
 had positive trace. -/
 noncomputable def subPMF_of_state_general {R : Type*} [RCLike R]
@@ -1207,6 +1286,24 @@ structure PVM_C {R : Type*} [RCLike R] where
     tauto
     ⟩
 
+/-- May 9, 2026. -/
+structure PVM_CPTNI {R : Type*} [RCLike R] where
+  k : ℕ -- the dimension
+  ρ : Matrix (Fin k) (Fin k) R          -- the state we're in
+  hρ : ρ.PosSemidef
+  t : ℕ -- the number of projections (states)
+  op : (Fin t) → Matrix (Fin k) (Fin k) R -- the projections
+
+  pf : ∀ i, IsStarProjection (op i)     -- ... are projections
+
+  p : PMF (Option (Fin t))                                       -- the measure
+  pf' : ∀ i : Fin t, p i = ofNNReal ⟨RCLike.re (op i * ρ).trace, by
+    have h₀ := (trace_mul_nonneg_C hρ (pf i))
+    have := @RCLike.le_iff_re_im R _ 0 ((op i * ρ).trace)
+    simp at this
+    tauto
+    ⟩
+
 theorem trace_real_of_projection_and_pos_semidef {R : Type*} [RCLike R]
   {k : ℕ}
   {ρ O : Matrix (Fin k) (Fin k) R}
@@ -1255,17 +1352,17 @@ noncomputable def myPVMeas_C_trace_one {R : Type*} [RCLike R] {k : ℕ} {ρ : Ma
   pf' := by intro i; simp; rfl
 }
 
-noncomputable def myPVMeas_C {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
-    (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PVMeas_C (R := R) := {
-  k := k
-  t := k
-  p := sorry --(POVM_PMF' hUT hPS).toMeasure
-  ρ := ρ
-  hρ := hPS
-  op := fun i : Fin k => pureState_C (e i)
-  pf := by exact fun i ↦ pureState_projection_C i
-  pf' := by sorry --intro i; simp; rfl
-}
+-- noncomputable def myPVMeas_C {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+--     (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PVMeas_C (R := R) := {
+--   k := k
+--   t := k
+--   p := sorry --(POVM_PMF' hUT hPS).toMeasure
+--   ρ := ρ
+--   hρ := hPS
+--   op := fun i : Fin k => pureState_C (e i)
+--   pf := by exact fun i ↦ pureState_projection_C i
+--   pf' := by sorry --intro i; simp; rfl
+-- }
 
 
 noncomputable def PVM_of_state_C {R : Type*} [RCLike R]
@@ -1293,7 +1390,31 @@ noncomputable def PVM_of_state_C {R : Type*} [RCLike R]
     · rfl
 }
 
-
+/-- May 9, 2026. -/
+noncomputable def PVM_of_state_CPTNI {R : Type*} [RCLike R]
+    {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PVM_CPTNI (R := R) := {
+      ρ := ρ
+      k := k
+      hρ := hPS
+      t := 2
+      p := PMF_of_state_CPTNI (R := R) acc hUT hPS
+      op := fun i : Fin 2 => ite (i=0)
+        (1 - pureState_C (e acc)) <| pureState_C (e acc)
+      pf := fun i ↦ by
+        fin_cases i
+        · simp only [Fin.zero_eta, Fin.isValue, ↓reduceIte];
+          refine IsStarProjection.one_sub ?_
+          exact pureState_projection_C _
+        · simp only [Fin.mk_one, Fin.isValue, one_ne_zero, ↓reduceIte];
+          exact pureState_projection_C acc
+      pf' := by
+        intro i
+        fin_cases i
+        · unfold PMF_of_state_CPTNI
+          simp
+        · rfl
+    }
 
 def languageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*}
   {q r : ℕ} (acceptStateIndex : Fin q.succ)
@@ -1334,6 +1455,210 @@ def MOlanguageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc 
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
     (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel_C acc (h𝓚) word).p (1 : Fin 2) > 1/2}
+
+
+noncomputable def PVM_of_word_of_channel_CPTNI
+    {R : Type*} [RCLike R]
+    {α : Type*} {r k : ℕ} (acc : Fin k.succ)
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
+    (h𝓚 : ∀ (a : α), quantumOperation (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) :
+    PVM_CPTNI (R := R) :=
+  have h₁ := krausApplyWord_subNormalizedDensityMatrix
+    word.2 h𝓚 ⟨pureState_C (e 0), ⟨pureState_psd_C (e 0), le_of_eq basisState_trace_one_C⟩⟩
+  PVM_of_state_CPTNI acc h₁.2 h₁.1
+
+/-- May 9, 2026.
+Language accepted by a family of quantum operations, as opposed to quantum channels.
+-/
+def MOlanguageAcceptedBy_CPTNI {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc : Fin k.succ)
+    {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
+    (h𝓚 : ∀ a, quantumOperation (𝓚 a)) :=
+  {word | (PVM_of_word_of_channel_CPTNI acc (h𝓚) word).p (some (1 : Fin 2)) > 1/2}
+
+def exampleLanguage₀ := @MOlanguageAcceptedBy_CPTNI ℂ _ (Fin 1) 1 0 0 (fun _ _ => !![1])
+  (by
+    intro z;unfold quantumOperation
+    apply le_of_eq
+    ext x y
+    fin_cases x
+    fin_cases y
+    simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.succ_eq_add_one,
+      Nat.reduceAdd, Fin.zero_eta, Finset.sum_const, Finset.card_singleton, smul_apply, one_smul,
+      one_apply_eq]
+    rw [mul_apply]
+    simp)
+
+open scoped ComplexOrder MatrixOrder
+
+lemma matrix_1x1_nonneg_iff (x : ℂ) : 0 ≤ !![x] ↔ 0 ≤ x := by
+  constructor
+  · rintro ⟨ y, hy ⟩;
+    specialize hy {
+      toFun := by intro _; exact 1
+      support := by exact Finset.univ
+      mem_support_toFun := by
+        intro z; simp only [Finset.univ_unique, Fin.default_eq_zero,
+          Fin.isValue, Finset.mem_singleton, ne_eq, one_ne_zero, not_false_eq_true, iff_true];
+        exact Fin.fin_one_eq_zero z
+    }
+    simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, star_def, sub_apply, of_apply,
+      cons_val', cons_val_fin_one, zero_apply, sub_zero] at hy
+    convert hy using 1
+    unfold Finsupp.sum
+    norm_num [ Matrix.mulVec, dotProduct ];
+  · intro hx
+    have h_pos : ∀ v : Fin 1 → ℂ, 0 ≤ (star v 0 * x * v 0).re := by
+      simp_all only [Complex.le_def, Complex.zero_re, Complex.zero_im, Fin.isValue, Pi.star_apply,
+        star_def, Complex.mul_re, Complex.conj_re, Complex.conj_im, neg_mul, sub_neg_eq_add,
+        Complex.mul_im];
+      intro v; rw [ ← hx.2 ] ;
+      ring_nf;
+      nlinarith [ sq_nonneg ( ( v 0 |> Complex.re ) - ( v 0 |> Complex.im ) ),
+        sq_nonneg ( ( v 0 |> Complex.re ) + ( v 0 |> Complex.im ) ) ] ;
+    constructor <;> norm_num;
+    · ext i j ; fin_cases i ; fin_cases j ; simp +decide [ Complex.ext_iff ];
+      simp_all +decide [ Complex.le_def ];
+      linarith;
+    · intro v; specialize h_pos v; simp_all +decide only [Fin.isValue, Pi.star_apply, star_def,
+      Complex.mul_re, Complex.conj_re, Complex.conj_im, neg_mul, sub_neg_eq_add, Complex.mul_im,
+      sub_nonneg];
+      simp_all +decide only [Complex.le_def, Complex.zero_re, Complex.zero_im, Fin.isValue];
+      rw [← hx.2]
+      unfold Finsupp.sum Finsupp.support
+      have h₀ : v.1 = ∅ ∨ v.1 = Finset.univ := by
+        by_cases H : 0 ∈ v.1
+        · right
+          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue]
+          ext i
+          have : i = 0 := by exact Fin.fin_one_eq_zero i
+          subst this
+          simp only [Fin.isValue, Finsupp.mem_support_iff, ne_eq, Finset.mem_singleton, iff_true]
+          unfold Finsupp.support at H
+          simp only [Fin.isValue, Finsupp.mem_support_iff, ne_eq] at H
+          exact H
+        · left
+          ext i
+          have : i = 0 := by exact Fin.fin_one_eq_zero i
+          subst this
+          simp only [Finset.notMem_empty]
+          tauto
+      constructor
+      · simp only [Complex.re_sum, Complex.mul_re, Complex.conj_re, Complex.conj_im, neg_mul,
+        sub_neg_eq_add, Complex.mul_im, Finset.sum_sub_distrib, sub_nonneg]
+        cases h₀ with
+        | inl h =>
+          simp_rw [h]
+          simp
+        | inr h =>
+          simp_rw [h]
+          simp
+          linarith
+      · simp only [Complex.im_sum, Complex.mul_im, Complex.mul_re, Complex.conj_re,
+        Complex.conj_im, neg_mul, sub_neg_eq_add]
+        cases h₀ with
+        | inl h =>
+          simp_rw [h]
+          simp
+        | inr h =>
+          simp_rw [h]
+          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Finset.sum_singleton]
+          rw [← hx.2]
+          simp
+          linarith
+
+/-- The matrix !![1 / 2] has trace < 1, but
+we are able to use it to define a language:
+-/
+def exampleLanguage₁ := @MOlanguageAcceptedBy_CPTNI
+  ℂ _ (Fin 1) 1 0 0 (fun _ _ => !![1 / 2])
+  (by
+    intro z
+    simp only [quantumOperation, Nat.succ_eq_add_one, Nat.reduceAdd, Finset.univ_unique,
+      Fin.default_eq_zero, Fin.isValue, one_div, Finset.sum_const, Finset.card_singleton, one_smul]
+    have : !![(2:ℂ)⁻¹]ᴴ * !![2⁻¹] = !![4⁻¹] := by
+      ext i j
+      fin_cases i; fin_cases j
+      rw [← mulᵣ_eq, mulᵣ]
+      simp [dotProduct]
+      field_simp
+      ring_nf
+    rw [this]
+    suffices 0 ≤ 1 - !![(4:ℂ)⁻¹] by simp at this;tauto
+    have : (1 : Matrix (Fin 1) (Fin 1) ℂ) = !![1] := by
+      ext i j; fin_cases i; fin_cases j; simp
+    rw [this]
+    simp only [of_sub_of, sub_cons, head_cons, tail_cons, sub_self, zero_empty, ge_iff_le]
+    rw [matrix_1x1_nonneg_iff]
+    simp only [sub_nonneg]
+    refine inv_le_one_of_one_le₀ ?_
+    exact Nat.one_le_ofNat
+    )
+
+
+example (a _ : ℕ) (h : a = 0) :
+  (match a with
+  |0 => (5:ℝ)
+  |Nat.succ _ => 1)
+  = 5 := by simp_all only
+
+
+/--
+May 10, 2026.
+Even though there is only one state
+and it is accepting, because of the trace-loss
+the length-one word is not accepted :) -/
+lemma exampleLanguage₁_length_one (word : Fin 1 → Fin 1) :
+  ¬ ⟨1, word⟩ ∈ exampleLanguage₁ := by
+  unfold exampleLanguage₁ MOlanguageAcceptedBy_CPTNI
+    PVM_of_word_of_channel_CPTNI PVM_of_state_CPTNI PMF_of_state_CPTNI
+  have : e (0 : Fin 1) = !![(1 : ℂ)] := by
+    ext x y; fin_cases x; fin_cases y; simp [e]
+  simp_rw [this]
+  have : word = ![0] := by ext x; fin_cases x; simp
+  rw [this]
+  have : pureState_C !![(1:ℂ)] = ![1] := by
+    unfold pureState_C
+    ext x y
+    fin_cases x; fin_cases y
+    simp [conjTranspose, vecMul]
+  simp_rw [this]
+  simp only [Fin.isValue, Nat.succ_eq_add_one, Nat.reduceAdd, one_div, re_to_complex,
+    Complex.sub_re, Complex.one_re, PMF.ofFintype_apply, Option.some.injEq, one_ne_zero, ↓reduceIte,
+    gt_iff_lt, Set.mem_setOf_eq, not_lt, le_inv_iff_mul_le, ge_iff_le]
+  unfold krausApplyWord
+  have : Fin.init ![(0 : Fin 1)] = ![] := by ext z; fin_cases z
+  rw [this]
+  unfold krausApplyWord krausApply conjTranspose
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, cons_mul, Nat.succ_eq_add_one,
+    Nat.reduceAdd, empty_mul, Equiv.symm_apply_apply, Matrix.map, transpose_apply, of_apply,
+    cons_val', cons_val_fin_one, star_inv₀, star_ofNat, vecMul_vecMul, Finset.sum_const,
+    Finset.card_singleton, one_smul, ge_iff_le]
+  have : ofNNReal ⟨(!![(2:ℂ)⁻¹ * 2⁻¹]).trace.re, by simp⟩ * 2 ≤ 1 := by
+    simp only [trace_fin_one_of, Complex.mul_re, Complex.inv_re, Complex.re_ofNat,
+      Complex.normSq_ofNat, div_self_mul_self', Complex.inv_im, Complex.im_ofNat, neg_zero,
+      zero_div, mul_zero, sub_zero]
+    have : ((2:ℝ)⁻¹ * 2⁻¹) = (2 * 2)⁻¹ := by simp
+    simp_rw [this]
+    have : (2:ℝ) * 2 = 4 := by linarith
+    simp_rw [this]
+    refine le_inv_iff_mul_le.mp ?_
+    have : ofNNReal ⟨4⁻¹, by simp⟩
+      = (4⁻¹ : ENNReal) := by
+        refine (toReal_eq_toReal_iff' ?_ ?_).mp ?_
+        all_goals simp
+    rw [this]
+    refine ENNReal.inv_le_inv.mpr ?_
+    norm_cast
+  convert this using 1
+  congr
+  ext x y
+  fin_cases x; fin_cases y
+  repeat rw [← mulᵣ_eq, mulᵣ]
+  simp [dotProduct, vecHead]
+
+
+
+
 
 /-- If the start and accept states are the same then
 the empty string is accepted in the measure-once setting. -/

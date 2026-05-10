@@ -88,19 +88,8 @@ noncomputable def grudka_C (θ : ℂ) : Fin 2 → Fin 2 → Matrix (Fin 3) (Fin 
 example (θ : ℝ) : (grudka_R θ 0 0).trace = 0 := by simp [grudka_R]
 example (θ : ℂ) : (grudka_C θ 0 0).trace = 0 := by simp [grudka_C]
 
-open Real in
-example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
-    (hρ : ρ.trace = 1) :
-    (krausApply (grudka_R θ 1) ρ).trace = 1 := by
-  rw [krausApply, trace]
-  unfold grudka_R
-  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
-  simp [Fin.sum_univ_succ]
-  rw [trace] at hρ
-  simp [Fin.sum_univ_succ] at hρ
-  ring_nf
-  rw [cos_sq' θ]
-  linarith
+
+
 
 example : quantumChannel (grudka_Z 0) := by
   simp only [quantumChannel, grudka_Z, Int.reduceNeg, Fin.isValue, cons_val', cons_val_fin_one,
@@ -175,6 +164,22 @@ lemma grudka_quantumChannel (θ : ℝ) (i : Fin 2) : quantumChannel (grudka_R θ
   fin_cases i
   · exact grudka_A_quantumChannel θ
   · exact grudka_B_quantumChannel θ
+
+open Real in
+example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
+    (hρ : ρ.trace = 1) :
+    (krausApply (grudka_R θ 1) ρ).trace = 1 := by
+  -- follows from it being a quantum channel, and ...
+  rw [krausApply, trace]
+  unfold grudka_R
+  simp only [diag, sum_apply, mul_apply, conjTranspose_apply]
+  simp [Fin.sum_univ_succ]
+  rw [trace] at hρ
+  simp [Fin.sum_univ_succ] at hρ
+  ring_nf
+  rw [cos_sq' θ]
+  linarith
+
 
 /-- Grudka et al. map does indeed map density matrices to density matrices. -/
 noncomputable def grudka_map (θ : ℝ) {n : ℕ} (word : Fin n → Fin 2) :
