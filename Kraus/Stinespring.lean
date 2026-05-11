@@ -1212,8 +1212,8 @@ noncomputable def krausCompletion {R : Type*} [RCLike R] {m r : ℕ}
 
 /-- Mar 14, 2026 -/
 lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
-    (K : Fin r → Matrix (Fin m) (Fin m) R)
-    (h_tni : ∑ i, star K i * K i ≤ 1) :
+    {K : Fin r → Matrix (Fin m) (Fin m) R}
+    (hK : ∑ i, star K i * K i ≤ 1) :
     (krausCompletion K)ᴴ * krausCompletion K = 1 := by
   have : (krausCompletion K)ᴴ * krausCompletion K =
     fun i j => ∑ k, (krausCompletion K)ᴴ i k  * krausCompletion K k j := by
@@ -1241,7 +1241,7 @@ lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
       have : 1 - (stinespringOp K)ᴴ * stinespringOp K ≥ 0 := by
         rw [← stinespringOp_adjoint_mul_self]
         simp only [Pi.star_apply, ge_iff_le, sub_nonneg]
-        exact h_tni
+        exact hK
       generalize 1 - (stinespringOp K)ᴴ * stinespringOp K = α at *
       have (x_2 : Fin m) : (starRingEnd R) ((CFC.sqrt α) x_2 x)
                                     = (star (CFC.sqrt α)) x x_2
@@ -1286,22 +1286,6 @@ lemma krausCompletion_I₂ₘNEWPROOF {r : ℕ}
   simp_rw [← h₀] at h_unital
   exact h_unital
 
-/-- krausCompletion is an isometry when `r=0` -/
-lemma krausCompletion_isometry_of_zero {m : ℕ}
-  (K : Fin 0 → Matrix (Fin m) (Fin m) ℂ) :
-  (krausCompletion K)ᴴ * krausCompletion K = 1 := by
-  apply krausCompletion_isometry_of_TNI
-  simp
-
-/-- krausCompletion is an isometry when `m=0` -/
-lemma krausCompletion_Iᵣ₀ {r : ℕ}
-  (K : Fin r → Matrix (Fin 0) (Fin 0) ℂ) :
-  (krausCompletion K)ᴴ * krausCompletion K = 1 := by
-  apply krausCompletion_isometry_of_TNI
-  simp
-
-
-
 /-- Tr_B (A ⨂ B) = Tr(B) · A -/
 lemma partialTrace_tensor {R : Type*} [RCLike R] {m n : ℕ}
   (A : Matrix (Fin m) (Fin m) R)
@@ -1318,8 +1302,7 @@ lemma partialTrace_tensor {R : Type*} [RCLike R] {m n : ℕ}
 
 /--
 April 7, 2026
-To explain the diagram in UCNC paper...
-or it contradicts the diagram by looking at A^4?
+To explain the diagram in UCNC paper.
 -/
 example {R : Type*} [RCLike R] {m r : ℕ}
     {K : Fin r → Matrix (Fin m) (Fin m) R}
@@ -1337,67 +1320,6 @@ example {R : Type*} [RCLike R] {m r : ℕ}
       rw [partialTrace_tensor]
       rw [hβ]
       simp
-
--- #check TensorProduct.map
-
--- set_option maxHeartbeats 0 in
--- lemma UdWord_eq {α : Type*} {R : Type*} [RCLike R]
---   {n q r : ℕ} (word : Fin n → α)
---   (𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R)
---     (hK : ∀ s, ∑ i, (𝓚 s i)ᴴ * 𝓚 s i = (1 : Matrix (Fin q) (Fin q) R))
---     (z : Fin r)
---   (ρ : Matrix (Fin q) (Fin q) R) :
---     krausApplyWord word 𝓚 ρ =
---     tr₂ (UdWord hK z word (ρ ⊗ₖ (single z z 1))) := by
---     induction n with
---     | zero =>
---         have : (UdWord hK z word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1)))
---             = (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1)) := by rfl
---         rw [this]
---         unfold krausApplyWord tr₂ single
---         simp
---     | succ n ih =>
---         have : (UdWord hK z word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ (single z z 1))) =
---             let U := Ud (hK (word (Fin.last n))) z
---             U * (UdWord hK z (Fin.init word) (ρ ⊗ₖ (single z z 1))) * Uᴴ
---             := by rfl
---         rw [this]
---         specialize ih <| Fin.init word
-
---         unfold krausApplyWord  -- tr₂ e₀Xe₀
---         have := @stinespringUnitaryForm_works R _ q r (𝓚 (word (Fin.last n)))
---             (hK (word (Fin.last n)))
---         rw [← this]
---         rw [ih]
---         set U := Ud (hK (word (Fin.last n))) z
---         change tr₂ (U * (tr₂ (UdWord hK z (Fin.init word)
---           (ρ ⊗ₖ (single z z 1)))) ⊗ₖ (single z z 1) * Uᴴ) =
---                tr₂ (U *       UdWord hK z (Fin.init word) (ρ ⊗ₖ (single z z 1)) * Uᴴ)
---         set V := UdWord hK z (Fin.init word)
---         change tr₂ (U * tr₂ (V (ρ ⊗ₖ (single z z 1))) ⊗ₖ (single z z 1) * Uᴴ) =
---                tr₂ (U *       V (ρ ⊗ₖ (single z z 1)) * Uᴴ)
---         set τ :=  V (ρ ⊗ₖ (single z z 1))
---         set σ := ((single z z 1) : Matrix (Fin r) (Fin r) R)
---         change tr₂ (U * ((tr₂ τ) ⊗ₖ σ) * Uᴴ) =
---                tr₂ (U *     τ          * Uᴴ)
---         have : tr₂ (U *     τ          * Uᴴ) = tr₂ (Uᴴ * U * τ) := by
---             sorry
---         -- if (partial) trace_cycle holds it would suffice that
---         have : tr₂ ((tr₂ τ) ⊗ₖ ((single z z 1) : Matrix (Fin r) (Fin r) R)) = (tr₂ τ) := by
---             generalize tr₂ τ = α
---             unfold tr₂ single
---             simp
-
---         -- have := @partialTrace_tensor
---         -- have : tr₂ (τ ⊗ₖ e₀Xe₀) = τ := by
---         --     sorry
---         -- rw [this]
-
---         -- nth_rw 1 [UdWord_eq₀]
-
---         sorry
-
-
 
 lemma trace_tr₂ {R : Type*} [RCLike R] {m n : ℕ}
   (ρ : Matrix ((Fin m) × (Fin n))
@@ -1429,28 +1351,32 @@ example {R : Type*} [RCLike R] {m r : ℕ}
   unfold POVM_PMF at P
   sorry
 
+/-- May 10, 2026. The Kraus completion as a map from
+operations to channels. -/
+noncomputable def krausCompletionChannelMap {R : Type*} [RCLike R] {q r : ℕ}
+    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : QuantumOperation K) :
+    {K : Fin (r+1) → Matrix (Fin q) (Fin q) R | QuantumChannel K} := by
+  constructor
+  swap
+  · exact fun i x => krausCompletion K (x, i)
+  · unfold QuantumChannel
+    rw [← krausCompletion_isometry_of_TNI hK]
+    ext x y
+    rw [mul_apply, Fintype.sum_prod_type, Finset.sum_comm, sum_apply]
+    congr
 
 
 /-- Feb 2, 2026 The "not orthogonal" CPTP completion of a CPTNI map. -/
 lemma CPTP_of_CPTNI {R : Type*} [RCLike R]
     {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R}
-    (hq : quantumOperation K) :
+    (hq : QuantumOperation K) :
     ∃ K' : Fin (r+1) → Matrix (Fin q) (Fin q) R,
-    quantumChannel K' ∧
+    QuantumChannel K' ∧
     ∀ i, ∀ H : i ≠ Fin.last r, K' i = K ⟨i.1, Fin.val_lt_last H⟩ := by
-  use (fun i x => @krausCompletion R _ q r K (x, i))
+  use (fun i x => krausCompletion K (x, i))
   constructor
-  · unfold quantumChannel
-    unfold quantumOperation at hq
-    have := @krausCompletion_isometry_of_TNI R _ q r K hq
-    rw [← this]
-    ext x y
-    rw [mul_apply]
-    rw [Fintype.sum_prod_type]
-    rw [Finset.sum_comm]
-    rw [sum_apply]
-    congr
+  · exact (krausCompletionChannelMap hq).2
   · unfold krausCompletion stinespringOp
     simp only [ne_eq, Fin.isValue]
     intro i H

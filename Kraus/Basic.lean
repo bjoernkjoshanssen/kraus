@@ -40,12 +40,12 @@ lemma krausApply.posSemidef {R : Type*} [Ring R] [PartialOrder R] [StarRing R]
     (krausApply K ρ).PosSemidef :=
   posSemidef_sum _ fun _ _ => hρ.mul_mul_conjTranspose_same _
 
-def quantumChannel {R : Type*} [Mul R] [One R] [Star R] [AddCommMonoid R]
+def QuantumChannel {R : Type*} [Mul R] [One R] [Star R] [AddCommMonoid R]
     {q r : Type*} [Fintype q] [Fintype r] [DecidableEq q] [DecidableEq r]
     (K : r → Matrix q q R) :=
   ∑ i, (K i)ᴴ * K i = 1
 
-def quantumOperation {R : Type*} [RCLike R]
+def QuantumOperation {R : Type*} [RCLike R]
   {q r : Type*} [Fintype q] [Fintype r] [DecidableEq q] [DecidableEq r]
   (K : r → Matrix q q R) := ∑ i, (K i)ᴴ * K i ≤ 1
 
@@ -69,11 +69,11 @@ def subNormalizedDensityMatrix
     (q : Type*) [Fintype q] :=
   {ρ : Matrix q q R // ρ.PosSemidef ∧ ρ.trace ≤ 1}
 
-lemma quantumChannel.trace_eq
+lemma QuantumChannel.trace_eq
     {R : Type*} [CommRing R] [PartialOrder R] [StarRing R]
     {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R}
-    (hK : quantumChannel K)
+    (hK : QuantumChannel K)
     (ρ : Matrix (Fin q) (Fin q) R) :
   (krausApply K ρ).trace = ρ.trace := by
   unfold krausApply
@@ -82,24 +82,24 @@ lemma quantumChannel.trace_eq
   rw [← trace_sum, ← Matrix.sum_mul, hK]
   simp
 
-lemma quantumChannel.trace_eq_one
+lemma QuantumChannel.trace_eq_one
     {R : Type*} [CommRing R] [PartialOrder R] [StarRing R]
     {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R}
-    (hK : quantumChannel K)
+    (hK : QuantumChannel K)
     (ρ : Matrix (Fin q) (Fin q) R) (hρ : ρ.trace = 1) :
     (krausApply K ρ).trace = 1 :=
-  quantumChannel.trace_eq hK ρ ▸ hρ
+  QuantumChannel.trace_eq hK ρ ▸ hρ
 
-/-- Realizing a quantumChannel as a map on densityMatrices. -/
-def krausApply_densityMatrix
+/-- Realizing a QuantumChannel as a map on densityMatrices. -/
+def densityMatrix.applyChannel
     {R : Type*} [CommRing R] [PartialOrder R] [StarRing R] [AddLeftMono R]
     {q r : ℕ}
     {K : Fin r → Matrix (Fin q) (Fin q) R}
-    (hK : quantumChannel K)
+    (hK : QuantumChannel K)
     (ρ : densityMatrix (Fin q) (R := R)) : densityMatrix (Fin q) (R := R) :=
   ⟨krausApply K ρ.1, ⟨krausApply.posSemidef K ρ.2.1,
-   quantumChannel.trace_eq_one hK ρ.1 ρ.2.2⟩⟩
+   QuantumChannel.trace_eq_one hK ρ.1 ρ.2.2⟩⟩
 
 
 /-- Transition function `δ^*` corresponding to a word `word` over an alphabet `α`,
@@ -121,12 +121,12 @@ theorem krausApplyWord_densityMatrix {α : Type*}
     {R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
     {n q r : ℕ} (word : Fin n → α)
     {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R}
-    (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (ρ : densityMatrix (Fin q)) :
+    (h𝓚 : ∀ (a : α), QuantumChannel (𝓚 a)) (ρ : densityMatrix (Fin q)) :
     (krausApplyWord word 𝓚 ρ.1).PosSemidef ∧ (krausApplyWord word 𝓚 ρ.1).trace = 1 := by
   induction n with
   | zero => exact ρ.2
   | succ n ih =>
-    exact (krausApply_densityMatrix (h𝓚 _)
+    exact (densityMatrix.applyChannel (h𝓚 _)
       ⟨krausApplyWord (Fin.init word) 𝓚 ρ.1, ih (Fin.init word)⟩).2
 
 /-- Using a family of quantum channels,
@@ -135,13 +135,13 @@ def krausApplyWord_map {α : Type*}
     {R : Type*} [CommRing R] [StarRing R] [PartialOrder R] [AddLeftMono R]
     {n q r : ℕ} (word : Fin n → α)
     (𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R)
-    (hq : ∀ a, quantumChannel (𝓚 a))
+    (hq : ∀ a, QuantumChannel (𝓚 a))
     (ρ : densityMatrix (Fin q) (R := R)) : densityMatrix (Fin q) (R := R) :=
   ⟨krausApplyWord word 𝓚 ρ.1, krausApplyWord_densityMatrix _ hq _⟩
 
 def e {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) R :=
   fun i => single i 0 1
--- Move pureState to a file Real.lean
+
 
 def pureState_C {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
     {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :=
@@ -448,11 +448,11 @@ theorem trace_mul_posSemidef_nonneg_general {R : Type*} [RCLike R]
 
 /-- Feb 1, 2026.
 And almost again May 9, 2026. -/
-lemma quantumOperation.trace_le {R : Type*} [RCLike R] {q r : ℕ}
-    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
+lemma QuantumOperation.trace_le {R : Type*} [RCLike R] {q r : ℕ}
+    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : QuantumOperation K)
     {ρ : Matrix (Fin q) (Fin q) R} (hρ : 0 ≤ ρ) :
     (krausApply K ρ).trace ≤ ρ.trace := by
-  unfold quantumOperation at hK
+  unfold QuantumOperation at hK
   unfold krausApply
   rw [trace_sum]
   simp_rw [fun i => trace_mul_cycle (C := (K i)ᴴ) (B := ρ) (A := K i)]
@@ -472,28 +472,28 @@ lemma quantumOperation.trace_le {R : Type*} [RCLike R] {q r : ℕ}
     exact sub_nonneg.mp this
   exact trace_mul_posSemidef_nonneg_general hρ <| nonneg_iff_posSemidef.mpr hK
 
-lemma quantumOperation_preserves_trace_le_one
+lemma QuantumOperation_preserves_trace_le_one
     {R : Type*} [RCLike R] {q r : ℕ}
-    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
+    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : QuantumOperation K)
     {ρ : Matrix (Fin q) (Fin q) R} (hρ : 0 ≤ ρ)
     (hρ₁ : ρ.trace ≤ 1) : (krausApply K ρ).trace ≤ 1 :=
   le_trans (hK.trace_le hρ) hρ₁
 
 /--
 Feb 1, 2026
-Realizing a quantumOperation as a map on subnormalized density matrices. -/
+Realizing a QuantumOperation as a map on subnormalized density matrices. -/
 def krausApply_subNormalizedDensityMatrix {R : Type*} [RCLike R] {q r : ℕ}
-    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : quantumOperation K)
+    {K : Fin r → Matrix (Fin q) (Fin q) R} (hK : QuantumOperation K)
     (ρ : subNormalizedDensityMatrix (Fin q) (R := R)) :
     subNormalizedDensityMatrix (Fin q) (R := R) :=
   ⟨krausApply K ρ.1, krausApply.posSemidef K ρ.2.1,
-    quantumOperation_preserves_trace_le_one hK
+    QuantumOperation_preserves_trace_le_one hK
       (Matrix.nonneg_iff_posSemidef.mpr ρ.2.1) ρ.2.2
    ⟩
 
 theorem krausApplyWord_subNormalizedDensityMatrix {α : Type*}
     {R : Type*} [RCLike R] {n q r : ℕ} (word : Fin n → α)
-    {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R} (h𝓚 : ∀ (a : α), quantumOperation (𝓚 a))
+    {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R} (h𝓚 : ∀ (a : α), QuantumOperation (𝓚 a))
     (ρ : subNormalizedDensityMatrix (Fin q)) :
     (krausApplyWord word 𝓚 ρ.1).PosSemidef ∧ (krausApplyWord word 𝓚 ρ.1).trace ≤ 1 := by
   induction n with
@@ -505,7 +505,7 @@ theorem krausApplyWord_subNormalizedDensityMatrix {α : Type*}
 then the whole word maps density matrices to density matrices. -/
 def krausApplyWord_map_sub {α : Type*} {R : Type*} [RCLike R]
     {n q r : ℕ} (word : Fin n → α)
-    {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R} (h𝓚 : ∀ a, quantumOperation (𝓚 a))
+    {𝓚 : α → Fin r → Matrix (Fin q) (Fin q) R} (h𝓚 : ∀ a, QuantumOperation (𝓚 a))
     (ρ : subNormalizedDensityMatrix (Fin q) (R := R)) :
     subNormalizedDensityMatrix (Fin q) (R := R) :=
   ⟨krausApplyWord word 𝓚 ρ.1,
@@ -1443,7 +1443,7 @@ noncomputable def PVM_of_word_of_channel_C
     {R : Type*} [RCLike R]
     {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
-    (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM_C (R := R) := by
+    (h𝓚 : ∀ (a : α), QuantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM_C (R := R) := by
   have := krausApplyWord_densityMatrix (𝓚 := 𝓚) (word := word.2)
       (ρ := ⟨pureState_C (e 0),⟨pureState_psd_C _, basisState_trace_one_C⟩⟩)
         (h𝓚 := h𝓚)
@@ -1453,15 +1453,15 @@ noncomputable def PVM_of_word_of_channel_C
 
 def MOlanguageAcceptedBy_C {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
-    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
+    (h𝓚 : ∀ a, QuantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel_C acc (h𝓚) word).p (1 : Fin 2) > 1/2}
 
 
-noncomputable def PVM_of_word_of_channel_CPTNI
+noncomputable def PVM_of_word_of_operation
     {R : Type*} [RCLike R]
     {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
-    (h𝓚 : ∀ (a : α), quantumOperation (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) :
+    (h𝓚 : ∀ (a : α), QuantumOperation (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) :
     PVM_CPTNI (R := R) :=
   have h₁ := krausApplyWord_subNormalizedDensityMatrix
     word.2 h𝓚 ⟨pureState_C (e 0), ⟨pureState_psd_C (e 0), le_of_eq basisState_trace_one_C⟩⟩
@@ -1472,21 +1472,14 @@ Language accepted by a family of quantum operations, as opposed to quantum chann
 -/
 def MOlanguageAcceptedBy_CPTNI {R : Type*} [RCLike R] {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) R}
-    (h𝓚 : ∀ a, quantumOperation (𝓚 a)) :=
-  {word | (PVM_of_word_of_channel_CPTNI acc (h𝓚) word).p (some (1 : Fin 2)) > 1/2}
+    (h𝓚 : ∀ a, QuantumOperation (𝓚 a)) :=
+  {word | (PVM_of_word_of_operation acc (h𝓚) word).p (some (1 : Fin 2)) > 1/2}
 
-def exampleLanguage₀ := @MOlanguageAcceptedBy_CPTNI ℂ _ (Fin 1) 1 0 0 (fun _ _ => !![1])
-  (by
-    intro z;unfold quantumOperation
+def exampleLanguage₀ := @MOlanguageAcceptedBy_CPTNI ℂ _ (Fin 1) 1 0 0 (fun _ _ => !![1]) (by
+    intro z
     apply le_of_eq
-    ext x y
-    fin_cases x
-    fin_cases y
-    simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.succ_eq_add_one,
-      Nat.reduceAdd, Fin.zero_eta, Finset.sum_const, Finset.card_singleton, smul_apply, one_smul,
-      one_apply_eq]
-    rw [mul_apply]
-    simp)
+    ext x y; fin_cases x; fin_cases y
+    simp [mul_apply])
 
 open scoped ComplexOrder MatrixOrder
 
@@ -1573,7 +1566,7 @@ def exampleLanguage₁ := @MOlanguageAcceptedBy_CPTNI
   ℂ _ (Fin 1) 1 0 0 (fun _ _ => !![1 / 2])
   (by
     intro z
-    simp only [quantumOperation, Nat.succ_eq_add_one, Nat.reduceAdd, Finset.univ_unique,
+    simp only [QuantumOperation, Nat.succ_eq_add_one, Nat.reduceAdd, Finset.univ_unique,
       Fin.default_eq_zero, Fin.isValue, one_div, Finset.sum_const, Finset.card_singleton, one_smul]
     have : !![(2:ℂ)⁻¹]ᴴ * !![2⁻¹] = !![4⁻¹] := by
       ext i j
@@ -1610,7 +1603,7 @@ the length-one word is not accepted :) -/
 lemma exampleLanguage₁_length_one (word : Fin 1 → Fin 1) :
   ¬ ⟨1, word⟩ ∈ exampleLanguage₁ := by
   unfold exampleLanguage₁ MOlanguageAcceptedBy_CPTNI
-    PVM_of_word_of_channel_CPTNI PVM_of_state_CPTNI PMF_of_state_CPTNI
+    PVM_of_word_of_operation PVM_of_state_CPTNI PMF_of_state_CPTNI
   have : e (0 : Fin 1) = !![(1 : ℂ)] := by
     ext x y; fin_cases x; fin_cases y; simp [e]
   simp_rw [this]
@@ -1664,7 +1657,7 @@ lemma exampleLanguage₁_length_one (word : Fin 1 → Fin 1) :
 the empty string is accepted in the measure-once setting. -/
 lemma MO_language_nonempty_C {α : Type*} {r k : ℕ}
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℂ}
-    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) :
+    (h𝓚 : ∀ a, QuantumChannel (𝓚 a)) :
   MOlanguageAcceptedBy_C 0 h𝓚 ≠ ∅ := by
   refine Set.nonempty_iff_ne_empty'.mp ?_
   refine nonempty_subtype.mpr ?_

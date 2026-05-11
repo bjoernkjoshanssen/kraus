@@ -319,7 +319,7 @@ belong to the measure-once language of KOA `𝓚`.
 -/
 def PVM_of_word_of_channel {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
-    (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM := by
+    (h𝓚 : ∀ (a : α), QuantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM := by
   have := krausApplyWord_densityMatrix (𝓚 := 𝓚) (word := word.2)
       (ρ := ⟨pureState (e 0),⟨pureState_psd _, basisState_trace_one⟩⟩) (h𝓚 := h𝓚)
   exact PVM_of_state acc this.2 this.1
@@ -327,7 +327,7 @@ def PVM_of_word_of_channel {α : Type*} {r k : ℕ} (acc : Fin k.succ)
 
 def getPVM₃ {α : Type*} {r : ℕ}
     {𝓚 : α → Fin r → Matrix (Fin (Nat.succ 2)) (Fin (Nat.succ 2)) ℝ}
-    (h𝓚 : ∀ (a : α), quantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM :=
+    (h𝓚 : ∀ (a : α), QuantumChannel (𝓚 a)) (word : (n : ℕ) × (Fin n → α)) : PVM :=
   PVM_of_word_of_channel 2 h𝓚 word
 
 
@@ -337,7 +337,7 @@ We accept `word` if starting in `e₀` we end up in `e₁` with probability at l
 -/
 def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
-    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
+    (h𝓚 : ∀ a, QuantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   {word | (PVM_of_word_of_channel acc (h𝓚) word).p (1 : Fin 2) > 1/2}
 -- quantum channel vs. all quantum channel?
 
@@ -347,7 +347,7 @@ def MOlanguageAcceptedBy {α : Type*} {r k : ℕ} (acc : Fin k.succ)
 the empty string is accepted in the measure-once setting. -/
 lemma MO_language_nonempty {α : Type*} {r k : ℕ}
     {𝓚 : α → Fin r → Matrix (Fin k.succ) (Fin k.succ) ℝ}
-    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) :
+    (h𝓚 : ∀ a, QuantumChannel (𝓚 a)) :
   MOlanguageAcceptedBy 0 h𝓚 ≠ ∅ := by
   refine Set.nonempty_iff_ne_empty'.mp ?_
   refine nonempty_subtype.mpr ?_
@@ -376,5 +376,5 @@ Measure-Once language accepted by 𝓚 is
 -/
 def MOlanguageAcceptedBy₃ {α : Type*} {r : ℕ}
     (𝓚 : α → Fin r → Matrix (Fin 3) (Fin 3) ℝ)
-    (h𝓚 : ∀ a, quantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
+    (h𝓚 : ∀ a, QuantumChannel (𝓚 a)) : Set ((n : ℕ) × (Fin n → α)) :=
   MOlanguageAcceptedBy 2 h𝓚

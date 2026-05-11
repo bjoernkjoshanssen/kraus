@@ -480,29 +480,17 @@ lemma prod_sum_prod_unitary (A : unitary _) :
     fin_cases i
     fin_cases j
     simp_all
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
+    repeat rw [Matrix.mul_apply]
     simp
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
+    repeat rw [Matrix.mul_apply]
     simp
     rw [Fintype.sum_prod_type]
     rw [Fin.sum_univ_two]
     rw [Fin.sum_univ_two]
     simp
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
+    repeat rw [Matrix.mul_apply]
     simp
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
-    rw [Matrix.mul_apply]
+    repeat rw [Matrix.mul_apply]
     simp
 
     sorry

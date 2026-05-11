@@ -91,22 +91,22 @@ example (θ : ℂ) : (grudka_C θ 0 0).trace = 0 := by simp [grudka_C]
 
 
 
-example : quantumChannel (grudka_Z 0) := by
-  simp only [quantumChannel, grudka_Z, Int.reduceNeg, Fin.isValue, cons_val', cons_val_fin_one,
+example : QuantumChannel (grudka_Z 0) := by
+  simp only [QuantumChannel, grudka_Z, Int.reduceNeg, Fin.isValue, cons_val', cons_val_fin_one,
     cons_val_zero, conjTranspose_eq_transpose_of_trivial, Fin.sum_univ_two, cons_transpose,
     Nat.succ_eq_add_one, Nat.reduceAdd, cons_val_one]
   ext i j
   fin_cases i <;> fin_cases j <;> decide
 
-example : quantumChannel (grudka_Z 1) := by
-  simp only [quantumChannel, grudka_Z, Int.reduceNeg, Fin.isValue, cons_val', cons_val_fin_one,
+example : QuantumChannel (grudka_Z 1) := by
+  simp only [QuantumChannel, grudka_Z, Int.reduceNeg, Fin.isValue, cons_val', cons_val_fin_one,
     cons_val_one, conjTranspose_eq_transpose_of_trivial, Fin.sum_univ_two, cons_val_zero,
     cons_transpose, Nat.succ_eq_add_one, Nat.reduceAdd, transpose_zero, mul_zero, add_zero]
   ext i j
   fin_cases i <;> fin_cases j <;> decide
 
-example : quantumChannel (grudka_R₀ 1 (R := ℝ)) := by
-  unfold quantumChannel grudka_R₀
+example : QuantumChannel (grudka_R₀ 1 (R := ℝ)) := by
+  unfold QuantumChannel grudka_R₀
   apply ext
   intro i j
   simp only [sum_apply, mul_apply, conjTranspose_apply]
@@ -114,7 +114,7 @@ example : quantumChannel (grudka_R₀ 1 (R := ℝ)) := by
 
 open Real in
 /-- 1/24/26 -/
-lemma grudka_B_quantumChannel (θ : ℝ) : quantumChannel (grudka_R θ 1) := by
+lemma grudka_B_QuantumChannel (θ : ℝ) : QuantumChannel (grudka_R θ 1) := by
   apply ext
   intro i j
   unfold grudka_R
@@ -143,9 +143,9 @@ lemma grudka_B_quantumChannel (θ : ℝ) : quantumChannel (grudka_R θ 1) := by
     · simp
   · fin_cases j <;> simp
 
-lemma grudka_A_quantumChannel (θ : ℝ) : quantumChannel (grudka_R θ 0) := by
+lemma grudka_A_QuantumChannel (θ : ℝ) : QuantumChannel (grudka_R θ 0) := by
   unfold grudka_R
-  unfold quantumChannel
+  unfold QuantumChannel
   simp only [Fin.isValue, cons_val', cons_val_fin_one, cons_val_zero,
     conjTranspose_eq_transpose_of_trivial]
   simp only [Fin.sum_univ_two, cons_val_one]
@@ -160,10 +160,10 @@ lemma grudka_A_quantumChannel (θ : ℝ) : quantumChannel (grudka_R θ 0) := by
   fin_cases j <;>
   simp
 
-lemma grudka_quantumChannel (θ : ℝ) (i : Fin 2) : quantumChannel (grudka_R θ i) := by
+lemma grudka_QuantumChannel (θ : ℝ) (i : Fin 2) : QuantumChannel (grudka_R θ i) := by
   fin_cases i
-  · exact grudka_A_quantumChannel θ
-  · exact grudka_B_quantumChannel θ
+  · exact grudka_A_QuantumChannel θ
+  · exact grudka_B_QuantumChannel θ
 
 open Real in
 example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
@@ -184,7 +184,7 @@ example (θ : ℝ) {ρ : Matrix (Fin 3) (Fin 3) ℝ}
 /-- Grudka et al. map does indeed map density matrices to density matrices. -/
 noncomputable def grudka_map (θ : ℝ) {n : ℕ} (word : Fin n → Fin 2) :
   densityMatrix (Fin 3) (R := ℝ) → densityMatrix (Fin 3) (R := ℝ) :=
-  krausApplyWord_map word _ fun i ↦ grudka_quantumChannel θ i
+  krausApplyWord_map word _ fun i ↦ grudka_QuantumChannel θ i
 
 
 example : pureState e₁ = !![1,0,0;0,0,0;0,0,0] := by
@@ -253,7 +253,7 @@ This can be generalized to any quantum channel.
 -/
 lemma MO_grudka0_language_nonempty :
   MOlanguageAcceptedBy 0
-    (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
+    (fun a ↦ grudka_QuantumChannel 0 a) ≠ ∅ := by
   apply MO_language_nonempty
 
 
@@ -374,7 +374,7 @@ lemma grudka_basic_operation₂ : krausApply (grudka_R₀ 0 (R := ℝ))
 to accept something... -/
 lemma MO_grudka1_language_nonempty :
   MOlanguageAcceptedBy 1
-    (fun a ↦ grudka_quantumChannel 0 a) ≠ ∅ := by
+    (fun a ↦ grudka_QuantumChannel 0 a) ≠ ∅ := by
   refine Set.nonempty_iff_ne_empty'.mp <| nonempty_subtype.mpr ?_
   use ⟨1,![0]⟩
   simp only [
