@@ -360,8 +360,8 @@ A projection-valued measure, with measure equal to the trace of the density matr
 	Projection-valued measure.
 \end{definition}
 
-\begin{definition}\label{quantumChannel}
-	\lean{quantumChannel}
+\begin{definition}\label{QuantumChannel}
+	\lean{QuantumChannel}
 	\leanok
 	Quantum channel.
 \end{definition}
@@ -371,17 +371,17 @@ A projection-valued measure, with measure equal to the trace of the density matr
 	Kraus operators preserve the PSD property.
 \end{lemma}
 
-\begin{lemma}\label{krausApply_densityMatrix}
-	\lean{krausApply_densityMatrix}
+\begin{lemma}\label{densityMatrix.applyChannel}
+	\lean{densityMatrix.applyChannel}
 	\leanok
-	\uses{quantumChannel,krausApply,krausApply_psd}
+	\uses{QuantumChannel,krausApply,krausApply_psd}
 	An automaton based on a quantum channel maps density matrices to density matrices while reading a single letter.
 \end{lemma}
 
 \begin{lemma}\label{krausApplyWord_densityMatrix}
 	\lean{krausApplyWord_densityMatrix}
 	\leanok
-	\uses{quantumChannel, krausApplyWord, krausApply_densityMatrix}
+	\uses{QuantumChannel, krausApplyWord, krausApply_densityMatrix}
 	An automaton based on a quantum channel maps density matrices to density matrices while reading a word.
 \end{lemma}
 
@@ -467,7 +467,7 @@ If the initial operators satisfy $\sum_i K_i^\dagger K_i \le I$, then the comple
 % \begin{definition}\label{PVM_of_word_of_channel}
 % 	\lean{PVM_of_word_of_channel}
 % 	\leanok
-% 	\uses{PVM,quantumChannel,PVM_of_state,krausApplyWord_densityMatrix,pureState_psd,basisState_trace_one,krausApplyWord}
+% 	\uses{PVM,QuantumChannel,PVM_of_state,krausApplyWord_densityMatrix,pureState_psd,basisState_trace_one,krausApplyWord}
 % The projection-valued measure corresponding to a word belonging to the measure-once language of the KOA $\mathcal K$.
 % \end{definition}
 
