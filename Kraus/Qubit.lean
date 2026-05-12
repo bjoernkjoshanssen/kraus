@@ -68,6 +68,8 @@ def transl₂ : Fin 2 × Fin 2 → Fin 4
 | (1,0) => 2
 | (1,1) => 3
 
+
+
 def transl₃ : Fin 2 × Fin 2 × Fin 2 → Fin 8
 | (0,0,0) => 0
 | (0,0,1) => 1
@@ -78,6 +80,13 @@ def transl₃ : Fin 2 × Fin 2 × Fin 2 → Fin 8
 | (1,1,0) => 6
 | (1,1,1) => 7
 
+def transl₃' : Fin 2 × Fin 2 × Fin 2 → Fin 8 :=
+    fun p => (p.1.mkDivMod p.2.1).mkDivMod p.2.2
+
+example : transl₃ = transl₃' := by
+  unfold transl₃ transl₃'
+  ext p
+  fin_cases p <;> simp
 
 
 def translate₂ : Matrix (Fin 4) (Fin 4) ℂ → Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ :=
@@ -105,8 +114,8 @@ def cnot₀ : Matrix (Fin 4) (Fin 4) ℂ := !![
   0,0,1,0
 ]
 
-def toffoli : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ := by
-  exact translate₃ toffoli₀
+def toffoli : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ :=
+  translate₃ toffoli₀
 
 
 def cnot : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ := by
@@ -123,8 +132,8 @@ example {n : ℕ} : PiTensorProduct ℂ (fun _ : Fin n => Matrix (Fin 2) (Fin 1)
 
 
 
-example : toffoli * (e (0 : Fin 2)) ⊗ₖ ((e (0 : Fin 2)) ⊗ₖ (e (0 : Fin 2))) =
-  (e (0 : Fin 2)) ⊗ₖ ((e (0 : Fin 2)) ⊗ₖ (e (0 : Fin 2))) := by
+example : toffoli * e 0 ⊗ₖ (e 0 ⊗ₖ e 0) =
+                    e 0 ⊗ₖ (e 0 ⊗ₖ e 0) := by
   unfold toffoli translate₃ toffoli₀ kroneckerMap transl₃
   simp only [Fin.isValue, of_apply, cons_val', cons_val_fin_one]
   all_goals
@@ -177,6 +186,17 @@ noncomputable def toffoli_probability
   let b :=  A (0,0,1) (0,0,0)
   let c :=  A (0,1,0) (0,0,0)
   let d :=  A (0,1,1) (0,0,0)
+  exact star a * a + star b * b
+      + star c * c + star d * d
+
+/-- May 11, 2026. Using `*ᵥ` to simplify matrix structure. -/
+noncomputable def toffoli_probability''
+    (startState : Fin 2 × Fin 2 × Fin 2 → ℂ) : ℂ := by
+  let A := toffoli *ᵥ startState
+  let a :=  A (0,0,0)
+  let b :=  A (0,0,1)
+  let c :=  A (0,1,0)
+  let d :=  A (0,1,1)
   exact star a * a + star b * b
       + star c * c + star d * d
 
@@ -235,70 +255,42 @@ example : toffoli_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
   have : a = 1 := by
     unfold a A toffoli translate₃ toffoli₀ transl₃ e
     rw [Matrix.mul_apply]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
+    repeat
+      try rw [Fintype.sum_prod_type]
+      rw [Fin.sum_univ_two]
     simp
   rw [this]
   have : b = 0 := by
     unfold b A toffoli translate₃ toffoli₀ transl₃ e
     rw [Matrix.mul_apply]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
+    repeat
+      try rw [Fintype.sum_prod_type]
+      rw [Fin.sum_univ_two]
     simp
   have : d 2 = 0 := this
   rw [this]
   have : c = 0 := by
     unfold c A toffoli translate₃ toffoli₀ transl₃ e
     rw [Matrix.mul_apply]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
+    repeat
+      try rw [Fintype.sum_prod_type]
+      rw [Fin.sum_univ_two]
     simp
   have : d 1 = 0 := this
   rw [this]
   have : d 0 = 0 := by
     unfold d A toffoli translate₃ toffoli₀ transl₃ e
     rw [Matrix.mul_apply]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
+    repeat
+      try rw [Fintype.sum_prod_type]
+      rw [Fin.sum_univ_two]
     simp
   rw [this]
   simp
 
 lemma cnot_basis (i j) : cnot * (e i ⊗ₖ e j) = ite (i = 0)
-  (e 0 ⊗ₖ e j)
-  (e 1 ⊗ₖ e (1-j))
+                                (e i ⊗ₖ e j)
+                                (e i ⊗ₖ e (1-j))
   := by
   fin_cases i <;> fin_cases j <;>
   all_goals

@@ -1,3 +1,4 @@
+import Mathlib.Data.Matrix.Mul
 import Mathlib.Analysis.Matrix.Normed
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
@@ -142,10 +143,28 @@ def krausApplyWord_map {α : Type*}
 def e {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) R :=
   fun i => single i 0 1
 
+/-- A version of `e` for use with `*ᵥ`.
+However, when combining with `⊗ₖ` it may be better to stick with `e`.
+-/
+def ev {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → (Fin k) → R :=
+  fun i j => ite (i = j) 1 0
 
 def pureState_C {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
     {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :=
   mulᵣ e eᴴ
+
+/-- A version of `pureState_C` for use with `*ᵥ`. -/
+def pureState_Cv {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
+    {k : ℕ} (e : (Fin k) → R) : Matrix (Fin k) (Fin k) R := by
+  intro i j
+  exact e i * star e j
+
+lemma preState_Cv_eq_pureState_C {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
+    {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :
+      pureState_C e = pureState_Cv (fun i => e i 0) := by
+  unfold pureState_C pureState_Cv
+  ext i j
+  simp [mulᵣ, dotProductᵣ, FinVec.sum, conjTranspose, transpose]
 
 lemma pureState_selfAdjoint_C {R : Type*} [Ring R] [StarRing R]
     {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :
@@ -247,13 +266,20 @@ theorem psd_versions {k : ℕ} {e : Matrix (Fin k) (Fin k) ℝ} {x : Fin k →�
   psd_versions_general he
 
 
-theorem matrix_identity_general {R : Type*} [RCLike R]
-    (k : ℕ) (e : Matrix (Fin k) (Fin 1) R) (α : Fin k → R) :
-  star α ⬝ᵥ (e * eᴴ) *ᵥ α = (star α ᵥ* e * eᴴ *ᵥ α) 0 := by
-  simp only [Pi.mul_apply, vecMul, dotProduct, Pi.star_apply,
-    RCLike.star_def, mulVec, mul_comm, Finset.mul_sum, mul_assoc];
-  congr; ext u; congr; ext v
-  simp [ Matrix.mul_apply, mul_comm, mul_left_comm ]
+theorem dotProduct_mul_mulVec {R : Type*} [RCLike R]
+    (k : ℕ)
+    (d : Matrix (Fin k) (Fin 1) R)
+    (e : Matrix (Fin 1) (Fin k) R)
+    (α β : Fin k → R) :
+  β ⬝ᵥ ((d * e) *ᵥ α) = ((β ᵥ* d) * (e *ᵥ α)) 0 := by
+  simp only [Fin.isValue, Pi.mul_apply,
+    vecMul, dotProduct, mulVec, mul_comm, Finset.mul_sum, mul_assoc]
+  congr; ext x
+  congr; ext y
+  rw [mul_apply]
+  simp
+  ring_nf
+
 
 
 lemma pureState_psd_C {R : Type*} [RCLike R] [PartialOrder R]
@@ -269,7 +295,7 @@ lemma pureState_psd_C {R : Type*} [RCLike R] [PartialOrder R]
     unfold pureState_C
     generalize ⇑x = α at *
     rw [mulᵣ_eq]
-    rw [matrix_identity_general]
+    rw [dotProduct_mul_mulVec]
     change 0 ≤ (star α ᵥ* e) 0 * (eᴴ *ᵥ α) 0
     have : star ((eᴴ *ᵥ α) 0) = (star α ᵥ* e) 0 := by
         rw [vecMul, mulVec, dotProduct, dotProduct]
