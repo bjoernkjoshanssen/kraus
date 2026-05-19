@@ -1327,29 +1327,29 @@ lemma trace_tr₂ {R : Type*} [RCLike R] {m n : ℕ}
     trace ρ = trace (tr₂ ρ) := Fintype.sum_prod_type fun x ↦ ρ x x
 
 
-example {R : Type*} [RCLike R] {m r : ℕ}
-    {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
-    (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r.succ)
-    (ρ : Matrix (Fin m) (Fin m) R)
-    (hρ : ρ.trace = 1) (i : Fin m)
-    (hρ₀ : 0 ≤ ρ)
-    : 0 = 0 := by
-  let P := @POVM_PMF R _ m ρ hρ hρ₀
-  let D := stinespringUnitaryForm hK z ρ
-  have := RCLike.re (pureState_C (e i) * ρ).trace
-  have : RCLike.re (pureState_C (e i) * (stinespringUnitaryForm hK z ρ)).trace
-    = RCLike.re (pureState_C (e i) * (krausApply K ρ)).trace := by
-    rw [stinespringUnitaryForm_works]
-  unfold stinespringUnitaryForm at this
---   simp at this
-  have h₀ := @trace_tr₂ R _ m r.succ
-    (let U := Ud hK z
-    (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ))
-  simp at h₀
---   have := @partialTrace_tensor
-  -- need that trace_mul type formula?
-  unfold POVM_PMF at P
-  sorry
+-- example {R : Type*} [RCLike R] {m r : ℕ}
+--     {K : Fin r.succ → Matrix (Fin m) (Fin m) R}
+--     (hK : ∑ i, (K i)ᴴ * K i = 1) (z : Fin r.succ)
+--     (ρ : Matrix (Fin m) (Fin m) R)
+--     (hρ : ρ.trace = 1) (i : Fin m)
+--     (hρ₀ : 0 ≤ ρ)
+--     : 0 = 0 := by
+--   let P := @POVM_PMF R _ m ρ hρ hρ₀
+--   let D := stinespringUnitaryForm hK z ρ
+--   have := RCLike.re (pureState_C (e i) * ρ).trace
+--   have : RCLike.re (pureState_C (e i) * (stinespringUnitaryForm hK z ρ)).trace
+--     = RCLike.re (pureState_C (e i) * (krausApply K ρ)).trace := by
+--     rw [stinespringUnitaryForm_works]
+--   unfold stinespringUnitaryForm at this
+-- --   simp at this
+--   have h₀ := @trace_tr₂ R _ m r.succ
+--     (let U := Ud hK z
+--     (U * (ρ ⊗ₖ (single z z 1)) * Uᴴ))
+--   simp at h₀
+-- --   have := @partialTrace_tensor
+--   -- need that trace_mul type formula?
+--   unfold POVM_PMF at P
+--   sorry
 
 /-- May 10, 2026. The Kraus completion as a map from
 operations to channels. -/
@@ -1395,7 +1395,8 @@ lemma CPTP_of_CPTNI {R : Type*} [RCLike R]
       exact Fin.eq_last_of_not_lt g₀
 
 
-noncomputable def partialTraceLeft {R : Type*} [RCLike R] {m n : ℕ}
-    (ρ : Matrix (Fin m × Fin n)
-                (Fin m × Fin n) R) : Matrix (Fin n) (Fin n) R :=
-fun i j => ∑ k : Fin m, ρ (k, i) (k, j)
+noncomputable def partialTraceLeft {R : Type*} [RCLike R]
+    {m n : Type*} [Fintype m]
+    (ρ : Matrix (m × n)
+                (m × n) R) : Matrix (n) (n) R :=
+fun i j => ∑ k : m, ρ (k, i) (k, j)

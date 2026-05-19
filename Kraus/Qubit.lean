@@ -13,7 +13,7 @@ import Mathlib.LinearAlgebra.PiTensorProduct
 import Mathlib.Analysis.InnerProductSpace.Positive
 import Kraus.Basic
 import Kraus.GrudkaExamples
-
+import Kraus.Stinespring
 import Mathlib.Data.PEquiv
 import Mathlib.Data.Matrix.PEquiv
 
@@ -26,41 +26,6 @@ import Mathlib.Data.Matrix.PEquiv
 open Matrix MatrixOrder
 
 open Kronecker
-
-example : Unit := by
-  have : (grudka_C 0 0 0).toLin' (fun a ↦ ite (a=0) 1 0) =
-    fun a ↦ ite (a=1) 1 0 := by
-    unfold grudka_C
-    simp only [Complex.cos_zero, Complex.sin_zero, neg_zero, Fin.isValue]
-    ext x
-    split_ifs with g₀
-    · subst g₀
-      simp
-      rfl
-    simp
-    by_cases H : x = 0
-    · subst H
-      simp
-    have : x = 2 := by fin_cases x <;> simp_all
-    subst this
-    rfl
-  have := (@LinearMap.IsPositive ℂ (WithLp 2 (Fin 3 → ℂ)))
-    (by
-      have := WithLp.map 2 (grudka_C 0 0 0).toLin'
-
-      refine {
-        toFun := WithLp.map 2 ((grudka_C 0 0 0).toLin')
-        map_add' := by
-          intro x y
-          generalize grudka_C 0 0 0 = A
-
-          sorry
-        map_smul' := sorry
-      })
-
-  -- have : (grudka_C 0 0 0).toLin'.IsPositive := by sorry
-  sorry
-
 
 def transl₂ : Fin 2 × Fin 2 → Fin 4
 | (0,0) => 0
@@ -80,6 +45,36 @@ def transl₃ : Fin 2 × Fin 2 × Fin 2 → Fin 8
 | (1,1,0) => 6
 | (1,1,1) => 7
 
+def transl₃'' : (Fin 2 × Fin 2) × Fin 2 → Fin 8
+| ((0,0),0) => 0
+| ((0,0),1) => 1
+| ((0,1),0) => 2
+| ((0,1),1) => 3
+| ((1,0),0) => 4
+| ((1,0),1) => 5
+| ((1,1),0) => 6
+| ((1,1),1) => 7
+
+noncomputable def transl3 {a b : ℕ} :
+    (Fin b → Fin a) → Fin (a ^ b) := by
+  have := (Fintype.equivFin (Fin b → Fin a)).toFun
+  convert this
+  simp
+
+def transl {a b : ℕ} :
+    (Fin b → Fin a) → Fin (a ^ b) := by
+  exact fun v => finFunctionFinEquiv v
+
+
+-- | ![0,0,0] => 0
+-- | ![0,0,1] => 0
+-- | ![0,1,0] => 0
+-- | ![0,1,1] => 0
+-- | ![1,0,0] => 0
+-- | ![1,0,1] => 0
+-- | ![1,1,0] => 0
+-- | ![1,1,1] => 0
+
 def transl₃' : Fin 2 × Fin 2 × Fin 2 → Fin 8 :=
     fun p => (p.1.mkDivMod p.2.1).mkDivMod p.2.2
 
@@ -95,6 +90,10 @@ def translate₂ : Matrix (Fin 4) (Fin 4) ℂ → Matrix (Fin 2 × Fin 2) (Fin 2
 def translate₃ : Matrix (Fin 8) (Fin 8) ℂ →
   Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ :=
   fun A x y => A (transl₃ x) (transl₃ y)
+
+def translate₃' : Matrix (Fin 8) (Fin 8) ℂ →
+  Matrix ((Fin 2 × Fin 2) × Fin 2) ((Fin 2 × Fin 2) × Fin 2) ℂ :=
+  fun A x y => A (transl₃'' x) (transl₃'' y)
 
 def toffoli₀ : Matrix (Fin 8) (Fin 8) ℂ := !![
   1,0,0,0, 0,0,0,0;
@@ -117,6 +116,8 @@ def cnot₀ : Matrix (Fin 4) (Fin 4) ℂ := !![
 def toffoli : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ :=
   translate₃ toffoli₀
 
+def toffoli' : Matrix ((Fin 2 × Fin 2) × Fin 2) ((Fin 2 × Fin 2) × Fin 2) ℂ :=
+  translate₃' toffoli₀
 
 def cnot : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ := by
   exact translate₂ cnot₀
@@ -131,41 +132,402 @@ example {n : ℕ} : PiTensorProduct ℂ (fun _ : Fin n => Matrix (Fin 2) (Fin 1)
     exact e 0
 
 
-
-example : toffoli * e 0 ⊗ₖ (e 0 ⊗ₖ e 0) =
-                    e 0 ⊗ₖ (e 0 ⊗ₖ e 0) := by
+-- If `b` and `c` aren't both 1 then `toffoli` acts like identity.
+lemma toffoli_unchange {a b c : Fin 2}
+  (h : ¬ (a = 1 ∧ b = 1)) : toffoli * e a ⊗ₖ (e b ⊗ₖ e c) =
+                                    e a ⊗ₖ (e b ⊗ₖ e c) := by
   unfold toffoli translate₃ toffoli₀ kroneckerMap transl₃
   simp only [Fin.isValue, of_apply, cons_val', cons_val_fin_one]
+  unfold e single
+  simp only [Fin.isValue, of_apply, mul_ite, mul_one, mul_zero]
+  ext i j
+  fin_cases j
+  simp only [Fin.isValue, Fin.zero_eta, of_apply, and_true]
+  fin_cases i
   all_goals
-    unfold e single
-    simp only [Fin.isValue, of_apply, mul_ite, mul_one, mul_zero]
-    ext i j
-    fin_cases j
-    simp only [Fin.isValue, Fin.zero_eta, of_apply, and_true]
-    fin_cases i
-    all_goals
-      try simp only [Fin.isValue, Fin.zero_eta, Fin.mk_one, zero_ne_one, ↓reduceIte]
-      try rw [Matrix.mul_apply]
-      try simp only [Fin.isValue, cons_val, cons_val_one, cons_val_zero, of_apply, and_true,
-        mul_ite, mul_one, mul_zero]
-      try rw [Fintype.sum_prod_type]
-      try simp only [Fin.isValue, Fin.sum_univ_two, ↓reduceIte, zero_ne_one, ite_self,
-        Finset.sum_const_zero, add_zero]
-      try rw [Fintype.sum_prod_type]
-      try rw [Fin.sum_univ_two]
-      try simp
+    try simp only [Fin.isValue, Fin.zero_eta, Fin.mk_one]
+    try rw [Matrix.mul_apply]
+    try simp only [Fin.isValue, cons_val, cons_val_one, cons_val_zero, of_apply, and_true,
+      mul_ite, mul_one, mul_zero]
+    try rw [Fintype.sum_prod_type]
+    try simp only [Fin.isValue, Fin.sum_univ_two]
+    try rw [Fintype.sum_prod_type]
+    try rw [Fin.sum_univ_two]
+    try rw [Fintype.sum_prod_type]
+    try rw [Fin.sum_univ_two]
+    try rw [Fin.sum_univ_two]
+    try simp
+    try tauto
+    try
+      fin_cases a <;>
+      fin_cases b <;>
+      fin_cases c <;> all_goals try simp_all
 
-/-- Prove that toffolo is a legitimate circuit. -/
-example : toffoli ∈ unitary _ := by
-  have h₀ : star toffoli = toffoli := by
-    refine Matrix.ext ?_
-    intro i j
-    unfold toffoli
-    unfold translate₃
-    unfold toffoli₀ transl₃
-    fin_cases i <;> fin_cases j <;> simp
-  have :  star toffoli * toffoli = 1 := by
-    rw [h₀]
+-- If `b=c=1` then `toffoli` flips.
+lemma toffoli_change {a b c : Fin 2}
+  (hb : b = 1) (ha : a = 1)
+  : toffoli * e a ⊗ₖ (e b ⊗ₖ e c) =
+                                  e a ⊗ₖ (e b ⊗ₖ e (1-c)) := by
+  subst a b
+  unfold toffoli translate₃ toffoli₀ kroneckerMap transl₃
+  simp only [Fin.isValue, of_apply, cons_val', cons_val_fin_one]
+  unfold e single
+  simp only [Fin.isValue, of_apply, mul_ite, mul_one, mul_zero]
+  ext i j
+  fin_cases j
+  simp only [Fin.isValue, Fin.zero_eta, of_apply, and_true]
+  fin_cases i
+  all_goals
+    simp
+    rw [mul_apply]
+    rw [Fintype.sum_prod_type]
+    rw [Fin.sum_univ_two]
+    rw [Fintype.sum_prod_type]
+    rw [Fin.sum_univ_two]
+    rw [Fin.sum_univ_two]
+    simp
+    rw [Fintype.sum_prod_type]
+    rw [Fin.sum_univ_two]
+    rw [Fin.sum_univ_two]
+    simp
+    fin_cases c <;> simp_all
+
+lemma kroneckerMap_injective {α β γ δ : Type*}
+      {w : Matrix α β ℂ} (hw : w ≠ 0)
+      {x y : Matrix (α × γ) (β × δ) ℂ}
+      (h₂ : w ⊗ₖ x = w ⊗ₖ y) : x = y := by
+        obtain ⟨i, j, hwij⟩ : ∃ i j, w i j ≠ 0 := by
+          contrapose! hw
+          exact Matrix.ext hw
+        ext a b
+        have hentry :=
+          congrArg
+          (fun M => M (i, a) (j, b)) h₂
+        simp at hentry
+        tauto
+
+lemma kroneckerMap_injective₀ {α β : Type*}
+    {w : Matrix α β ℂ} (hw : w ≠ 0)
+      {x y : Matrix α β ℂ}
+      (h₂ : w ⊗ₖ x = w ⊗ₖ y) : x = y := by
+        obtain ⟨i, j, hwij⟩ : ∃ i j, w i j ≠ 0 := by
+          contrapose! hw
+          exact Matrix.ext hw
+        ext a b
+        have hentry :=
+          congrArg
+          (fun M => M (i, a) (j, b)) h₂
+        simp at hentry
+        tauto
+
+
+lemma e_ne_zero {z : Fin 2} : (e (R := ℂ) (z : Fin 2)) ≠ 0 := by
+      intro hc
+      have := congrFun (congrFun hc z) 0
+      simp [e, single] at this
+
+theorem toffoli_characterize (a b c : Fin 2) :
+    toffoli * e a ⊗ₖ (e b ⊗ₖ e c) =
+    ite (a = 1 ∧ b = 1)
+    (e a ⊗ₖ (e b ⊗ₖ e (1-c)))
+    (e a ⊗ₖ (e b ⊗ₖ e c)) := by
+  split_ifs with g₀
+  · exact toffoli_change g₀.2 g₀.1
+  · exact toffoli_unchange g₀
+
+/-- If we inspect the third qubit on input (a,1,1) we find 1-a. -/
+lemma negation_using_toffoli (a : Fin 2) :
+    toffoli * e a ⊗ₖ (e 1 ⊗ₖ e 1)
+            = e a ⊗ₖ (e 1 ⊗ₖ e (1 - a)) := by
+  rw [toffoli_characterize]
+  simp only [Fin.isValue, and_true, sub_self]
+  split_ifs with g₀
+  · subst a
+    rfl
+  · fin_cases a
+    · simp
+    · simp at g₀
+
+set_option maxHeartbeats 0 in
+lemma scratch_off_tensor {i j k : Fin 2} :
+    let v := e (R := ℂ) i ⊗ₖ (e j ⊗ₖ e k)
+    let B := v * vᵀ
+    let Bl := partialTraceLeft B
+
+    Bl = (e (R := ℂ) j ⊗ₖ (e k))
+        * (e (R := ℂ) j ⊗ₖ (e k))ᵀ := by
+    -- have := toffoli * e 0 ⊗ₖ (e 0 ⊗ₖ e 0)
+
+    -- correct acc. to https://chatgpt.com/c/6a0ba46b-6c94-83e8-8262-52b4a2dc0954
+
+        intro v B Bl
+        unfold Bl B partialTraceLeft v e
+        -- simp [transpose]
+        ext a b
+        by_cases hb : b = (0,0)
+        · subst b
+          simp [transpose]
+          rw [mul_apply]
+          simp
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp [single]
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          split_ifs with g₀ g₁ g₂ g₃
+          all_goals try simp_all
+
+          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
+          cases this with
+          | inl h => subst i;tauto
+          | inr h => subst i; tauto
+        fin_cases a
+        · fin_cases b
+          · simp [single, kroneckerMap]
+            rw [mul_apply]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            split_ifs with g₀ g₁
+            all_goals
+              simp [transpose]
+              rw [mul_apply]
+              simp
+              rw [mul_apply]
+              simp
+              rw [Fintype.sum_prod_type]
+              simp
+            · subst i j k
+              simp [transpose]
+              rw [Fintype.sum_prod_type]
+              simp
+            · subst j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+              fin_cases i
+              simp_all
+              simp
+            · subst k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+              fin_cases i
+              simp_all
+              simp
+            · repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+              fin_cases i
+              simp_all
+              simp
+
+          · simp [single, kroneckerMap]
+            rw [mul_apply]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            split_ifs with g₀ g₁
+            all_goals
+              simp [transpose]
+              rw [mul_apply]
+              simp
+              rw [mul_apply]
+              simp
+              rw [Fintype.sum_prod_type]
+              simp
+            · subst i j k
+              simp_all
+            · subst i j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · subst j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              fin_cases i <;> simp_all
+            · fin_cases k <;> simp
+          · simp [single, kroneckerMap]
+            rw [mul_apply]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            split_ifs with g₀ g₁
+            all_goals
+              simp [transpose]
+              rw [mul_apply]
+              simp
+              rw [mul_apply]
+              simp
+              rw [Fintype.sum_prod_type]
+              simp
+            · subst i j k
+              simp_all
+            · subst i j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · subst j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              fin_cases i <;> simp_all
+            · fin_cases k <;> simp_all
+          · simp [single, kroneckerMap]
+            rw [mul_apply]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            rw [Fintype.sum_prod_type]
+            simp
+            split_ifs with g₀ g₁
+            all_goals
+              simp [transpose]
+              rw [mul_apply]
+              simp
+              rw [mul_apply]
+              simp
+              rw [Fintype.sum_prod_type]
+              simp
+            · subst i j k
+              simp_all
+            · subst i j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · subst j k
+              repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              simp
+            · repeat rw [mul_apply]
+              repeat rw [Fintype.sum_prod_type]
+              fin_cases i <;> simp_all
+            · fin_cases k <;> simp
+            · fin_cases k
+              simp
+              simp at g₀
+        · simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [Fintype.sum_prod_type]
+          simp [single]
+          repeat rw [mul_apply]
+          split_ifs with g₀ g₁ g₂ g₃
+          all_goals
+            try simp_all
+          subst i j k
+          apply hb
+          ext
+          rw [← g₁]
+          simp
+          tauto
+          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
+          cases this with
+          | inl h => subst i;tauto
+          | inr h => subst i; tauto
+        · simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp [single]
+          split_ifs with g₀ g₁ g₂ g₃ g₄
+          all_goals try simp_all
+          subst i j k; apply hb; ext; simp;rw [g₂];simp
+          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
+          cases this with
+          | inl h => subst i;tauto
+          | inr h => subst i; tauto
+        · simp
+          repeat rw [mul_apply]
+          repeat rw [Fintype.sum_prod_type]
+          simp
+          repeat rw [Fintype.sum_prod_type]
+          simp [single]
+          repeat rw [mul_apply]
+          split_ifs with g₀ g₁ g₂ g₃
+          all_goals
+            try simp_all
+          subst j k
+          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
+          cases this with
+          | inl h => subst i;tauto
+          | inr h =>
+            subst i; simp_all
+            have : b.1 = 0 := by
+                have (x : Fin 2) : x = 0 ∨ x = 1 := by
+                    fin_cases x <;> simp
+                cases this b.1
+                tauto
+                tauto
+            apply hb
+            ext
+            simp
+            tauto
+            simp
+            rw [g₁]
+            tauto
+    -- have := toffoli' * e 0 ⊗ₖ e 0 ⊗ₖ e 0
+    -- have A := this * thisᵀ
+    -- have Ar := tr₂ A
+    -- have Al := partialTraceLeft A
+    -- sorry
+
+/-- The usual characterization of the behavior of the Toffoli gate:
+`the target bit (third bit) will be inverted if`
+`and only if the first and second bits are both 1`
+from https://en.wikipedia.org/wiki/Toffoli_gate
+-/
+theorem toffoli_characterize.TFAE (a b c : Fin 2) :
+    [a = 1 ∧ b = 1,
+     toffoli * e a ⊗ₖ (e b ⊗ₖ e c) = e a ⊗ₖ (e b ⊗ₖ e (1-c)),
+     toffoli * e a ⊗ₖ (e b ⊗ₖ e c) ≠ e a ⊗ₖ (e b ⊗ₖ e c)].TFAE := by
+  apply List.tfae_of_cycle
+  · apply List.IsChain.cons_cons
+    · exact fun h => toffoli_change h.2 h.1
+    · apply List.isChain_pair.mpr
+      intro h hc
+      rw [h] at hc
+      have := congrFun (congrFun (kroneckerMap_injective₀ e_ne_zero
+        <| kroneckerMap_injective e_ne_zero hc) 0) 0
+      simp only [e, single, Fin.isValue, of_apply, and_true] at this
+      split_ifs at this <;> simp_all only [Fin.isValue, sub_zero, one_ne_zero]
+      repeat fin_cases c <;> simp_all
+  · intro h
+    contrapose! h
+    simp only [ne_eq, Fin.isValue, List.getLastD_eq_getLast?, List.getLast?_singleton,
+      Option.getD_some, Decidable.not_not]
+    apply toffoli_unchange
+    tauto
+
+
+lemma toffoli_real : star toffoli = toffoli := by
+  refine Matrix.ext ?_
+  intro i j
+  fin_cases i <;> fin_cases j <;> simp [toffoli, translate₃, toffoli₀, transl₃]
+
+lemma toffoli_unitary.aux : star toffoli * toffoli = 1 := by
     refine Matrix.ext ?_
     intro i j
     rw [Matrix.mul_apply]
@@ -173,10 +535,16 @@ example : toffoli ∈ unitary _ := by
     repeat rw [Fin.sum_univ_two]
     unfold toffoli translate₃ toffoli₀ transl₃
     fin_cases i <;> fin_cases j <;> simp
+
+
+/-- Prove that toffolo is a unitary circuit. -/
+lemma toffoli_unitary : toffoli ∈ unitary _ := by
   constructor
-  · exact this
-  · rw [h₀] at *
-    exact this
+  · exact toffoli_unitary.aux
+  · rw [← toffoli_unitary.aux]
+    rw [toffoli_real]
+
+
 -- now we need to measure whether the 1st qubit is e 0
 -- should use a hadamard matrix to get nontrivial probabilities
 noncomputable def toffoli_probability
@@ -201,12 +569,10 @@ noncomputable def toffoli_probability''
       + star c * c + star d * d
 
 noncomputable def toffoli_probability'
-    (startState : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 1 × Fin 1 × Fin 1) ℂ) : ℂ := by
-  let A := toffoli * startState
-  exact
-    ∑ i : Fin 2 × Fin 2,
-      let z := ((toffoli * startState) (0, i.1, i.2) (0,0,0))
-      star z * z
+    (startState : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 1 × Fin 1 × Fin 1) ℂ) : ℂ :=
+  ∑ i : Fin 2 × Fin 2,
+    let z := ((toffoli * startState) (0, i.1, i.2) (0,0,0))
+    star z * z
 
 lemma toffoli_probability_eq :
   toffoli_probability = toffoli_probability' := by
@@ -219,14 +585,14 @@ lemma toffoli_probability_eq :
   rw [Fin.sum_univ_two]
   ring_nf
 
-def ket0 : Matrix (Fin 2) (Fin 1) ℂ := !![(1 : ℂ); 0]
+def ket₀ : Matrix (Fin 2) (Fin 1) ℂ := !![(1 : ℂ); 0]
 
-noncomputable def proj0 : Matrix (Fin 2) (Fin 2) ℂ :=
-  ket0 * ket0ᴴ
-noncomputable def first_qubit_proj0 : Matrix (Fin 2 × Fin 2 × Fin 2)
-                               (Fin 2 × Fin 2 × Fin 2) ℂ :=
-  Matrix.kronecker proj0
-    (Matrix.kronecker 1 1)
+noncomputable def proj₀ : Matrix (Fin 2) (Fin 2) ℂ :=
+  ket₀ * ket₀ᴴ
+
+noncomputable def first_qubit_proj₀ :
+    Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ :=
+  proj₀ ⊗ₖ (1 ⊗ₖ 1)
 
 #check (⊤ : MeasurableSpace (Fin 2))
 example : @MeasurableSet (Fin 2) ⊤ {0} := by
@@ -242,8 +608,19 @@ noncomputable def gate_probability
     Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 1 × Fin 1 × Fin 1) ℂ) : ℂ :=
 by
   let ψ := toffoli * startState
-  exact (ψᴴ * first_qubit_proj0 * ψ) (0,0,0) (0,0,0)
+  exact (ψᴴ * first_qubit_proj₀ * ψ) (0,0,0) (0,0,0)
 
+-- Let's try to use `gate_probability` for something:
+example : gate_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
+  unfold gate_probability
+  unfold first_qubit_proj₀
+
+  unfold toffoli toffoli₀
+  simp
+  unfold translate₃ transl₃
+  simp
+
+  sorry
 
 example : toffoli_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
   let A := toffoli * ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0)))
@@ -416,19 +793,24 @@ lemma Matrix.fromBlocks_split'_eq {a b : ℕ} (A : Matrix (Fin a × Fin b) (Fin 
       split_ifs
       simp
 
+theorem fromBlocks_unitary
+  (A : ↥(unitary (Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ))) :
+  fromBlocks (↑A) 0 0 1 ∈
+  unitary (Matrix (Fin 2 × Fin 2 ⊕ Fin 2 × Fin 2) (Fin 2 × Fin 2 ⊕ Fin 2 × Fin 2) ℂ) := by
+      have : star (Matrix.fromBlocks A.1 0 0
+        (1 : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)) =
+        Matrix.fromBlocks (star (A : Matrix (Fin 2 × Fin 2)
+        (Fin 2 × Fin 2) ℂ)) (star 0) (star 0) (star 1) := by
+          exact ext_iff_trace_mul_left.mpr (congrFun rfl)
+      constructor <;>
+      · rw [this]
+        simp [fromBlocks_multiply]
 
-noncomputable def quantumCircuitUnitary''
-    (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
-  : (unitary <| Matrix (Fin 2 × Fin 2 ⊕ Fin 2 × Fin 2)
-                       (Fin 2 × Fin 2 ⊕ Fin 2 × Fin 2) ℂ) :=
-    ⟨Matrix.fromBlocks A 0 0 1, by
-    have : star (Matrix.fromBlocks A 0 0 (1 : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)) =
-      Matrix.fromBlocks (star (A : Matrix (Fin 2 × Fin 2)
-      (Fin 2 × Fin 2) ℂ)) (star 0) (star 0) (star 1) := by
-        exact ext_iff_trace_mul_left.mpr (congrFun rfl)
-    constructor <;>
-    · rw [this]
-      simp [fromBlocks_multiply]⟩
+noncomputable section
+def quantumCircuitUnitary'' (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ) :
+    (unitary <| Matrix ((Fin 2 × Fin 2) ⊕ (Fin 2 × Fin 2))
+                        (Fin 2 × Fin 2 ⊕ Fin 2 × Fin 2) ℂ) :=
+    ⟨Matrix.fromBlocks A 0 0 1, fromBlocks_unitary _⟩
 
 lemma sum_prod_sum_1 : sum_prod (a := 2) (b := 2) * prod_sum (a := 2) (b := 2) = 1 := by
     unfold prod_sum sum_prod split'

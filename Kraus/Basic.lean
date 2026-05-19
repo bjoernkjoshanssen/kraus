@@ -282,32 +282,21 @@ theorem dotProduct_mul_mulVec {R : Type*} [RCLike R]
 
 
 
-lemma pureState_psd_C {R : Type*} [RCLike R] [PartialOrder R]
-    [StarOrderedRing R]
+lemma pureState_psd_C {R : Type*} [RCLike R] [PartialOrder R] [StarOrderedRing R]
     {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :
     (pureState_C e).PosSemidef := by
   constructor
   · exact pureState_selfAdjoint_C _
   · intro x
-    suffices 0 ≤ star x ⬝ᵥ (pureState_C e).mulVec x by
-      apply psd_versions_general
-      convert this
-    unfold pureState_C
-    generalize ⇑x = α at *
-    rw [mulᵣ_eq]
-    rw [dotProduct_mul_mulVec]
-    change 0 ≤ (star α ᵥ* e) 0 * (eᴴ *ᵥ α) 0
-    have : star ((eᴴ *ᵥ α) 0) = (star α ᵥ* e) 0 := by
-        rw [vecMul, mulVec, dotProduct, dotProduct]
-        simp only [conjTranspose_apply, RCLike.star_def, star_sum, star_mul',
-          RingHomCompTriple.comp_apply, RingHom.id_apply, Pi.star_apply]
-        congr
-        ext i
-        rw [mul_comm]
-    rw [← this]
-    refine star_mul_self_nonneg ((eᴴ *ᵥ α) 0)
-
-
+    apply psd_versions_general
+    rw [pureState_C, mulᵣ_eq, dotProduct_mul_mulVec]
+    change 0 ≤ (star ⇑x ᵥ* e) 0 * (eᴴ *ᵥ ⇑x) 0
+    convert star_mul_self_nonneg ((eᴴ *ᵥ ⇑x) 0)
+    rw [vecMul, mulVec, dotProduct, dotProduct, star_sum]
+    congr
+    ext i
+    rw [mul_comm]
+    simp
 
 
 lemma pure_state_eq {k : ℕ} (i : Fin k) :
@@ -336,73 +325,34 @@ instance : NormedRing (Matrix (Fin 2) (Fin 2) ℂ) := frobeniusNormedRing
 
 instance :  NormedAlgebra ℝ (Matrix (Fin 2) (Fin 2) ℂ) := frobeniusNormedAlgebra
 
-/-- Jireh recommends this approach. -/
-theorem matrix_posSemidef_eq_star_mul_self' {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ)
-(hP : 0 ≤ P) : ∃ B, P = star B * B := by
-  use CFC.sqrt P
-  have h₀ : (CFC.sqrt P)ᴴ = CFC.sqrt P := by
-    have := hP.1
-    simp only [IsHermitian, sub_zero, conjTranspose_eq_transpose_of_trivial] at this ⊢
-    nth_rw 2 [← this]
-    symm
-    rw [@CFC.sqrt_eq_iff]
-    · rw [← transpose_mul]
-      congr
-      apply @CFC.sqrt_mul_sqrt_self (a := P)
-      · exact topologicalRing
-      · exact instT2SpaceMatrix
-      · exact hP
-    · exact star_nonneg_iff.mp hP
-    · exact star_nonneg_iff.mp <| CFC.sqrt_nonneg P
-  have : star (CFC.sqrt P) = CFC.sqrt P := by
-    have := hP.1
-    simp only [IsHermitian, sub_zero, conjTranspose_eq_transpose_of_trivial] at this ⊢
-    nth_rw 2 [← h₀]
-    congr
-  rw [this]
-  symm
-  rw [← @CFC.sqrt_eq_iff (a := P) (b := CFC.sqrt P)]
-  · exact topologicalRing
-  · exact instT2SpaceMatrix
-  · simp;tauto
-  · exact CFC.sqrt_nonneg P
+lemma oftr {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ)
+(hP : 0 ≤ P) : 0 ≤ Pᵀ := by exact star_nonneg_iff.mp hP
+
 
 theorem matrix_posSemidef_eq_star_mul_self'_C {R : Type*} [RCLike R] {n : ℕ}
     (P : Matrix (Fin n) (Fin n) R)
 (hP : 0 ≤ P) : ∃ B, P = star B * B := by
   use CFC.sqrt P
   have h₀ : (CFC.sqrt P)ᴴ = CFC.sqrt P := by
-    have := hP.1
-    simp only [sub_zero] at this ⊢
-    nth_rw 2 [← this]
+    have h₁ := hP.1
+    rw [sub_zero] at h₁
+    nth_rw 2 [← h₁]
     symm
     rw [@CFC.sqrt_eq_iff]
     · rw [← conjTranspose_mul]
       congr
-      apply @CFC.sqrt_mul_sqrt_self (a := P)
-      · exact topologicalRing
-      · exact instT2SpaceMatrix
-      · exact hP
+      exact CFC.sqrt_mul_sqrt_self (a := P)
     · exact star_nonneg_iff.mpr hP
     · exact star_nonneg_iff.mpr <| CFC.sqrt_nonneg P
-  have : star (CFC.sqrt P) = CFC.sqrt P := by
-    have := hP.1
-    simp only [sub_zero] at this ⊢
-    nth_rw 2 [← h₀]
-    congr
-  rw [this]
+  rw [show star (CFC.sqrt P) = CFC.sqrt P by exact h₀]
   symm
-  rw [← @CFC.sqrt_eq_iff (a := P) (b := CFC.sqrt P)]
-  · exact topologicalRing
-  · exact instT2SpaceMatrix
-  · simp;tauto
-  · exact CFC.sqrt_nonneg P
+  rw [← CFC.sqrt_eq_iff (a := P) (b := CFC.sqrt P)]
 
 theorem trace_mul_posSemidef_nonneg {n : ℕ} {ρ P : Matrix (Fin n) (Fin n) ℝ}
     (hρ : ρ.PosSemidef) (hP : P.PosSemidef) : 0 ≤ (P * ρ).trace := by
       -- Use `Matrix.posSemidef_iff_eq_transpose_mul_self` to write $P = Bᵀ * B$.
       obtain ⟨B, hB⟩ : ∃ B : Matrix (Fin n) (Fin n) ℝ, P = star B * B := by
-        apply matrix_posSemidef_eq_star_mul_self'
+        apply matrix_posSemidef_eq_star_mul_self'_C
         exact nonneg_iff_posSemidef.mpr hP
       obtain ⟨B, hB⟩ : ∃ B : Matrix (Fin n) (Fin n) ℝ, P = B.transpose * B := by
         use B
@@ -812,6 +762,131 @@ theorem pure_trace_nonneg_re {R : Type*} [RCLike R] {k : ℕ} (acc : Fin k)
   simp at this
   tauto
 
+
+/-
+In the above we have quantum instruments:
+CP maps:
+  𝓔 i ρ = pureState_C (e i) * ρ * pureState_C (e i)
+  tr (∑ i, 𝓔 i ρ) = tr ρ
+-/
+def preQuantumInstrument {R : Type*} [RCLike R]
+    {q r : Type*} [Fintype q] [Fintype r] [DecidableEq q] [DecidableEq r]
+    {α : Type*} [Fintype α]
+    (𝓔 : α → r → Matrix q q R) :=
+    ∀ ρ ≥ 0,
+    (∑ i, krausApply (𝓔 i) ρ).trace = ρ.trace
+
+def QuantumInstrument {R : Type*} [RCLike R]
+    {q r : Type*} [Fintype q] [Fintype r] [DecidableEq q] [DecidableEq r]
+    {α : Type*} [Fintype α]
+    (𝓔 : α → r → Matrix q q R) :=
+    preQuantumInstrument 𝓔 ∧
+    (∀ a : α, ∑ i, (𝓔 a i)ᴴ * 𝓔 a i ≤ 1)
+
+
+lemma ofReal_inj_aux {α : Type*} [Fintype α] {J : α → ℝ} (hnn : ∀ a, J a ≥ 0) :
+    ∑ a, (⟨J a, hnn a⟩ : NNReal) =
+    ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
+  refine Eq.symm (Subtype.ext ?_)
+  simp only [NNReal.val_eq_coe]
+  rw [← @RCLike.ofReal_inj ℝ _ _ (∑ a, ⟨J a, hnn a⟩ : NNReal)]
+  simp
+
+
+theorem krausApply_trace_nonneg {R : Type*}
+  [RCLike R] {r : Type*}
+  [Fintype r] [inst_2 : DecidableEq r] {α : Type*}
+  {k : ℕ}
+  {𝓔 : α → r → Matrix (Fin k) (Fin k) R}
+  {ρ : Matrix (Fin k) (Fin k) R}
+  (hPS : 0 ≤ ρ) (i : α) :
+  0 ≤ (krausApply (𝓔 i) ρ).trace := by
+      simp only [krausApply, trace_sum]
+      refine Fintype.sum_nonneg ?_
+      intro x
+      simp only [Pi.zero_apply]
+      rw [trace_mul_cycle]
+      refine trace_mul_posSemidef_nonneg_general hPS
+        <| nonneg_iff_posSemidef.mpr <| posSemidef_conjTranspose_mul_self _
+
+/-- May 13, 2026. -/
+def PMF_of_preQuantumInstrument {R : Type*} [RCLike R]
+    {r : Type*} [Fintype r] [DecidableEq r]
+    {α : Type*} [Fintype α]
+    {k : ℕ}
+    {𝓔 : α → r → Matrix (Fin k) (Fin k) R} (h𝓔 : preQuantumInstrument 𝓔)
+    {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) : PMF α := by
+  have hRC {z : R} (h : 0 ≤ z) : 0 ≤ RCLike.re z :=
+    (RCLike.re_nonneg_of_nonneg h.isSelfAdjoint).mpr h
+  apply PMF.ofFintype
+    (fun i => ofNNReal ⟨RCLike.re (krausApply (𝓔 i) ρ).trace,
+                              hRC (krausApply_trace_nonneg hPS _)⟩)
+  rw [← coe_finset_sum]
+  congr
+  have htn := hPS.posSemidef.trace_nonneg
+  have h₀ : ⟨RCLike.re ρ.trace, hRC htn⟩ = (1 : NNReal) := by
+    simp_rw [hUT]
+    simp
+  rw [← h₀]
+  simp_rw [← h𝓔 ρ hPS]
+  simp only [trace_sum, map_sum]
+  exact ofReal_inj_aux _
+
+
+lemma pureState_C_QuantumInstrument {R : Type*} [RCLike R] {q : ℕ} :
+    QuantumInstrument (fun (i : Fin q) (_ : Fin 1) => pureState_C (e i)) (R := R) := by
+  constructor
+  swap
+  · intro a
+    have h₁ : (1 : Matrix (Fin q) (Fin q) R) - single a a 1 =
+      fun i j => ite (i = j ∧ i ≠ a) 1 0 := by
+        rw [single]
+        ext i j
+        split_ifs with g₀
+        · rw [sub_apply, ← g₀.1]
+          simp
+          tauto
+        · push_neg at g₀
+          by_cases H : i = j
+          · subst i
+            specialize g₀ rfl
+            subst j
+            rw [sub_apply]
+            simp
+          rw [sub_apply, of_apply]
+          simp_all
+    unfold pureState_C e
+    simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, conjTranspose_single,
+      star_one, mulᵣ_eq, single_mul_single_same, mul_one, Finset.sum_const, Finset.card_singleton,
+      one_smul, ge_iff_le]
+    refine le_iff.mpr ?_
+    rw [h₁]
+    have : ∃ B : Matrix (Fin q) (Fin q) R, (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0) = Bᴴ * B := by
+      use (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0)
+      ext i j
+      rw [mul_apply]
+      split_ifs with g₀
+      · have := g₀.1
+        subst i
+        simp_all only [ne_eq, true_and, conjTranspose_apply, RCLike.star_def,
+          MonoidWithZeroHom.map_ite_one_zero, mul_ite, not_false_eq_true, and_self, ↓reduceIte,
+          mul_one, mul_zero, Finset.sum_boole]
+        symm
+        simp only [Nat.cast_eq_one]
+        refine (Fintype.existsUnique_iff_card_one _).mp ?_
+        use j
+        simp
+        tauto
+      · simp_all
+        split_ifs
+        · tauto
+        · simp
+    exact (CStarAlgebra.nonneg_iff_eq_star_mul_self.mpr this).posSemidef
+  · intro ρ hρ
+    simp [krausApply, pureState_C, e]
+    rfl
+
 /-- Positive operator (or projection) valued measure
 as a probability mass function.
 Technically the measure is valued in `Fin k`
@@ -837,6 +912,32 @@ def POVM_PMF {R : Type*} [RCLike R]
   rw [← this]
   apply toReal_sum
   simp
+
+
+def POVM_PMF_alt {R : Type*} [RCLike R]
+    {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) : PMF (Fin k) := by
+  exact @PMF_of_preQuantumInstrument
+    R _ (Fin 1) _ _ (Fin k) _ k (fun i _ => pureState_C (e i))
+    pureState_C_QuantumInstrument.1
+    ρ hUT hPS
+
+/-- (pre)quantum instruments can be used as an alternative construction of our PMF. -/
+lemma POVM_PMF_eq_POVM_PMF_alt {R : Type*} [RCLike R]
+    {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
+    (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) :
+    POVM_PMF hUT hPS = POVM_PMF_alt hUT hPS := by
+  unfold POVM_PMF POVM_PMF_alt PMF_of_preQuantumInstrument
+  congr
+  ext i
+  unfold krausApply
+  suffices (pureState_C (e i) * ρ).trace =
+           (pureState_C (e i) * ρ * (pureState_C (e i))ᴴ).trace by
+    simp_rw [this]; simp
+  rw [trace_mul_cycle]
+  congr
+  simp [pureState_C, e]
+
 
 
 open scoped BigOperators
@@ -1038,13 +1139,6 @@ lemma PMF₂₃help {R : Type*} [RCLike R] {ρ : Matrix (Fin 3) (Fin 3) R}
 
 
 
-lemma ofReal_inj_aux {k : ℕ} (J : Fin k → ℝ) (hnn : ∀ a, J a ≥ 0) :
-    ∑ a, (⟨J a, hnn a⟩ : NNReal) =
-    ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
-  refine Eq.symm (Subtype.ext ?_)
-  simp only [NNReal.val_eq_coe]
-  rw [← @RCLike.ofReal_inj ℝ _ _ (∑ a, ⟨J a, hnn a⟩ : NNReal)]
-  simp
 
 /-- Had to make this lemma as it seems missing in Mathlib. -/
 theorem RCLike.re_sum {R : Type*} [RCLike R] {α : Type*}
