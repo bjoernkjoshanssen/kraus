@@ -140,7 +140,7 @@ def krausApplyWord_map {α : Type*}
     (ρ : densityMatrix (Fin q) (R := R)) : densityMatrix (Fin q) (R := R) :=
   ⟨krausApplyWord word 𝓚 ρ.1, krausApplyWord_densityMatrix _ hq _⟩
 
-def e {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → Matrix (Fin k) (Fin 1) R :=
+def e {R : Type*} [One R] [Zero R] {k : Type*} [DecidableEq k] : k → Matrix k (Fin 1) R :=
   fun i => single i 0 1
 
 /-- A version of `e` for use with `*ᵥ`.

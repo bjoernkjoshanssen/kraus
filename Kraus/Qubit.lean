@@ -237,7 +237,7 @@ theorem toffoli_characterize (a b c : Fin 2) :
 
 /-- If we inspect the third qubit on input (a,1,1) we find 1-a. -/
 lemma negation_using_toffoli (a : Fin 2) :
-    toffoli * e a ⊗ₖ (e 1 ⊗ₖ e 1)
+    toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
             = e a ⊗ₖ (e 1 ⊗ₖ e (1 - a)) := by
   rw [toffoli_characterize]
   simp only [Fin.isValue, and_true, sub_self]
@@ -248,8 +248,25 @@ lemma negation_using_toffoli (a : Fin 2) :
     · simp
     · simp at g₀
 
+lemma partialTraceLeft_tensor_rankOne_basis {R : Type*} [RCLike R]
+    {k : Type*} [Fintype k] [DecidableEq k] (i : k)
+    (M : Matrix (k × k) (Fin 1 × Fin 1) R) :
+    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
+  unfold partialTraceLeft e
+  simp only [kroneckerMap, single, Fin.isValue, of_apply, transpose]
+  ext a b
+  simp_rw [mul_apply]
+  rw [Finset.sum_comm]
+  repeat rw [Fintype.sum_prod_type]
+  simp [Fintype.sum_prod_type]
 
-set_option maxHeartbeats 0 in
+
+lemma scratch_off_tensor_general {R : Type*} [RCLike R] {i : Fin 2}
+    (M : Matrix (Fin 2 × Fin 2) (Fin 1 × Fin 1) R) :
+    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
+  apply partialTraceLeft_tensor_rankOne_basis
+
+
 /-- correct acc. to https://chatgpt.com/c/6a0ba46b-6c94-83e8-8262-52b4a2dc0954
 This can be used to compute negation using the Toffoli gate.
 -/
@@ -259,54 +276,9 @@ lemma scratch_off_tensor {R : Type*} [RCLike R] {i j k : Fin 2} :
     let Bl := partialTraceLeft B
     Bl = (e (R := R) j ⊗ₖ (e k))
         * (e (R := R) j ⊗ₖ (e k))ᵀ := by
-        intro v B Bl
-        unfold Bl B partialTraceLeft v e
-        simp only [kroneckerMap, single, Fin.isValue, of_apply, mul_ite, mul_one, mul_zero,
-          transpose, Fin.sum_univ_two]
-        ext a b
-        by_cases hb : b = (0,0)
-        · subst b
-          rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, of_apply, mul_ite,
-            mul_one, mul_zero, Finset.sum_singleton, and_true, Finset.sum_ite_irrel,
-            Finset.sum_const_zero]
-          repeat rw [Fintype.sum_prod_type]
-          split_ifs
-          all_goals try simp_all
-          fin_cases i <;> tauto
-        fin_cases a
-        all_goals repeat (
-            simp
-            repeat rw [mul_apply]
-            repeat rw [Fintype.sum_prod_type])
-        · fin_cases b
-          all_goals (
-              simp; repeat rw [mul_apply]
-              split_ifs
-              all_goals try simp_all
-            )
-        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
-          subst i
-          ext
-          · rw [← g₁]
-          · simp
-            tauto
-          fin_cases i <;> tauto
-        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
-          subst i; ext; simp;rw [g₂];simp
-          fin_cases i <;> tauto
-        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
-          fin_cases i
-          · tauto
-          obtain ⟨b₀,b₁⟩ := b
-          have : b₀ = 0 := by fin_cases b₀ <;> tauto
-          ext
-          all_goals simp at g₁ ⊢
-          · exact this
-          · exact g₁ ▸ this
+        apply scratch_off_tensor_general
+
+
 
 /-- The usual characterization of the behavior of the Toffoli gate:
 `the target bit (third bit) will be inverted if`
@@ -436,8 +408,8 @@ example : gate_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
 
   sorry
 
-example : toffoli_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
-  let A := toffoli * ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0)))
+example : toffoli_probability ((e (R := ℂ) (0 : Fin 2)) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
+  let A := toffoli * ((e (R := ℂ) (0 : Fin 2)) ⊗ₖ (e (0 : Fin 2) ⊗ₖ (e (0 : Fin 2))))
   let a :=  A (0,0,0) (0,0,0)
   let b :=  A (0,0,1) (0,0,0)
   let c :=  A (0,1,0) (0,0,0)
@@ -479,7 +451,7 @@ example : toffoli_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
   rw [this]
   simp
 
-lemma cnot_basis (i j) : cnot * (e i ⊗ₖ e j) = ite (i = 0)
+lemma cnot_basis (i j : Fin 2) : cnot * (e i ⊗ₖ e j) = ite (i = 0)
                                 (e i ⊗ₖ e j)
                                 (e i ⊗ₖ e (1-j))
   := by
