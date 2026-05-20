@@ -248,251 +248,65 @@ lemma negation_using_toffoli (a : Fin 2) :
     · simp
     · simp at g₀
 
+
 set_option maxHeartbeats 0 in
-lemma scratch_off_tensor {i j k : Fin 2} :
-    let v := e (R := ℂ) i ⊗ₖ (e j ⊗ₖ e k)
+/-- correct acc. to https://chatgpt.com/c/6a0ba46b-6c94-83e8-8262-52b4a2dc0954
+This can be used to compute negation using the Toffoli gate.
+-/
+lemma scratch_off_tensor {R : Type*} [RCLike R] {i j k : Fin 2} :
+    let v := e (R := R) i ⊗ₖ (e j ⊗ₖ e k)
     let B := v * vᵀ
     let Bl := partialTraceLeft B
-
-    Bl = (e (R := ℂ) j ⊗ₖ (e k))
-        * (e (R := ℂ) j ⊗ₖ (e k))ᵀ := by
-    -- have := toffoli * e 0 ⊗ₖ (e 0 ⊗ₖ e 0)
-
-    -- correct acc. to https://chatgpt.com/c/6a0ba46b-6c94-83e8-8262-52b4a2dc0954
-
+    Bl = (e (R := R) j ⊗ₖ (e k))
+        * (e (R := R) j ⊗ₖ (e k))ᵀ := by
         intro v B Bl
         unfold Bl B partialTraceLeft v e
-        -- simp [transpose]
+        simp only [kroneckerMap, single, Fin.isValue, of_apply, mul_ite, mul_one, mul_zero,
+          transpose, Fin.sum_univ_two]
         ext a b
         by_cases hb : b = (0,0)
         · subst b
-          simp [transpose]
           rw [mul_apply]
-          simp
           repeat rw [Fintype.sum_prod_type]
-          simp
-          repeat rw [Fintype.sum_prod_type]
-          simp
           repeat rw [mul_apply]
           repeat rw [Fintype.sum_prod_type]
-          simp [single]
-          repeat rw [mul_apply]
+          simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, of_apply, mul_ite,
+            mul_one, mul_zero, Finset.sum_singleton, and_true, Finset.sum_ite_irrel,
+            Finset.sum_const_zero]
           repeat rw [Fintype.sum_prod_type]
-          simp
-          split_ifs with g₀ g₁ g₂ g₃
+          split_ifs
           all_goals try simp_all
-
-          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
-          cases this with
-          | inl h => subst i;tauto
-          | inr h => subst i; tauto
+          fin_cases i <;> tauto
         fin_cases a
+        all_goals repeat (
+            simp
+            repeat rw [mul_apply]
+            repeat rw [Fintype.sum_prod_type])
         · fin_cases b
-          · simp [single, kroneckerMap]
-            rw [mul_apply]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            split_ifs with g₀ g₁
-            all_goals
-              simp [transpose]
-              rw [mul_apply]
-              simp
-              rw [mul_apply]
-              simp
-              rw [Fintype.sum_prod_type]
-              simp
-            · subst i j k
-              simp [transpose]
-              rw [Fintype.sum_prod_type]
-              simp
-            · subst j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-              fin_cases i
-              simp_all
-              simp
-            · subst k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-              fin_cases i
-              simp_all
-              simp
-            · repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-              fin_cases i
-              simp_all
-              simp
-
-          · simp [single, kroneckerMap]
-            rw [mul_apply]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            split_ifs with g₀ g₁
-            all_goals
-              simp [transpose]
-              rw [mul_apply]
-              simp
-              rw [mul_apply]
-              simp
-              rw [Fintype.sum_prod_type]
-              simp
-            · subst i j k
-              simp_all
-            · subst i j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · subst j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              fin_cases i <;> simp_all
-            · fin_cases k <;> simp
-          · simp [single, kroneckerMap]
-            rw [mul_apply]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            split_ifs with g₀ g₁
-            all_goals
-              simp [transpose]
-              rw [mul_apply]
-              simp
-              rw [mul_apply]
-              simp
-              rw [Fintype.sum_prod_type]
-              simp
-            · subst i j k
-              simp_all
-            · subst i j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · subst j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              fin_cases i <;> simp_all
-            · fin_cases k <;> simp_all
-          · simp [single, kroneckerMap]
-            rw [mul_apply]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            rw [Fintype.sum_prod_type]
-            simp
-            split_ifs with g₀ g₁
-            all_goals
-              simp [transpose]
-              rw [mul_apply]
-              simp
-              rw [mul_apply]
-              simp
-              rw [Fintype.sum_prod_type]
-              simp
-            · subst i j k
-              simp_all
-            · subst i j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · subst j k
-              repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              simp
-            · repeat rw [mul_apply]
-              repeat rw [Fintype.sum_prod_type]
-              fin_cases i <;> simp_all
-            · fin_cases k <;> simp
-            · fin_cases k
-              simp
-              simp at g₀
-        · simp
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp
-          repeat rw [Fintype.sum_prod_type]
-          simp [single]
-          repeat rw [mul_apply]
-          split_ifs with g₀ g₁ g₂ g₃
-          all_goals
-            try simp_all
-          subst i j k
-          apply hb
+          all_goals (
+              simp; repeat rw [mul_apply]
+              split_ifs
+              all_goals try simp_all
+            )
+        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
+          subst i
           ext
-          rw [← g₁]
-          simp
-          tauto
-          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
-          cases this with
-          | inl h => subst i;tauto
-          | inr h => subst i; tauto
-        · simp
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp [single]
-          split_ifs with g₀ g₁ g₂ g₃ g₄
-          all_goals try simp_all
-          subst i j k; apply hb; ext; simp;rw [g₂];simp
-          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
-          cases this with
-          | inl h => subst i;tauto
-          | inr h => subst i; tauto
-        · simp
-          repeat rw [mul_apply]
-          repeat rw [Fintype.sum_prod_type]
-          simp
-          repeat rw [Fintype.sum_prod_type]
-          simp [single]
-          repeat rw [mul_apply]
-          split_ifs with g₀ g₁ g₂ g₃
-          all_goals
-            try simp_all
-          subst j k
-          have : i = 0 ∨ i = 1 := by fin_cases i <;> simp
-          cases this with
-          | inl h => subst i;tauto
-          | inr h =>
-            subst i; simp_all
-            have : b.1 = 0 := by
-                have (x : Fin 2) : x = 0 ∨ x = 1 := by
-                    fin_cases x <;> simp
-                cases this b.1
-                tauto
-                tauto
-            apply hb
-            ext
-            simp
+          · rw [← g₁]
+          · simp
             tauto
-            simp
-            rw [g₁]
-            tauto
-    -- have := toffoli' * e 0 ⊗ₖ e 0 ⊗ₖ e 0
-    -- have A := this * thisᵀ
-    -- have Ar := tr₂ A
-    -- have Al := partialTraceLeft A
-    -- sorry
+          fin_cases i <;> tauto
+        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
+          subst i; ext; simp;rw [g₂];simp
+          fin_cases i <;> tauto
+        · split_ifs with g₀ g₁ g₂ g₃; (all_goals try simp_all); apply hb; subst j k
+          fin_cases i
+          · tauto
+          obtain ⟨b₀,b₁⟩ := b
+          have : b₀ = 0 := by fin_cases b₀ <;> tauto
+          ext
+          all_goals simp at g₁ ⊢
+          · exact this
+          · exact g₁ ▸ this
 
 /-- The usual characterization of the behavior of the Toffoli gate:
 `the target bit (third bit) will be inverted if`
