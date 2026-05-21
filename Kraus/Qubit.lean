@@ -260,6 +260,46 @@ lemma partialTraceLeft_tensor_rankOne_basis {R : Type*} [RCLike R]
   repeat rw [Fintype.sum_prod_type]
   simp [Fintype.sum_prod_type]
 
+lemma partialTraceLeft_tensor_rankOne_basis' {R : Type*} [RCLike R]
+    {k : Type*} [Fintype k] [DecidableEq k] (i : k)
+    (M : Matrix (k) (Fin 1) R) :
+    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
+  unfold partialTraceLeft e
+  simp only [kroneckerMap, single, Fin.isValue, of_apply, transpose]
+  ext a b
+  simp_rw [mul_apply]
+  rw [Finset.sum_comm]
+  repeat rw [Fintype.sum_prod_type]
+  simp [Fintype.sum_prod_type]
+
+lemma negation_using_toffoli'' (a : Fin 2) :
+    let t := toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
+    (partialTraceLeft (t * tᵀ)) = (e (R := ℂ) 1 ⊗ₖ e (1 - a)) * (e (R := ℂ) 1 ⊗ₖ e (1 - a))ᵀ := by
+  rw [toffoli_characterize]
+  simp only [Fin.isValue, and_true, sub_self]
+  split_ifs with g₀
+  · subst a
+    rw [partialTraceLeft_tensor_rankOne_basis]
+    have := @partialTraceLeft_tensor_rankOne_basis
+      ℂ _ (Fin 2) _ _ 1 (e 1 ⊗ₖ e 0)
+    simp at this ⊢
+  · fin_cases a
+    · simp
+      rw [partialTraceLeft_tensor_rankOne_basis]
+    · simp at g₀
+
+/-- May 20, 2026. Best result so far on computing negation using Toffoli gate. -/
+lemma negation_using_toffoli' (a : Fin 2) :
+    let t := toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
+    partialTraceLeft (partialTraceLeft (t * tᵀ)) = e (1 - a) * (e (1 - a))ᵀ := by
+  intro
+  rw [negation_using_toffoli'']
+  have := @partialTraceLeft_tensor_rankOne_basis' ℂ _ (Fin 2) _ _ 1 (e (1 - a))
+  rw [this]
+
+
+
+
 
 lemma scratch_off_tensor_general {R : Type*} [RCLike R] {i : Fin 2}
     (M : Matrix (Fin 2 × Fin 2) (Fin 1 × Fin 1) R) :
