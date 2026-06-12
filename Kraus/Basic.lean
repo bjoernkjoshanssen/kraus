@@ -3,6 +3,7 @@ import Mathlib.Analysis.Matrix.Normed
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Mathlib.Data.Fintype.WithTopBot
+import Mathlib.Probability.Kernel.Defs
 
 /-!
 
@@ -152,6 +153,11 @@ def ev {R : Type*} [One R] [Zero R] {k : ℕ} : Fin k → (Fin k) → R :=
 def pureState_C {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
     {k : ℕ} (e : Matrix (Fin k) (Fin 1) R) :=
   mulᵣ e eᴴ
+
+def pureState' {R : Type*} [RCLike R]
+    {k l : Type*} [Fintype k] [Fintype l]
+    (v : Matrix k l R) := v * vᴴ
+
 
 /-- A version of `pureState_C` for use with `*ᵥ`. -/
 def pureState_Cv {R : Type*} [Mul R] [Add R] [Zero R] [Star R]
@@ -508,6 +514,8 @@ theorem posSemidef_of_isStarProjection {n : ℕ}
   convert h_pos_semi_def
   generalize ⇑x = β at *
   clear h_pos_semi_def h₁
+  rfl
+  rfl
   unfold mulVec vecMul
   simp only
   ext i
@@ -556,46 +564,40 @@ open Real in
 lemma nonneg_trace_of_posSemidef_C {R : Type*} [RCLike R] {n : ℕ} {ρ : Matrix (Fin n) (Fin n) R}
     (hρ' : ρ.PosSemidef) (i : Fin n) :
     0 ≤ (pureState_C (e i) * ρ).trace := by
-  apply nonneg_trace'_C hρ'
-  simp only [PiLp.instNorm, OfNat.ofNat_ne_zero, ↓reduceIte, ENNReal.ofNat_ne_top,
-    ENNReal.toReal_ofNat, rpow_ofNat, one_div, e, single, Fin.isValue, of_apply, and_true]
-  suffices (∑ x, ‖if i = x then (1:R) else 0‖ ^ 2) = 1 by rw [this];simp
-  have : (fun (x : Fin n) => ‖if i = x then  (1:R)  else 0‖ ^ 2) =
+  have h₀ : (fun (x : Fin n) => ‖if i = x then  (1:R)  else 0‖ ^ 2) =
          (fun x =>            if i = x then ‖(1:R)‖ else ‖(0:R)‖) := by
         ext j
         split_ifs <;> simp
-  simp_rw [this]
+  apply nonneg_trace'_C hρ'
+  simp only [e, single, Fin.isValue, of_apply, and_true]
+  suffices (∑ x, ‖if i = x then (1:R) else 0‖ ^ 2) = 1 by
+    convert this
+    simp only [Norm.norm, OfNat.ofNat_ne_zero, ↓reduceIte, ENNReal.ofNat_ne_top,
+      ENNReal.toReal_ofNat, rpow_ofNat, one_div]
+    rw [this]
+    simp
+  simp_rw [h₀]
   simp
-
-
-lemma sum_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
-  ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
-      ext i j
-      rw [Finset.sum_apply]
-      simp only [row, Finset.sum_apply, of_apply, Function.update,
-        eq_rec_constant, Pi.zero_apply, dite_eq_ite]
-      rw [← congrFun (Fintype.sum_ite_eq i fun j ↦ ρ i) j]
-      aesop
 
 lemma sum_rows_C {R : Type*} [RCLike R] {k : ℕ} (ρ : Matrix (Fin k) (Fin k) R) :
   ∑ x, of (Function.update 0 x (ρ.row x)) = ρ := by
       ext i j
-      rw [Finset.sum_apply]
-      simp only [row, Finset.sum_apply, of_apply, Function.update,
+      rw [Matrix.sum_apply]
+      simp only [row, of_apply, Function.update,
         eq_rec_constant, Pi.zero_apply, dite_eq_ite]
       rw [← congrFun (Fintype.sum_ite_eq i fun j ↦ ρ i) j]
       aesop
-
 
 lemma single_row {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R} (x : Fin k) :
   single x x 1 * ρ = of (Function.update 0 x (ρ.row x)) := by
         rw [@Matrix.single_mul_eq_updateRow_zero]
         unfold updateRow
         simp
+        rfl
 
 lemma combined_rows {k : ℕ} (ρ : Matrix (Fin k) (Fin k) ℝ) :
   ∑ x, single x x 1 * ρ = ρ := by
-      have := @sum_rows k ρ
+      have := @sum_rows_C ℝ _ k ρ
       nth_rw 2 [← this]
       have := @single_row ℝ _ k ρ
       simp_rw [this]
@@ -691,13 +693,13 @@ lemma one_eq_sum_pureState {R : Type*} [RCLike R] {k : ℕ} :
   by_cases H : i = j
   · subst H
     simp only [one_apply_eq, single]
-    rw [Finset.sum_apply] -- !
+    rw [Matrix.sum_apply]
     simp
   · simp only [single]
-    rw [Finset.sum_apply] -- !
+    rw [Matrix.sum_apply] -- !
     symm
     rw [one_apply_ne' fun a ↦ H ((Eq.symm a))]
-    simp only [Finset.sum_apply, of_apply, Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero,
+    simp only [of_apply, Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero,
       Finset.filter_eq_empty_iff, Finset.mem_univ, not_and, forall_const, forall_eq]
     exact H
 
@@ -786,11 +788,25 @@ def QuantumInstrument {R : Type*} [RCLike R]
 
 lemma ofReal_inj_aux {α : Type*} [Fintype α] {J : α → ℝ} (hnn : ∀ a, J a ≥ 0) :
     ∑ a, (⟨J a, hnn a⟩ : NNReal) =
-    ⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ := by
-  refine Eq.symm (Subtype.ext ?_)
-  simp only [NNReal.val_eq_coe]
-  rw [← @RCLike.ofReal_inj ℝ _ _ (∑ a, ⟨J a, hnn a⟩ : NNReal)]
+    (⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ : NNReal) := by
+  have h₁ := @Real.toNNReal_sum_of_nonneg
+    α Finset.univ J (by simp;tauto)
+  have h₀ : (⟨∑ a, J a, Fintype.sum_nonneg hnn⟩ : NNReal)
+    = (∑ a, J a).toNNReal := by
+      have (A : ℝ) (hA : 0 ≤ A) : ⟨A,hA⟩ = A.toNNReal := by
+        refine NNReal.eq ?_
+        simp
+        rw [max_eq_left]
+        congr
+        tauto
+      apply this
+  rw [h₀]
+  rw [h₁]
+  congr
+  ext a
   simp
+  tauto
+
 
 
 theorem krausApply_trace_nonneg {R : Type*}
@@ -828,6 +844,7 @@ def PMF_of_preQuantumInstrument {R : Type*} [RCLike R]
   have h₀ : ⟨RCLike.re ρ.trace, hRC htn⟩ = (1 : NNReal) := by
     simp_rw [hUT]
     simp
+    congr
   rw [← h₀]
   simp_rw [← h𝓔 ρ hPS]
   simp only [trace_sum, map_sum]
@@ -844,24 +861,51 @@ lemma pureState_C_QuantumInstrument {R : Type*} [RCLike R] {q : ℕ} :
         rw [single]
         ext i j
         split_ifs with g₀
-        · rw [sub_apply, ← g₀.1]
+        · have := g₀.1
+          subst i
+          have := @Matrix.sub_apply (Fin q) (Fin q) R
+            _ 1 (of fun i' j' ↦ if a = i' ∧ a = j' then 1 else 0)
+            j j
+          convert this
+          · rfl
           simp
-          tauto
+          have := g₀.2.symm
+          rw [if_neg this]
+          simp
         · push_neg at g₀
           by_cases H : i = j
           · subst i
             specialize g₀ rfl
             subst j
-            rw [sub_apply]
+            have := @Matrix.sub_apply (Fin q) (Fin q) R
+              _ 1 (of fun i' j' ↦ if a = i' ∧ a = j' then 1 else 0)
+              a a
+            convert this
+            rfl
             simp
-          rw [sub_apply, of_apply]
-          simp_all
+          have := @Matrix.sub_apply (Fin q) (Fin q) R
+            _ 1 (of fun i' j' ↦ if a = i' ∧ a = j' then 1 else 0)
+            i j
+          convert this
+          rfl
+          simp
+          have : (0 : R) = 0 - 0 := by simp
+          convert this
+          exact one_apply_ne' fun a ↦ H (id (Eq.symm a))
+          simp
+          intro ha
+          subst ha
+          exact H
     unfold pureState_C e
     simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, conjTranspose_single,
       star_one, mulᵣ_eq, single_mul_single_same, mul_one, Finset.sum_const, Finset.card_singleton,
       one_smul, ge_iff_le]
     refine le_iff.mpr ?_
-    rw [h₁]
+    have : (@HSub.hSub (Matrix (Fin q) (Fin q) R) (Matrix (Fin q) (Fin q) R) (Matrix (Fin q) (Fin q) R) instHSub 1 (single a a 1) : Matrix (Fin q) (Fin q) R)
+      = (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0 : Fin q → Fin q → R) := by
+        rw [← h₁]
+        congr
+    rw [this]
     have : ∃ B : Matrix (Fin q) (Fin q) R, (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0) = Bᴴ * B := by
       use (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0)
       ext i j
@@ -913,7 +957,6 @@ def POVM_PMF {R : Type*} [RCLike R]
   apply toReal_sum
   simp
 
-
 def POVM_PMF_alt {R : Type*} [RCLike R]
     {k : ℕ} {ρ : Matrix (Fin k) (Fin k) R}
     (hUT : ρ.trace = 1) (hPS : 0 ≤ ρ) : PMF (Fin k) := by
@@ -945,7 +988,7 @@ open scoped BigOperators
 example {α} (s : Finset α) (f : α → NNReal) :
     ENNReal.ofNNReal (∑ x ∈ s, f x)
       = ∑ x ∈ s, ENNReal.ofNNReal (f x) := by
-  exact coe_finset_sum
+  simp
 
 /-- Probability measure with "lost" trace in the last outcome. -/
 def p {R : Type*} [RCLike R]
@@ -1030,6 +1073,7 @@ def POVM_PMF_withTop₀ {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (F
         congr
     · simp
     · exact Subtype.fintype _
+  simp
 
 /-- A PMF where the probability of `none` is the probability lost due
 to trace decrease. -/
@@ -1087,7 +1131,7 @@ noncomputable def POVM_subPMF {R : Type*} [RCLike R]
           refine (RCLike.re_nonneg_of_nonneg ?_).mpr this
           exact LE.le.isSelfAdjoint this⟩)
   show ∑ a, ofNNReal ⟨RCLike.re (pureState_C (e a) * ρ).trace, _⟩ ≤ 1
-  apply le_of_eq_of_le (α := ENNReal) --(b := ofNNReal ⟨RCLike.re ρ.trace, sorry⟩)
+  apply le_of_eq_of_le (α := ENNReal) --(b := ofNNReal ⟨RCLike.re ρ.trace, zorry⟩)
   · have := @toReal_eq_toReal_iff' (∑ a, ofNNReal
       ⟨RCLike.re (pureState_C (e a) * ρ).trace, by
           have := @nonneg_trace_of_posSemidef_C R _ k ρ (LE.le.posSemidef hPS)
@@ -1190,6 +1234,7 @@ lemma PMF_of_state.sum_one_general {R : Type*} [RCLike R]
     have h₁ : (∑ a, ofNNReal ⟨RCLike.re (f a * ρ).trace, hnn _⟩ ).toReal
              = ∑ a,           RCLike.re (f a * ρ).trace := by
         rw [toReal_sum] <;> simp
+        congr
     rw [← h₁]
     congr
     rw [← coe_finset_sum]
@@ -1199,7 +1244,21 @@ lemma PMF_of_state.sum_one_general {R : Type*} [RCLike R]
       Finset.sum_erase_sub acc (fun a => RCLike.re (f a * ρ).trace)]
     rw [← coe_add]
     congr
-    rw [Nonneg.mk_add_mk, ofReal_inj_aux]
+    simp
+    have := @Nonneg.mk_add_mk ℝ _ _ _
+      (∑ x with ¬x = acc, RCLike.re (f x * ρ).trace)
+      (RCLike.re (f acc * ρ).trace)
+      (Finset.sum_nonneg fun i a ↦ hnn i)
+      (hnn _)
+      --(α := R)
+    show (⟨∑ x with ¬x = acc, RCLike.re (f x * ρ).trace, _⟩ : NNReal)
+    + ⟨RCLike.re (f acc * ρ).trace, _⟩ =
+      _
+    rw [this]
+    have := @ofReal_inj_aux (Fin k) _
+        (fun i => RCLike.re (f i * ρ).trace) hnn
+    show _ = ∑ i : Fin k, (⟨RCLike.re (f i * ρ).trace, hnn _⟩ : NNReal)
+    rw [this]
     congr
     apply add_eq_of_eq_sub
     rw [Finset.sum_erase_sub]
@@ -1232,9 +1291,11 @@ lemma PMF_of_state.sum_one_general_general {R : Type*} [RCLike R]
         exact toReal_add hx hy
   rw [this _ _ (by simp) (by simp)]
   simp only [coe_toReal, NNReal.coe_mk]
-  rw [sub_mul]
-  rw [trace_sub]
+  simp_rw [sub_mul]
+  simp_rw [trace_sub]
   simp
+  exact add_eq_of_eq_sub rfl
+
 
 noncomputable def PMF_of_state_general {R : Type*} [RCLike R]
     {k : ℕ} (acc : Fin k) {ρ : Matrix (Fin k) (Fin k) R}
@@ -1280,10 +1341,12 @@ noncomputable def PMF_of_state_CPTNI {R : Type*} [RCLike R]
     norm_cast at hUT ⊢
   rw [Real.toNNReal_of_nonneg h₀]
   norm_cast
-  rw [Nonneg.mk_add_mk]
+  have := @Nonneg.mk_add_mk ℝ _ _ _ (1 - re ρ.trace) (re ρ.trace)
+    h₀ (trace_nonneg_re hPS)
+  change (⟨1 - re ρ.trace, h₀⟩ : NNReal)
+    + ⟨re ρ.trace, trace_nonneg_re hPS⟩ = 1
+  rw [this]
   simp
-
-  -- apply PMF_of_state.sum_one_general _ hUT hPS
 
 /-- To use conditional computability here we would need to know the state
 had positive trace. -/
@@ -1315,7 +1378,6 @@ noncomputable def PMF_of_state_bern {R : Type*} [RCLike R]
   · suffices (pureState_C (e acc) * ρ).trace ≤ ρ.trace by
       have := @RCLike.le_iff_re_im R _ (w := ρ.trace)
         (z := (pureState_C (e acc) * ρ).trace)
-      simp at this
       tauto
     apply sub_nonneg.mp
     suffices 0 ≤ (1 * ρ).trace - (pureState_C (e acc) * ρ).trace by
@@ -1476,12 +1538,12 @@ noncomputable def myPVMeas_C_trace_one {R : Type*} [RCLike R] {k : ℕ} {ρ : Ma
 --     (hUT : ρ.trace ≤ 1) (hPS : Matrix.PosSemidef ρ) : PVMeas_C (R := R) := {
 --   k := k
 --   t := k
---   p := sorry --(POVM_PMF' hUT hPS).toMeasure
+--   p := zorry --(POVM_PMF' hUT hPS).toMeasure
 --   ρ := ρ
 --   hρ := hPS
 --   op := fun i : Fin k => pureState_C (e i)
 --   pf := by exact fun i ↦ pureState_projection_C i
---   pf' := by sorry --intro i; simp; rfl
+--   pf' := by zorry --intro i; simp; rfl
 -- }
 
 
@@ -1759,6 +1821,7 @@ lemma exampleLanguage₁_length_one (word : Fin 1 → Fin 1) :
       = (4⁻¹ : ENNReal) := by
         refine (toReal_eq_toReal_iff' ?_ ?_).mp ?_
         all_goals simp
+        rfl
     rw [this]
     refine ENNReal.inv_le_inv.mpr ?_
     norm_cast
@@ -1768,7 +1831,6 @@ lemma exampleLanguage₁_length_one (word : Fin 1 → Fin 1) :
   fin_cases x; fin_cases y
   repeat rw [← mulᵣ_eq, mulᵣ]
   simp [dotProduct, vecHead]
-
 
 
 
@@ -1791,4 +1853,7 @@ lemma MO_language_nonempty_C {α : Type*} {r k : ℕ}
     (pureState_projection_C (0 : Fin k.succ) (R := ℂ)).1
   simp_rw [this]
   simp_rw [basisState_trace_one_C]
+  simp
+  norm_cast
+  show 2⁻¹ < 1
   simp

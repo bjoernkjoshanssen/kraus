@@ -1,40 +1,28 @@
-import Mathlib.Analysis.Matrix.Order
-import Mathlib.Probability.ProbabilityMassFunction.Constructions
-
-import Mathlib.Data.Matrix.Basic
-import Mathlib.Analysis.Complex.Order
-import Mathlib.Analysis.RCLike.Basic
-import Mathlib.Data.Complex.BigOperators
-import Mathlib.LinearAlgebra.Complex.Module
-import Mathlib.Topology.Algebra.InfiniteSum.Module
-import Mathlib.Topology.Instances.RealVectorSpace
 import Mathlib.LinearAlgebra.PiTensorProduct
-
-import Mathlib.Analysis.InnerProductSpace.Positive
-import Kraus.Basic
-import Kraus.GrudkaExamples
 import Kraus.Stinespring
-import Mathlib.Data.PEquiv
 import Mathlib.Data.Matrix.PEquiv
+import Mathlib.Probability.Distributions.Poisson.Basic
 
 /-!
 
-# Stinespring dilation
+# Qubits
 
 -/
-
+-- #check Fin.encodeBool
 open Matrix MatrixOrder
 
 open Kronecker
 
+noncomputable section
+
+/-- To use `Fin 4 × Fin 4` matrices to manipulate `2` qubits. -/
 def transl₂ : Fin 2 × Fin 2 → Fin 4
 | (0,0) => 0
 | (0,1) => 1
 | (1,0) => 2
 | (1,1) => 3
 
-
-
+/-- To use `Fin 8 × Fin 8` matrices to manipulate `3` qubits. -/
 def transl₃ : Fin 2 × Fin 2 × Fin 2 → Fin 8
 | (0,0,0) => 0
 | (0,0,1) => 1
@@ -45,6 +33,7 @@ def transl₃ : Fin 2 × Fin 2 × Fin 2 → Fin 8
 | (1,1,0) => 6
 | (1,1,1) => 7
 
+/-- An "associative variant" for using `Fin 8 × Fin 8` matrices to manipulate `3` qubits. -/
 def transl₃'' : (Fin 2 × Fin 2) × Fin 2 → Fin 8
 | ((0,0),0) => 0
 | ((0,0),1) => 1
@@ -96,14 +85,14 @@ def translate₃' : Matrix (Fin 8) (Fin 8) ℂ →
   fun A x y => A (transl₃'' x) (transl₃'' y)
 
 def toffoli₀ : Matrix (Fin 8) (Fin 8) ℂ := !![
-  1,0,0,0, 0,0,0,0;
-  0,1,0,0, 0,0,0,0;
-  0,0,1,0, 0,0,0,0;
-  0,0,0,1, 0,0,0,0;
-  0,0,0,0, 1,0,0,0;
-  0,0,0,0, 0,1,0,0;
-  0,0,0,0, 0,0,0,1;
-  0,0,0,0, 0,0,1,0;
+  1, 0, 0, 0,  0, 0, 0, 0;
+  0, 1, 0, 0,  0, 0, 0, 0;
+  0, 0, 1, 0,  0, 0, 0, 0;
+  0, 0, 0, 1,  0, 0, 0, 0;
+  0, 0, 0, 0,  1, 0, 0, 0;
+  0, 0, 0, 0,  0, 1, 0, 0;
+  0, 0, 0, 0,  0, 0, 0, 1;
+  0, 0, 0, 0,  0, 0, 1, 0;
 ]
 
 def cnot₀ : Matrix (Fin 4) (Fin 4) ℂ := !![
@@ -119,8 +108,8 @@ def toffoli : Matrix (Fin 2 × Fin 2 × Fin 2) (Fin 2 × Fin 2 × Fin 2) ℂ :=
 def toffoli' : Matrix ((Fin 2 × Fin 2) × Fin 2) ((Fin 2 × Fin 2) × Fin 2) ℂ :=
   translate₃' toffoli₀
 
-def cnot : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ := by
-  exact translate₂ cnot₀
+def cnot : Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ := translate₂ cnot₀
+
 open PiTensorProduct
 
 #check (e (0 : Fin 2)) ⊗ₖ ((e (0 : Fin 2)) ⊗ₖ (e (0 : Fin 2)))
@@ -135,7 +124,7 @@ example {n : ℕ} : PiTensorProduct ℂ (fun _ : Fin n => Matrix (Fin 2) (Fin 1)
 -- If `b` and `c` aren't both 1 then `toffoli` acts like identity.
 lemma toffoli_unchange {a b c : Fin 2}
   (h : ¬ (a = 1 ∧ b = 1)) : toffoli * e a ⊗ₖ (e b ⊗ₖ e c) =
-                                    e a ⊗ₖ (e b ⊗ₖ e c) := by
+                                      e a ⊗ₖ (e b ⊗ₖ e c) := by
   unfold toffoli translate₃ toffoli₀ kroneckerMap transl₃
   simp only [Fin.isValue, of_apply, cons_val', cons_val_fin_one]
   unfold e single
@@ -154,21 +143,16 @@ lemma toffoli_unchange {a b c : Fin 2}
     try rw [Fintype.sum_prod_type]
     try rw [Fin.sum_univ_two]
     try rw [Fintype.sum_prod_type]
-    try rw [Fin.sum_univ_two]
-    try rw [Fin.sum_univ_two]
-    try simp
-    try tauto
+    try repeat rw [Fin.sum_univ_two]
     try
       fin_cases a <;>
       fin_cases b <;>
       fin_cases c <;> all_goals try simp_all
 
--- If `b=c=1` then `toffoli` flips.
-lemma toffoli_change {a b c : Fin 2}
-  (hb : b = 1) (ha : a = 1)
-  : toffoli * e a ⊗ₖ (e b ⊗ₖ e c) =
-                                  e a ⊗ₖ (e b ⊗ₖ e (1-c)) := by
-  subst a b
+-- If the first two qubits are `1` then `toffoli` flips the third qubit.
+lemma toffoli_change (c : Fin 2) :
+    toffoli * e (1 : Fin 2) ⊗ₖ (e (1 : Fin 2) ⊗ₖ e c) =
+              e (1 : Fin 2) ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1-c)) := by
   unfold toffoli translate₃ toffoli₀ kroneckerMap transl₃
   simp only [Fin.isValue, of_apply, cons_val', cons_val_fin_one]
   unfold e single
@@ -178,18 +162,22 @@ lemma toffoli_change {a b c : Fin 2}
   simp only [Fin.isValue, Fin.zero_eta, of_apply, and_true]
   fin_cases i
   all_goals
-    simp
+    simp only [Fin.isValue, Fin.zero_eta, Fin.mk_one, sub_eq_self, ↓reduceIte, one_ne_zero,
+      ite_self]
     rw [mul_apply]
     rw [Fintype.sum_prod_type]
     rw [Fin.sum_univ_two]
     rw [Fintype.sum_prod_type]
     rw [Fin.sum_univ_two]
     rw [Fin.sum_univ_two]
-    simp
+    simp only [Fin.isValue, cons_val_zero, cons_val, cons_val_one, of_apply, and_true, one_ne_zero,
+      ↓reduceIte, ite_self, mul_zero, add_zero, and_self, Finset.sum_const_zero, mul_ite, mul_one,
+      zero_add]
     rw [Fintype.sum_prod_type]
     rw [Fin.sum_univ_two]
     rw [Fin.sum_univ_two]
-    simp
+    simp only [Fin.isValue, one_ne_zero, ↓reduceIte, ite_self, add_zero, Finset.sum_ite_eq,
+      Finset.mem_univ, zero_add]
     fin_cases c <;> simp_all
 
 lemma kroneckerMap_injective {α β γ δ : Type*}
@@ -232,13 +220,13 @@ theorem toffoli_characterize (a b c : Fin 2) :
     (e a ⊗ₖ (e b ⊗ₖ e (1-c)))
     (e a ⊗ₖ (e b ⊗ₖ e c)) := by
   split_ifs with g₀
-  · exact toffoli_change g₀.2 g₀.1
+  · rw [g₀.1, g₀.2];exact toffoli_change c
   · exact toffoli_unchange g₀
 
 /-- If we inspect the third qubit on input (a,1,1) we find 1-a. -/
 lemma negation_using_toffoli (a : Fin 2) :
     toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
-            = e a ⊗ₖ (e 1 ⊗ₖ e (1 - a)) := by
+            = e          a ⊗ₖ (e  1          ⊗ₖ e (1 - a)) := by
   rw [toffoli_characterize]
   simp only [Fin.isValue, and_true, sub_self]
   split_ifs with g₀
@@ -251,9 +239,11 @@ lemma negation_using_toffoli (a : Fin 2) :
 lemma partialTraceLeft_tensor_rankOne_basis {R : Type*} [RCLike R]
     {k : Type*} [Fintype k] [DecidableEq k] (i : k)
     (M : Matrix (k × k) (Fin 1 × Fin 1) R) :
-    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
-  unfold partialTraceLeft e
-  simp only [kroneckerMap, single, Fin.isValue, of_apply, transpose]
+    partialTraceLeft (pureState' ((e i) ⊗ₖ M)) = pureState' M := by
+  have := (e i) ⊗ₖ M
+  have := pureState' ((e i) ⊗ₖ M)
+  unfold partialTraceLeft e pureState'
+  simp only [kroneckerMap, single, Fin.isValue, of_apply]
   ext a b
   simp_rw [mul_apply]
   rw [Finset.sum_comm]
@@ -263,18 +253,19 @@ lemma partialTraceLeft_tensor_rankOne_basis {R : Type*} [RCLike R]
 lemma partialTraceLeft_tensor_rankOne_basis' {R : Type*} [RCLike R]
     {k : Type*} [Fintype k] [DecidableEq k] (i : k)
     (M : Matrix (k) (Fin 1) R) :
-    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
-  unfold partialTraceLeft e
-  simp only [kroneckerMap, single, Fin.isValue, of_apply, transpose]
+    partialTraceLeft (pureState' ((e i) ⊗ₖ M)) = pureState' M := by
+  unfold partialTraceLeft pureState' e
+  simp only [kroneckerMap, single, Fin.isValue, of_apply]
   ext a b
   simp_rw [mul_apply]
   rw [Finset.sum_comm]
   repeat rw [Fintype.sum_prod_type]
-  simp [Fintype.sum_prod_type]
+  simp
 
 lemma negation_using_toffoli'' (a : Fin 2) :
     let t := toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
-    (partialTraceLeft (t * tᵀ)) = (e (R := ℂ) 1 ⊗ₖ e (1 - a)) * (e (R := ℂ) 1 ⊗ₖ e (1 - a))ᵀ := by
+    (partialTraceLeft (pureState' t))
+    = pureState' (e (R := ℂ) 1 ⊗ₖ e (1 - a)) := by
   rw [toffoli_characterize]
   simp only [Fin.isValue, and_true, sub_self]
   split_ifs with g₀
@@ -284,26 +275,69 @@ lemma negation_using_toffoli'' (a : Fin 2) :
       ℂ _ (Fin 2) _ _ 1 (e 1 ⊗ₖ e 0)
     simp at this ⊢
   · fin_cases a
-    · simp
+    · simp only [Fin.zero_eta, Fin.isValue, sub_zero]
       rw [partialTraceLeft_tensor_rankOne_basis]
     · simp at g₀
 
-/-- May 20, 2026. Best result so far on computing negation using Toffoli gate. -/
+/-- May 21, 2026. Best result so far on computing negation using Toffoli gate. -/
 lemma negation_using_toffoli' (a : Fin 2) :
-    let t := toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2))
-    partialTraceLeft (partialTraceLeft (t * tᵀ)) = e (1 - a) * (e (1 - a))ᵀ := by
-  intro
-  rw [negation_using_toffoli'']
-  have := @partialTraceLeft_tensor_rankOne_basis' ℂ _ (Fin 2) _ _ 1 (e (1 - a))
-  rw [this]
+    partialTraceLeft
+    (partialTraceLeft
+    (pureState'
+    (toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2)))
+    )) = pureState' (e (1 - a)) := by
+  rw [negation_using_toffoli'', partialTraceLeft_tensor_rankOne_basis']
 
 
+noncomputable def
+  bit_from_pureState (M : Matrix (Fin 2) (Fin 2) ℂ) : Matrix (Fin 1) (Fin 1) ℂ := by
+  have v := !![(0:ℂ);1]
+  exact vᴴ * M * v
+
+lemma bit_from_pureState_eq (i : Fin 2) :
+  bit_from_pureState (pureState' (e i)) = !![(i.1 : ℂ)] := by
+    unfold bit_from_pureState pureState' e
+    ext z₀ z₁
+    have : z₀ = 0 := Fin.fin_one_eq_zero z₀
+    subst z₀
+    have : z₁ = 0 := Fin.fin_one_eq_zero _
+    subst z₁
+    simp only [Fin.isValue, conjTranspose_single, star_one, single_mul_single_same, mul_one,
+      of_apply, cons_val', cons_val_fin_one]
+    repeat rw [mul_apply]
+    simp only [conjTranspose, transpose, of_apply, cons_val', cons_val_fin_one, RCLike.star_def,
+      Fin.isValue, Fin.sum_univ_two, cons_val_zero, mul_zero, cons_val_one, mul_one, zero_add]
+    rw [mul_apply]
+    simp only [Fin.isValue, map_apply, of_apply, single, mul_ite, mul_one, mul_zero,
+      Fin.sum_univ_two, cons_val_zero, map_zero, ite_self, and_self, cons_val_one, map_one,
+      zero_add]
+    split_ifs with g₀
+    · rw [g₀];simp
+    · fin_cases i
+      · simp
+      · simp at g₀
+
+lemma bit_from_pureState_eq' (i : Fin 2) :
+  bit_from_pureState (pureState' (e i)) 0 0 = (i.1 : ℂ) := by
+    rw [bit_from_pureState_eq]
+    simp
+
+lemma negation_using_toffoli''' (a : Fin 2) :
+    bit_from_pureState (
+    partialTraceLeft
+    (partialTraceLeft
+    (pureState'
+    (toffoli * e (R := ℂ) a ⊗ₖ (e (1 : Fin 2) ⊗ₖ e (1 : Fin 2)))))) 0 0
+     =  (1 - a) := by
+  rw [negation_using_toffoli'', partialTraceLeft_tensor_rankOne_basis']
+  rw [bit_from_pureState_eq']
+  fin_cases a <;> simp
 
 
 
 lemma scratch_off_tensor_general {R : Type*} [RCLike R] {i : Fin 2}
     (M : Matrix (Fin 2 × Fin 2) (Fin 1 × Fin 1) R) :
-    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᵀ) = M * Mᵀ := by
+    partialTraceLeft (((e i) ⊗ₖ M) * ((e i) ⊗ₖ M)ᴴ) = M * Mᴴ := by
   apply partialTraceLeft_tensor_rankOne_basis
 
 
@@ -312,10 +346,10 @@ This can be used to compute negation using the Toffoli gate.
 -/
 lemma scratch_off_tensor {R : Type*} [RCLike R] {i j k : Fin 2} :
     let v := e (R := R) i ⊗ₖ (e j ⊗ₖ e k)
-    let B := v * vᵀ
+    let B := v * vᴴ
     let Bl := partialTraceLeft B
     Bl = (e (R := R) j ⊗ₖ (e k))
-        * (e (R := R) j ⊗ₖ (e k))ᵀ := by
+        * (e (R := R) j ⊗ₖ (e k))ᴴ := by
         apply scratch_off_tensor_general
 
 
@@ -331,7 +365,7 @@ theorem toffoli_characterize.TFAE (a b c : Fin 2) :
      toffoli * e a ⊗ₖ (e b ⊗ₖ e c) ≠ e a ⊗ₖ (e b ⊗ₖ e c)].TFAE := by
   apply List.tfae_of_cycle
   · apply List.IsChain.cons_cons
-    · exact fun h => toffoli_change h.2 h.1
+    · intro h;rw [h.1,h.2]; exact toffoli_change c
     · apply List.isChain_pair.mpr
       intro h hc
       rw [h] at hc
@@ -440,9 +474,7 @@ by
 example : gate_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
   unfold gate_probability
   unfold first_qubit_proj₀
-
   unfold toffoli toffoli₀
-  simp
   unfold translate₃ transl₃
   simp
 
@@ -692,22 +724,7 @@ lemma prod_sum_prod_unitary (A : unitary _) :
     simp
     repeat rw [Matrix.mul_apply]
     simp
-
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
+    all_goals sorry
   · sorry
 
 noncomputable def quantumCircuitUnitary'

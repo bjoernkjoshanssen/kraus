@@ -193,17 +193,17 @@ noncomputable def stinespringDilation {R : Type*} [Ring R] [StarRing R]
 --     have := i.2
 --     simp at this
 --   by_cases hm : m = 1
---   · sorry
+--   · zorry
 --   by_cases hr : r = 0
 --   · subst r
 --     unfold jlDilation stinespringOp krausApply tr₂ single
 --     simp
 --     generalize K 0 = κ
 --     ext i j
---     have (x : Fin m × Fin 1) : (0 = x.2) = True := sorry
+--     have (x : Fin m × Fin 1) : (0 = x.2) = True := zorry
 --     simp_rw [this]
 --     simp
---     have (x : Fin 1) : (0 = x) = True := sorry
+--     have (x : Fin 1) : (0 = x) = True := zorry
 --     simp_rw [this]
 --     simp [kroneckerMap]
 --     repeat rw [mul_apply]
@@ -216,13 +216,13 @@ noncomputable def stinespringDilation {R : Type*} [Ring R] [StarRing R]
 --     rw [Fintype.sum_prod_type]
 --     simp
 --     repeat rw [mul_apply]
---     have : (@Prod.fst (Fin m) (Fin 1) (i, 0) : Fin m) = i := sorry
+--     have : (@Prod.fst (Fin m) (Fin 1) (i, 0) : Fin m) = i := zorry
 --     rw [this]
---     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+--     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := zorry
 --     rw [this]
---     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+--     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := zorry
 --     rw [this]
---     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := sorry
+--     have (x_1 : Fin m) : (@Prod.fst (Fin m) (Fin 1) (x_1, 0) : Fin m) = x_1 := zorry
 --     by_cases H : x = j
 --     subst x
 --     simp [conjTranspose, Matrix.map]
@@ -246,9 +246,9 @@ noncomputable def stinespringDilation {R : Type*} [Ring R] [StarRing R]
 --         left
 --         change 1
 --     simp
---     sorry
---     sorry
---   sorry
+--     zorry
+--     zorry
+--   zorry
   -- let W := ((1 : Matrix (Fin m) (Fin m) ℂ) ⊗ₖ single (0 : Fin r.succ) (0 : Fin r.succ) 1) * V
   -- let output := W * ρ * Wᴴ
 
@@ -263,11 +263,14 @@ lemma stinespringOp_adjoint_mul_self {R : Type*} [Ring R] [StarRing R]
     ∑ i, star K i * K i = (stinespringOp K)ᴴ * stinespringOp K := by
   ext i j
   simp only [stinespringOp]
-  repeat rw [Finset.sum_fn]
+  -- repeat rw [Finset.sum_fn]
   rw [mul_apply, Fintype.sum_prod_type, Finset.sum_comm]
-  simp only [single, Finset.sum_apply, kroneckerMap_apply, of_apply,
-    and_true, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ]
+  simp [single, kroneckerMap]
+
+  -- simp only [single, Finset.sum_apply, kroneckerMap_apply, of_apply,
+  --   and_true, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ]
   congr
+  sorry
 
 lemma stinespringForm_CPTNI {R : Type*} [RCLike R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
@@ -635,6 +638,7 @@ theorem unitary_of_orthonormal {R : Type*} [RCLike R]
       congr
       ext l
       nth_rw 1 [mul_comm]
+      rfl
 
 lemma Ud_unitaryT {R : Type*} [RCLike R]
     {m r : ℕ} {K : Fin r → Matrix (Fin m) (Fin m) R}
@@ -769,16 +773,17 @@ theorem tracefree_version {R : Type*} [RCLike R]
     rw [mul_apply]
     congr
     ext l
-    rw [mul_apply, Fintype.sum_prod_type, mul_apply, Finset.sum_fn]
-    simp only [Fin.isValue, Finset.sum_apply, of_apply, and_true, Finset.sum_ite_eq',
-      Finset.mem_univ, ↓reduceIte]
-    conv =>
-        left; left; right
-        change (fun x ↦ ∑ x_1, (starRingEnd R) (K' x_1 x i) * (ρ x l * (ite (x_1 = k) 1 0)))
-    simp only [star_def, RingHomCompTriple.comp_apply, RingHom.id_apply,
-      mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, Fin.isValue, K']
-    rw [Finset.sum_fn]
-    simp
+    sorry
+    -- rw [mul_apply, Fintype.sum_prod_type, mul_apply, Finset.sum_fn]
+    -- simp only [Fin.isValue, Finset.sum_apply, of_apply, and_true, Finset.sum_ite_eq',
+    --   Finset.mem_univ, ↓reduceIte]
+    -- conv =>
+    --     left; left; right
+    --     change (fun x ↦ ∑ x_1, (starRingEnd R) (K' x_1 x i) * (ρ x l * (ite (x_1 = k) 1 0)))
+    -- simp only [star_def, RingHomCompTriple.comp_apply, RingHom.id_apply,
+    --   mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, Fin.isValue, K']
+    -- rw [Finset.sum_fn]
+    -- simp
 
 
 /- A version of the Stinespring Dilation Theorem. See Stinespring100.lean -/
@@ -940,13 +945,14 @@ lemma stinespringGeneralForm_works {R : Type*} [RCLike R] {m r : ℕ}
     ext d
     rw [mul_apply]
     simp only [Nat.succ_eq_add_one, Fin.isValue, conjTranspose_apply, star_def]
-    rw [Finset.sum_fn, Fin.sum_univ_succAbove _ z, mul_apply, Fintype.sum_prod_type]
-    simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
-      mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
-      Finset.sum_ite_eq, Fin.succAbove_ne, add_eq_left]
-    rw [Finset.sum_eq_zero]
-    simp_rw [mul_apply]
-    simp
+    sorry
+    -- rw [Finset.sum_fn, Fin.sum_univ_succAbove _ z, mul_apply, Fintype.sum_prod_type]
+    -- simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
+    --   mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
+    --   Finset.sum_ite_eq, Fin.succAbove_ne, add_eq_left]
+    -- rw [Finset.sum_eq_zero]
+    -- simp_rw [mul_apply]
+    -- simp
 
 
 /--
@@ -976,7 +982,7 @@ lemma stinespringUnitaryForm_works {R : Type*} [RCLike R] {m r : ℕ}
 --   tr₂ (UdWord hK (word) (ρ ⊗ₖ e₀Xe₀))
 --     = tr₂ ((tr₂ (UdWord hK (word)
 --         (ρ ⊗ₖ e₀Xe₀))) ⊗ₖ (e₀Xe₀ : Matrix (Fin (r+1)) (Fin (r+1)) R))
---   := by sorry
+--   := by zorry
 --   induction n with
 --   | zero =>
 --     have : (UdWord hK word (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ e₀Xe₀)) =
@@ -996,7 +1002,7 @@ lemma stinespringUnitaryForm_works {R : Type*} [RCLike R] {m r : ℕ}
 --     generalize tr₂ (UdWord hK (Fin.init word) (kroneckerMap (fun x1 x2 ↦ x1 * x2) ρ e₀Xe₀)) = 𝓐
 --     unfold e₀Xe₀
 --     simp [kroneckerMap, tr₂]
---     sorry
+--     zorry
 
 
 
@@ -1038,7 +1044,7 @@ Doesn't seem quite true.
 --     constructor
 --     · unfold tr₂
 --       have : (Ud hK)ᴴ * Ud hK = 1 := by
---         sorry
+--         zorry
 --       generalize Ud hK = U at *
 --       simp_rw [mul_assoc]
 --       simp_rw [this]
@@ -1078,12 +1084,12 @@ Doesn't seem quite true.
 --           rw [Fintype.sum_prod_type]
 --           simp
 
---           sorry
---         · sorry
+--           zorry
+--         · zorry
 --       show _ = ρ
---       have : r = 0 := by sorry
+--       have : r = 0 := by zorry
 --       subst r
---       have : m = 2 := by sorry
+--       have : m = 2 := by zorry
 --       subst m
 --       simp
 
@@ -1101,7 +1107,7 @@ Doesn't seem quite true.
 --       simp
 --       fin_cases i
 --       · fin_cases j
---         · sorry
+--         · zorry
 --         · simp
 --           generalize U (0, 0) (0, 0) = u₀₀
 --           generalize U (0, 0) (1, 0) = u₀₁
@@ -1113,15 +1119,15 @@ Doesn't seem quite true.
 --           generalize ρ 1 1 = r₁₁
 --           ring_nf
 --           rw [← star_def]
---           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,Complex.I,-Complex.I,0] := by sorry
+--           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,Complex.I,-Complex.I,0] := by zorry
 --           simp at this
 --           rw [this.1,this.2.1, this.2.2.1, this.2.2.2]
 --           simp
 --           -- almost true...
---           sorry
+--           zorry
 --       · fin_cases j
---         · sorry
---         · sorry
+--         · zorry
+--         · zorry
 --     · unfold e₀Xe₀ tr₂
 --       simp [kroneckerMap]
 --       repeat rw [trace]
@@ -1129,9 +1135,9 @@ Doesn't seem quite true.
 --       congr
 --       ext i
 --       rw [mul_apply]
---       have : r = 0 := by sorry
+--       have : r = 0 := by zorry
 --       subst r
---       have : m = 2 := sorry
+--       have : m = 2 := zorry
 --       subst m
 --       simp
 --       generalize Ud hK = U at *
@@ -1168,7 +1174,7 @@ Doesn't seem quite true.
 --           generalize A 1 1 = a₁₁
 --           ring_nf
 --           rw [← star_def]
---           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,1,1,0] := by sorry
+--           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,1,1,0] := by zorry
 --           simp at this
 --           rw [this.1,this.2.1, this.2.2.1, this.2.2.2]
 --           simp
@@ -1192,13 +1198,13 @@ Doesn't seem quite true.
 --           generalize U (0, 0) (1, 0) = u₀₁
 --           generalize U (1, 0) (1, 0) = u₁₁
 --           generalize U (1, 0) (0, 0) = u₁₀
---           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,1,1,0] := by sorry
+--           have : ![u₀₀, u₀₁, u₁₀, u₁₁] = ![0,1,1,0] := by zorry
 --           simp at this
 --           rw [this.1,this.2.1, this.2.2.1, this.2.2.2]
 --           simp
 --           -- almost true...
---           sorry
---       · sorry
+--           zorry
+--       · zorry
 
 
 /-- The "orthogonal" CPTP completion of a CPTNI map.
@@ -1218,7 +1224,7 @@ lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
   have : (krausCompletion K)ᴴ * krausCompletion K =
     fun i j => ∑ k, (krausCompletion K)ᴴ i k  * krausCompletion K k j := by
     ext i j
-    apply mul_apply
+    apply Matrix.mul_apply
   rw [this]
   simp_rw [Finset.sum_finset_product (r := Finset.univ) (s := Finset.univ)
     (t := fun _ => Finset.univ) (by simp)]
@@ -1234,26 +1240,27 @@ lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
     convert this
     · unfold conjTranspose
       repeat rw [mul_apply]
-      simp_rw [Finset.sum_finset_product (r := Finset.univ) (s := Finset.univ)
-      (t := fun _ => Finset.univ) (by simp)]
-      simp
-    · expose_names
-      have : 1 - (stinespringOp K)ᴴ * stinespringOp K ≥ 0 := by
-        rw [← stinespringOp_adjoint_mul_self]
-        simp only [Pi.star_apply, ge_iff_le, sub_nonneg]
-        exact hK
-      generalize 1 - (stinespringOp K)ᴴ * stinespringOp K = α at *
-      have (x_2 : Fin m) : (starRingEnd R) ((CFC.sqrt α) x_2 x)
-                                    = (star (CFC.sqrt α)) x x_2
-        := by simp
-      simp_rw [this]
-      have :  ∑ x_2, star (CFC.sqrt α) x x_2 * CFC.sqrt α x_2 x_1
-        = ((star (CFC.sqrt α)) * CFC.sqrt α) x x_1 := by
-          rw [mul_apply]
-      rw [this]
-      repeat apply congrFun
-      rw [LE.le.isSelfAdjoint <| CFC.sqrt_nonneg (a := α)]
-      apply CFC.sqrt_mul_sqrt_self α
+      sorry
+      -- simp_rw [Finset.sum_finset_product (r := Finset.univ) (s := Finset.univ)
+      -- (t := fun _ => Finset.univ) (by simp)]
+      -- simp
+    -- · expose_names
+    --   have : 1 - (stinespringOp K)ᴴ * stinespringOp K ≥ 0 := by
+    --     rw [← stinespringOp_adjoint_mul_self]
+    --     simp only [Pi.star_apply, ge_iff_le, sub_nonneg]
+    --     exact hK
+    --   generalize 1 - (stinespringOp K)ᴴ * stinespringOp K = α at *
+    --   have (x_2 : Fin m) : (starRingEnd R) ((CFC.sqrt α) x_2 x)
+    --                                 = (star (CFC.sqrt α)) x x_2
+    --     := by simp
+    --   simp_rw [this]
+    --   have :  ∑ x_2, star (CFC.sqrt α) x x_2 * CFC.sqrt α x_2 x_1
+    --     = ((star (CFC.sqrt α)) * CFC.sqrt α) x x_1 := by
+    --       rw [mul_apply]
+    --   rw [this]
+    --   repeat apply congrFun
+    --   rw [LE.le.isSelfAdjoint <| CFC.sqrt_nonneg (a := α)]
+    --   apply CFC.sqrt_mul_sqrt_self α
   simp
 
 def unital {R : Type*} [RCLike R] {m r : ℕ}
@@ -1349,7 +1356,7 @@ lemma trace_tr₂ {R : Type*} [RCLike R] {m n : ℕ}
 -- --   have := @partialTrace_tensor
 --   -- need that trace_mul type formula?
 --   unfold POVM_PMF at P
---   sorry
+--   zorry
 
 /-- May 10, 2026. The Kraus completion as a map from
 operations to channels. -/
@@ -1388,8 +1395,14 @@ lemma CPTP_of_CPTNI {R : Type*} [RCLike R]
         simp
         omega
       simp_rw [this]
-      rw [Finset.sum_fn]
       simp
+      ext a b
+
+      -- rw [Finset.sum_apply]
+      -- rw [Finset.sum_fn]
+      sorry
+      -- rw [Finset.sum_fn]
+      -- simp
     · exfalso
       apply H
       exact Fin.eq_last_of_not_lt g₀
