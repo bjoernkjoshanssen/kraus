@@ -398,3 +398,5 @@ lemma MO_grudka1_language_nonempty :
   have g₃ : (pureState ![0, 1, 0] (R := ℝ)).trace = 1 := g₁ ▸ @basisState_trace_one 2 (1 : Fin 3)
   simp_rw [e, g₀, g₁, g₂, g₃]
   simp
+  change 2⁻¹ < 1
+  simp
