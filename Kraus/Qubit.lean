@@ -54,16 +54,6 @@ def transl {a b : ℕ} :
     (Fin b → Fin a) → Fin (a ^ b) := by
   exact fun v => finFunctionFinEquiv v
 
-
--- | ![0,0,0] => 0
--- | ![0,0,1] => 0
--- | ![0,1,0] => 0
--- | ![0,1,1] => 0
--- | ![1,0,0] => 0
--- | ![1,0,1] => 0
--- | ![1,1,0] => 0
--- | ![1,1,1] => 0
-
 def transl₃' : Fin 2 × Fin 2 × Fin 2 → Fin 8 :=
     fun p => (p.1.mkDivMod p.2.1).mkDivMod p.2.2
 
@@ -743,6 +733,7 @@ noncomputable def quantumCircuitUnitary'
     · sorry
     · sorry⟩
 
+set_option maxHeartbeats 0 in
 noncomputable def quantumCircuitUnitary
     (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
     (σ : Equiv.Perm (Fin 2 × Fin 2 × Fin 2)) :
@@ -750,8 +741,40 @@ noncomputable def quantumCircuitUnitary
                        (Fin 2 × Fin 2 × Fin 2) ℂ) := by
     exact ⟨quantumCircuit A σ, by
       unfold quantumCircuit
+      constructor
+      · simp [split']
+        ext x y
+        repeat rw [Matrix.mul_apply]
+        repeat rw [Fintype.sum_prod_type]
+        simp_rw [Fintype.sum_prod_type]
+        simp
+        repeat rw [Matrix.mul_apply]
+        repeat rw [Fintype.sum_prod_type]
+        simp_rw [Fintype.sum_prod_type]
+        simp
+        by_cases H :  σ (0, 0, 0) = x
+        · symm at H
+          subst x
+          simp
+          by_cases Hy :  σ (0, 0, 0) = y
+          · symm at Hy
+            subst y
+            simp
+            repeat rw [Matrix.mul_apply]
+            repeat rw [Fintype.sum_prod_type]
+            simp_rw [Fintype.sum_prod_type]
+            simp
+            repeat rw [Matrix.mul_apply]
+            repeat rw [Fintype.sum_prod_type]
+            by_cases H : (Equiv.symm σ) (0, 0, 0) = (0, 0, 0)
+            · rw [H];simp
+              sorry
+            · rw [if_neg H];simp
+              sorry
+          · sorry
+        · sorry
 
-      sorry⟩
+      · sorry⟩
     -- quantumCircuit A σ ∈ unitary _ := by
     -- unfold quantumCircuit
     -- set PT := (Equiv.symm σ).toPEquiv.toMatrix (α := ℂ)

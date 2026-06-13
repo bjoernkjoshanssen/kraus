@@ -261,16 +261,16 @@ lemma stinespringOp_adjoint_mul_self {R : Type*} [Ring R] [StarRing R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
     (K : r → Matrix m m R) :
     ∑ i, star K i * K i = (stinespringOp K)ᴴ * stinespringOp K := by
+  -- I had my own proof which broke going from 4.27 to 4.31,
+  -- so this is Aristotle's proof.
   ext i j
-  simp only [stinespringOp]
-  -- repeat rw [Finset.sum_fn]
-  rw [mul_apply, Fintype.sum_prod_type, Finset.sum_comm]
-  simp [single, kroneckerMap]
-
-  -- simp only [single, Finset.sum_apply, kroneckerMap_apply, of_apply,
-  --   and_true, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ]
-  congr
-  sorry
+  unfold stinespringOp
+  rw [Matrix.mul_apply]
+  rw [Matrix.sum_apply]
+  simp only [Pi.star_apply, Matrix.mul_apply, star_apply, single, Fin.isValue, Matrix.sum_apply,
+    kroneckerMap_apply, of_apply, and_true, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
+    Finset.mem_univ, ↓reduceIte, conjTranspose_apply];
+  erw [ Finset.sum_product, Finset.sum_comm ]
 
 lemma stinespringForm_CPTNI {R : Type*} [RCLike R]
     {m r : Type*} [Fintype r] [DecidableEq r] [Fintype m] [DecidableEq m]
@@ -761,30 +761,17 @@ theorem tracefree_version {R : Type*} [RCLike R]
     (ρ : Matrix m m R) :
     let K' := fun i x y => star <| K i y x; let U := (stinespringOp K');
     Uᴴ * (ρ ⊗ₖ (1 : Matrix r r R)) * U = stinespringForm K ρ := by
-    intro K' U
-    unfold stinespringForm U stinespringOp tr₂
-        stinespringDilation stinespringOp
-    simp only [kroneckerMap, single, Fin.isValue, of_apply, mul_ite,
-      mul_one, mul_zero]
-    ext i j
-    rw [mul_apply, Fintype.sum_prod_type, Finset.sum_comm]
-    congr
-    ext k
-    rw [mul_apply]
-    congr
-    ext l
-    sorry
-    -- rw [mul_apply, Fintype.sum_prod_type, mul_apply, Finset.sum_fn]
-    -- simp only [Fin.isValue, Finset.sum_apply, of_apply, and_true, Finset.sum_ite_eq',
-    --   Finset.mem_univ, ↓reduceIte]
-    -- conv =>
-    --     left; left; right
-    --     change (fun x ↦ ∑ x_1, (starRingEnd R) (K' x_1 x i) * (ρ x l * (ite (x_1 = k) 1 0)))
-    -- simp only [star_def, RingHomCompTriple.comp_apply, RingHom.id_apply,
-    --   mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, Fin.isValue, K']
-    -- rw [Finset.sum_fn]
-    -- simp
-
+  -- Since my proof broke in 4.27 -> 4.31, here's Aristotle's proof.
+  simp only [stinespringOp, star_def, Fin.isValue, stinespringForm, stinespringDilation];
+  ext x y
+  simp [ Matrix.mul_apply, Matrix.one_apply, tr₂ ]
+  ring_nf;
+  simp only [Fin.isValue, Matrix.sum_apply, kroneckerMap_apply, map_sum, map_mul,
+    RingHomCompTriple.comp_apply, RingHom.id_apply, Fintype.sum_prod_type, Finset.sum_ite_eq',
+    Finset.mem_univ, ↓reduceIte];
+  simp only [single, Fin.isValue, of_apply, and_true, MonoidWithZeroHom.map_ite_one_zero, mul_ite,
+    mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte];
+  exact Finset.sum_comm
 
 /- A version of the Stinespring Dilation Theorem. See Stinespring100.lean -/
 -- theorem stinespringForm_eq {m r : ℕ}
@@ -928,31 +915,25 @@ lemma stinespringGeneralForm_works {R : Type*} [RCLike R] {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) R) (z : Fin r)
     (M : Matrix (Fin m × Fin r) (Fin m × Fin r) R) :
     stinespringGeneralForm K z M = krausApply K := by
-    have ⟨r₀,hr₀⟩ : ∃ r₀ : ℕ, r = r₀.succ := by
-      refine Nat.exists_eq_succ_of_ne_zero ?_
-      have := z.2
-      omega
-    subst hr₀
-    unfold stinespringGeneralForm dilation general_dilation
-        krausApply tr₂ stinespringOp single
-    ext a b
-    rw [sum_apply]
-    congr
-    ext c
-    repeat rw [mul_apply]
-    rw [Fintype.sum_prod_type]
-    congr
-    ext d
-    rw [mul_apply]
-    simp only [Nat.succ_eq_add_one, Fin.isValue, conjTranspose_apply, star_def]
-    sorry
-    -- rw [Finset.sum_fn, Fin.sum_univ_succAbove _ z, mul_apply, Fintype.sum_prod_type]
-    -- simp only [Fin.isValue, Finset.sum_apply, kroneckerMap_apply, of_apply, and_true, mul_ite,
-    --   mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, ite_mul,
-    --   Finset.sum_ite_eq, Fin.succAbove_ne, add_eq_left]
-    -- rw [Finset.sum_eq_zero]
-    -- simp_rw [mul_apply]
-    -- simp
+      -- my 4.27 proof failed in 4.31 so this is Aristotle:
+      unfold stinespringGeneralForm krausApply dilation general_dilation stinespringOp tr₂;
+      ext ρ i j;
+      simp only [Fin.isValue, Matrix.sum_apply, kroneckerMap_apply, Matrix.mul_apply, ite_mul,
+        conjTranspose_apply, star_def];
+      simp only [single, Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero,
+        Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, Finset.sum_ite, not_and,
+        Finset.sum_const_zero, add_zero];
+      refine Finset.sum_congr rfl fun x _ => ?_
+      rw [ ← Finset.sum_subset
+        (Finset.subset_univ (Finset.image (fun y : Fin m => ( y, z ) ) Finset.univ))]
+      · rw [ Finset.sum_image ]
+        · simp only [and_true, Finset.sum_filter, ite_not, ↓reduceIte];
+          refine Finset.sum_congr rfl fun y _ => ?_
+          erw [ Finset.sum_product, Finset.sum_product ]
+          simp [ Finset.sum_ite, Finset.filter_eq', Finset.filter_ne' ];
+        · simp only [Finset.coe_univ, Set.injOn_univ];
+          exact fun a b h => by injection h;
+      · aesop
 
 
 /--
@@ -1216,52 +1197,81 @@ noncomputable def krausCompletion {R : Type*} [RCLike R] {m r : ℕ}
   (fun H => stinespringOp K ⟨x.1, ⟨x.2, H⟩⟩)
    fun _ => (CFC.sqrt (1 - (stinespringOp K)ᴴ * (stinespringOp K)) : Matrix _ _ _) x.1
 
-/-- Mar 14, 2026 -/
+/-- Entrywise formula for the Stinespring isometry: its `((x₁, x₂), y)` entry is `K x₂ x₁ y`. -/
+theorem stinespringOp_apply {R : Type*} [Ring R] {m r : Type*} [Fintype r] [DecidableEq r]
+    [Fintype m] [DecidableEq m] (K : r → Matrix m m R) (x : m × r) (y : m) :
+    stinespringOp K x y = K x.2 x.1 y := by
+  unfold stinespringOp
+  simp [Matrix.sum_apply, Matrix.kroneckerMap_apply, Matrix.single_apply]
+
+/-- The Gram matrix of the Stinespring isometry is `∑ i, (K i)ᴴ * K i`. -/
+theorem stinespringOp_gram {R : Type*} [RCLike R] {m r : ℕ}
+    (K : Fin r → Matrix (Fin m) (Fin m) R) :
+    (stinespringOp K)ᴴ * stinespringOp K = ∑ i, star (K i) * K i := by
+  ext a b
+  rw [Matrix.mul_apply, Matrix.sum_apply]
+  simp only [Matrix.conjTranspose_apply, stinespringOp_apply]
+  rw [← Finset.univ_product_univ, Finset.sum_product, Finset.sum_comm]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [Matrix.mul_apply]
+  apply Finset.sum_congr rfl
+  intro x1 _
+  simp [Matrix.star_apply]
+
+/-- Mar 14, 2026 by Bjørn for 4.27
+June 13, 2026 by Aristotle for 4.31 including
+`stinespringOp_gram` and `stinespringOp_apply`. -/
 lemma krausCompletion_isometry_of_TNI {R : Type*} [RCLike R] {m r : ℕ}
     {K : Fin r → Matrix (Fin m) (Fin m) R}
     (hK : ∑ i, star K i * K i ≤ 1) :
     (krausCompletion K)ᴴ * krausCompletion K = 1 := by
-  have : (krausCompletion K)ᴴ * krausCompletion K =
-    fun i j => ∑ k, (krausCompletion K)ᴴ i k  * krausCompletion K k j := by
-    ext i j
-    apply Matrix.mul_apply
-  rw [this]
-  simp_rw [Finset.sum_finset_product (r := Finset.univ) (s := Finset.univ)
-    (t := fun _ => Finset.univ) (by simp)]
-  simp_rw [Fin.sum_univ_castSucc] -- !!
-  simp only [krausCompletion, conjTranspose_apply, Fin.val_castSucc, Fin.is_lt,
-    ↓reduceDIte, Fin.eta, star_def, Fin.val_last, lt_self_iff_false]
-  suffices (stinespringOp K)ᴴ * stinespringOp K + (1 - (stinespringOp K)ᴴ * stinespringOp K) = 1 by
-    simp_rw [Finset.sum_add_distrib]
-    have h₀ (f g : Fin m → Fin m → R) : (fun i j => f i j + g i j)
-      = (fun i j => f i j) + (fun i j => g i j) :=
-        (Pi.add_def (ι := Fin m) (M := fun _ => Fin m → R) f g).symm
-    rw [h₀]
-    convert this
-    · unfold conjTranspose
-      repeat rw [mul_apply]
-      sorry
-      -- simp_rw [Finset.sum_finset_product (r := Finset.univ) (s := Finset.univ)
-      -- (t := fun _ => Finset.univ) (by simp)]
-      -- simp
-    -- · expose_names
-    --   have : 1 - (stinespringOp K)ᴴ * stinespringOp K ≥ 0 := by
-    --     rw [← stinespringOp_adjoint_mul_self]
-    --     simp only [Pi.star_apply, ge_iff_le, sub_nonneg]
-    --     exact hK
-    --   generalize 1 - (stinespringOp K)ᴴ * stinespringOp K = α at *
-    --   have (x_2 : Fin m) : (starRingEnd R) ((CFC.sqrt α) x_2 x)
-    --                                 = (star (CFC.sqrt α)) x x_2
-    --     := by simp
-    --   simp_rw [this]
-    --   have :  ∑ x_2, star (CFC.sqrt α) x x_2 * CFC.sqrt α x_2 x_1
-    --     = ((star (CFC.sqrt α)) * CFC.sqrt α) x x_1 := by
-    --       rw [mul_apply]
-    --   rw [this]
-    --   repeat apply congrFun
-    --   rw [LE.le.isSelfAdjoint <| CFC.sqrt_nonneg (a := α)]
-    --   apply CFC.sqrt_mul_sqrt_self α
-  simp
+  set S := stinespringOp K with hS
+  -- `Sᴴ * S = ∑ i, (K i)ᴴ * K i`, hence `1 - Sᴴ * S` is positive semidefinite.
+  have hgram : Sᴴ * S = ∑ i, star (K i) * K i := stinespringOp_gram K
+  have h0 : 0 ≤ 1 - Sᴴ * S := by rw [hgram]; exact sub_nonneg.mpr hK
+  -- `W` is the (selfadjoint) square root of `1 - Sᴴ * S`, completing the isometry.
+  set W := CFC.sqrt (1 - Sᴴ * S) with hW
+  have hWsa : Wᴴ = W := IsSelfAdjoint.of_nonneg (CFC.sqrt_nonneg _)
+  have hWW : Wᴴ * W = 1 - Sᴴ * S := by
+    rw [hWsa]; exact CFC.sqrt_mul_sqrt_self _ h0
+  -- The first `r` blocks of the completion are the blocks of `S`.
+  have hcast : ∀ (x : Fin m) (i : Fin r) (c : Fin m),
+      krausCompletion K (x, i.castSucc) c = S (x, i) c := by
+    intro x i c
+    rw [hS]
+    unfold krausCompletion
+    rw [dif_pos (by exact i.isLt)]
+    congr 1
+  -- The last block of the completion is `W`.
+  have hlast : ∀ (x : Fin m) (c : Fin m),
+      krausCompletion K (x, Fin.last r) c = W x c := by
+    intro x c
+    rw [hW, hS]
+    unfold krausCompletion
+    rw [dif_neg (by simp)]
+  -- `Cᴴ * C = Sᴴ * S + Wᴴ * W` by splitting the row sum into the first `r` blocks and the last.
+  have key : (krausCompletion K)ᴴ * krausCompletion K = Sᴴ * S + Wᴴ * W := by
+    ext a b
+    rw [Matrix.mul_apply, Matrix.add_apply, Matrix.mul_apply, Matrix.mul_apply]
+    simp only [Matrix.conjTranspose_apply]
+    have hSsum : (∑ p : Fin m × Fin r, star (S p a) * S p b)
+        = ∑ x, ∑ i, star (S (x, i) a) * S (x, i) b := by
+      rw [← Finset.univ_product_univ, Finset.sum_product]
+    rw [← Finset.univ_product_univ, Finset.sum_product]
+    simp only [Fin.sum_univ_castSucc]
+    rw [Finset.sum_add_distrib, hSsum]
+    congr 1
+    · apply Finset.sum_congr rfl; intro x _
+      apply Finset.sum_congr rfl; intro i _
+      rw [hcast x i a, hcast x i b]
+    · apply Finset.sum_congr rfl; intro x _
+      rw [hlast x a, hlast x b]
+  -- Finally `Sᴴ * S + Wᴴ * W = Sᴴ * S + (1 - Sᴴ * S) = 1`.
+  rw [key, hWW]
+  abel
+
+
 
 def unital {R : Type*} [RCLike R] {m r : ℕ}
   (K : Fin r → Matrix (Fin m) (Fin m) R) := ∑ i, K i * star (K i) = 1
@@ -1395,17 +1405,11 @@ lemma CPTP_of_CPTNI {R : Type*} [RCLike R]
         simp
         omega
       simp_rw [this]
-      simp
       ext a b
-
-      -- rw [Finset.sum_apply]
-      -- rw [Finset.sum_fn]
-      sorry
-      -- rw [Finset.sum_fn]
-      -- simp
-    · exfalso
-      apply H
-      exact Fin.eq_last_of_not_lt g₀
+      erw [Finset.sum_apply]
+      erw [Finset.sum_fn]
+      simp
+    · exact False.elim <| H <| Fin.eq_last_of_not_lt g₀
 
 
 noncomputable def partialTraceLeft {R : Type*} [RCLike R]
