@@ -512,10 +512,8 @@ theorem posSemidef_of_isStarProjection {n : ℕ}
   simp_all only [star, conjTranspose_eq_transpose_of_trivial]
   apply psd_versions
   convert h_pos_semi_def
-  generalize ⇑x = β at *
-  clear h_pos_semi_def h₁
-  rfl
-  rfl
+  · rfl
+  · rfl
   unfold mulVec vecMul
   simp only
   ext i
@@ -795,10 +793,9 @@ lemma ofReal_inj_aux {α : Type*} [Fintype α] {J : α → ℝ} (hnn : ∀ a, J 
     = (∑ a, J a).toNNReal := by
       have (A : ℝ) (hA : 0 ≤ A) : ⟨A,hA⟩ = A.toNNReal := by
         refine NNReal.eq ?_
-        simp
-        rw [max_eq_left]
-        congr
-        tauto
+        simp only [Real.coe_toNNReal']
+        rw [max_eq_left hA]
+        rfl
       apply this
   rw [h₀]
   rw [h₁]
@@ -838,7 +835,7 @@ def PMF_of_preQuantumInstrument {R : Type*} [RCLike R]
   apply PMF.ofFintype
     (fun i => ofNNReal ⟨RCLike.re (krausApply (𝓔 i) ρ).trace,
                               hRC (krausApply_trace_nonneg hPS _)⟩)
-  rw [← coe_finset_sum]
+  rw [← ofNNReal_finsetSum]
   congr
   have htn := hPS.posSemidef.trace_nonneg
   have h₀ : ⟨RCLike.re ρ.trace, hRC htn⟩ = (1 : NNReal) := by
@@ -868,11 +865,11 @@ lemma pureState_C_QuantumInstrument {R : Type*} [RCLike R] {q : ℕ} :
             j j
           convert this
           · rfl
-          simp
+          simp only [one_apply_eq, of_apply, and_self]
           have := g₀.2.symm
           rw [if_neg this]
           simp
-        · push_neg at g₀
+        · push Not at g₀
           by_cases H : i = j
           · subst i
             specialize g₀ rfl
@@ -881,27 +878,26 @@ lemma pureState_C_QuantumInstrument {R : Type*} [RCLike R] {q : ℕ} :
               _ 1 (of fun i' j' ↦ if a = i' ∧ a = j' then 1 else 0)
               a a
             convert this
-            rfl
-            simp
+            · rfl
+            · simp
           have := @Matrix.sub_apply (Fin q) (Fin q) R
             _ 1 (of fun i' j' ↦ if a = i' ∧ a = j' then 1 else 0)
             i j
           convert this
-          rfl
-          simp
+          · rfl
           have : (0 : R) = 0 - 0 := by simp
           convert this
-          exact one_apply_ne' fun a ↦ H (id (Eq.symm a))
-          simp
-          intro ha
-          subst ha
-          exact H
+          · exact one_apply_ne' fun a ↦ H (id (Eq.symm a))
+          · simp only [of_apply, ite_eq_right_iff, one_ne_zero, imp_false, not_and]
+            intro ha
+            subst ha
+            exact H
     unfold pureState_C e
     simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, conjTranspose_single,
       star_one, mulᵣ_eq, single_mul_single_same, mul_one, Finset.sum_const, Finset.card_singleton,
       one_smul, ge_iff_le]
     refine le_iff.mpr ?_
-    have : (@HSub.hSub (Matrix (Fin q) (Fin q) R) (Matrix (Fin q) (Fin q) R) (Matrix (Fin q) (Fin q) R) instHSub 1 (single a a 1) : Matrix (Fin q) (Fin q) R)
+    have : (@HSub.hSub _ _ _ instHSub 1 (single a a 1))
       = (fun i j ↦ if i = j ∧ i ≠ a then 1 else 0 : Fin q → Fin q → R) := by
         rw [← h₁]
         congr
@@ -1034,45 +1030,45 @@ def POVM_PMF_withTop₀ {R : Type*} [RCLike R] {k : ℕ} {ρ : Matrix (Fin k) (F
   apply PMF.ofFintype (p hPS)
   apply (toReal_eq_toReal_iff' (p.ne_top _) one_ne_top).mp
   convert toReal_one
-  unfold p
-  rw [trace_arithmetic hUT hPS, Finset.sum_dite] --!!
-  congr
-  · rw [Finset.sum_subtype (p := fun x => x.1 = Fin.last k)]
-    · rw [← toReal_eq_toReal_iff']
-      · simp only [some_eq_coe, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, toReal_mul,
-        toReal_natCast, coe_toReal, Real.coe_toNNReal']
-        convert one_mul _
-        rw [Nat.cast_eq_one]
-        refine Fintype.card_eq_one_iff.mpr <| by simp
-      · refine sum_ne_top.mpr <| by simp
+  · unfold p
+    rw [trace_arithmetic hUT hPS, Finset.sum_dite] --!!
+    congr
+    · rw [Finset.sum_subtype (p := fun x => x.1 = Fin.last k)]
+      · rw [← toReal_eq_toReal_iff']
+        · simp only [some_eq_coe, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, toReal_mul,
+          toReal_natCast, coe_toReal, Real.coe_toNNReal']
+          convert one_mul _
+          rw [Nat.cast_eq_one]
+          refine Fintype.card_eq_one_iff.mpr <| by simp
+        · refine sum_ne_top.mpr <| by simp
+        · simp
       · simp
-    · simp
-  · rw [← standard_basis_probability_C,
-        Finset.sum_subtype (p := fun x => x.1 ≠ Fin.last k)]
-    · have : ofNNReal (∑ x, RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
-           = ∑ x, ofNNReal (RCLike.re (pureState_C (e x) * ρ).trace).toNNReal := by
-        rw [← coe_finset_sum]
-        congr
-        refine Real.toNNReal_sum_of_nonneg fun _ _ => pure_trace_nonneg_re _ hPS.posSemidef
-      simp only [ne_eq, map_sum]
-      rw [this]
-      apply Function.Bijective.finset_sum
-        (e := fun ⟨x,hx⟩ => ⟨x.1.1, Fin.val_lt_last hx⟩)
-      · constructor
+    · rw [← standard_basis_probability_C,
+          Finset.sum_subtype (p := fun x => x.1 ≠ Fin.last k)]
+      · have : ofNNReal (∑ x, RCLike.re (pureState_C (e x) * ρ).trace).toNNReal
+            = ∑ x, ofNNReal (RCLike.re (pureState_C (e x) * ρ).trace).toNNReal := by
+          rw [← ofNNReal_finsetSum]
+          congr
+          refine Real.toNNReal_sum_of_nonneg fun _ _ => pure_trace_nonneg_re _ hPS.posSemidef
+        simp only [ne_eq, map_sum]
+        rw [this]
+        apply Function.Bijective.finsetSum
+          (e := fun ⟨x,hx⟩ => ⟨x.1.1, Fin.val_lt_last hx⟩)
+        · constructor
+          · intro ⟨x,hx⟩
+            simp only [Fin.mk.injEq, Subtype.forall, Subtype.mk.injEq, Finset.mem_filter,
+              Finset.mem_univ, true_and, forall_self_imp]
+            exact fun _ _ => SetLike.coe_eq_coe.mp ∘ Fin.eq_of_val_eq
+          · intro x
+            simp only [Subtype.exists, Finset.mem_filter, Finset.mem_univ, true_and, exists_idem]
+            use Fin.castSucc x
+            simp
         · intro ⟨x,hx⟩
-          simp only [Fin.mk.injEq, Subtype.forall, Subtype.mk.injEq, Finset.mem_filter,
-            Finset.mem_univ, true_and, forall_self_imp]
-          exact fun _ _ => SetLike.coe_eq_coe.mp ∘ Fin.eq_of_val_eq
-        · intro x
-          simp only [Subtype.exists, Finset.mem_filter, Finset.mem_univ, true_and, exists_idem]
-          use Fin.castSucc x
-          simp
-      · intro ⟨x,hx⟩
-        congr
-        rw [max_eq_left (pure_trace_nonneg_re _ hPS.posSemidef)]
-        congr
-    · simp
-    · exact Subtype.fintype _
+          congr
+          rw [max_eq_left (pure_trace_nonneg_re _ hPS.posSemidef)]
+          congr
+      · simp
+      · exact Subtype.fintype _
   simp
 
 /-- A PMF where the probability of `none` is the probability lost due
@@ -1148,7 +1144,7 @@ noncomputable def POVM_subPMF {R : Type*} [RCLike R]
           simp at this
           tauto⟩) (by simp) (by simp)
     rw [← this]
-    simp only [coe_toReal, NNReal.coe_mk]
+    simp only [coe_toReal]
     have := @standard_basis_probability_general R _ k ρ
     have := congrArg (RCLike.re) this
     simp only [map_sum] at this ⊢
@@ -1237,27 +1233,25 @@ lemma PMF_of_state.sum_one_general {R : Type*} [RCLike R]
         congr
     rw [← h₁]
     congr
-    rw [← coe_finset_sum]
+    rw [← ofNNReal_finsetSum]
     ring_nf
     simp_rw [Matrix.sum_mul Finset.univ f ρ,
       RCLike.sub_re, trace_sum, RCLike.re_sum,
       Finset.sum_erase_sub acc (fun a => RCLike.re (f a * ρ).trace)]
     rw [← coe_add]
     congr
-    simp
     have := @Nonneg.mk_add_mk ℝ _ _ _
       (∑ x with ¬x = acc, RCLike.re (f x * ρ).trace)
       (RCLike.re (f acc * ρ).trace)
       (Finset.sum_nonneg fun i a ↦ hnn i)
       (hnn _)
       --(α := R)
-    show (⟨∑ x with ¬x = acc, RCLike.re (f x * ρ).trace, _⟩ : NNReal)
-    + ⟨RCLike.re (f acc * ρ).trace, _⟩ =
-      _
+    change (⟨∑ x with ¬x = acc, RCLike.re (f x * ρ).trace, _⟩ : NNReal)
+      + ⟨RCLike.re (f acc * ρ).trace, _⟩ = _
     rw [this]
     have := @ofReal_inj_aux (Fin k) _
         (fun i => RCLike.re (f i * ρ).trace) hnn
-    show _ = ∑ i : Fin k, (⟨RCLike.re (f i * ρ).trace, hnn _⟩ : NNReal)
+    change _ = ∑ i : Fin k, (⟨RCLike.re (f i * ρ).trace, hnn _⟩ : NNReal)
     rw [this]
     congr
     apply add_eq_of_eq_sub
@@ -1290,10 +1284,10 @@ lemma PMF_of_state.sum_one_general_general {R : Type*} [RCLike R]
     (x + y).toReal = x.toReal + y.toReal := by
         exact toReal_add hx hy
   rw [this _ _ (by simp) (by simp)]
-  simp only [coe_toReal, NNReal.coe_mk]
+  simp only [coe_toReal]
   simp_rw [sub_mul]
   simp_rw [trace_sub]
-  simp
+  simp only [one_mul, map_sub]
   exact add_eq_of_eq_sub rfl
 
 
@@ -1853,7 +1847,6 @@ lemma MO_language_nonempty_C {α : Type*} {r k : ℕ}
     (pureState_projection_C (0 : Fin k.succ) (R := ℂ)).1
   simp_rw [this]
   simp_rw [basisState_trace_one_C]
-  simp
   norm_cast
-  show 2⁻¹ < 1
+  change 2⁻¹ < 1
   simp

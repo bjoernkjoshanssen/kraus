@@ -461,14 +461,14 @@ by
   exact (ψᴴ * first_qubit_proj₀ * ψ) (0,0,0) (0,0,0)
 
 -- Let's try to use `gate_probability` for something:
-example : gate_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
-  unfold gate_probability
-  unfold first_qubit_proj₀
-  unfold toffoli toffoli₀
-  unfold translate₃ transl₃
-  simp
+-- example : gate_probability ((e 0) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
+--   unfold gate_probability
+--   unfold first_qubit_proj₀
+--   unfold toffoli toffoli₀
+--   unfold translate₃ transl₃
+--   simp
 
-  sorry
+--   sorry
 
 example : toffoli_probability ((e (R := ℂ) (0 : Fin 2)) ⊗ₖ (e 0 ⊗ₖ (e 0))) = 1 := by
   let A := toffoli * ((e (R := ℂ) (0 : Fin 2)) ⊗ₖ (e (0 : Fin 2) ⊗ₖ (e (0 : Fin 2))))
@@ -672,109 +672,108 @@ lemma sum_prod_sum_1 : sum_prod (a := 2) (b := 2) * prod_sum (a := 2) (b := 2) =
       fin_cases i
       all_goals try simp
 
-lemma blah (A) :
-  star (prod_sum (a := 2) (b := 2) * ↑A * sum_prod (a := 2) (b := 2))
-  = (prod_sum * star ↑A * sum_prod) := by
-    unfold prod_sum sum_prod split'
-    ext i j
-    rw [Matrix.mul_apply]
-    fin_cases j
-    all_goals
-      fin_cases i
-      all_goals try simp
-      all_goals sorry
-lemma prod_sum_prod_unitary (A : unitary _) :
-  prod_sum (a := 2) (b := 2) * A.1 * sum_prod (a := 2) (b := 2) ∈ unitary _ := by
-  constructor
-  · have := A.2.1
+-- lemma blah (A) :
+--   star (prod_sum (a := 2) (b := 2) * ↑A * sum_prod (a := 2) (b := 2))
+--   = (prod_sum * star ↑A * sum_prod) := by
+--     unfold prod_sum sum_prod split'
+--     ext i j
+--     rw [Matrix.mul_apply]
+--     fin_cases j
+--     all_goals
+--       fin_cases i
+--       all_goals try simp
+--       all_goals sorry
+-- lemma prod_sum_prod_unitary (A : unitary _) :
+--   prod_sum (a := 2) (b := 2) * A.1 * sum_prod (a := 2) (b := 2) ∈ unitary _ := by
+--   constructor
+--   · have := A.2.1
 
-    unfold prod_sum sum_prod split'
-    simp
-    ext i j
-    rw [Matrix.mul_apply]
-    simp
-    rw [Fintype.sum_prod_type]
-    simp
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    simp
-    fin_cases i
-    fin_cases j
-    simp_all
-    repeat rw [Matrix.mul_apply]
-    simp
-    repeat rw [Matrix.mul_apply]
-    simp
-    rw [Fintype.sum_prod_type]
-    rw [Fin.sum_univ_two]
-    rw [Fin.sum_univ_two]
-    simp
-    repeat rw [Matrix.mul_apply]
-    simp
-    repeat rw [Matrix.mul_apply]
-    simp
-    all_goals sorry
-  · sorry
+--     unfold prod_sum sum_prod split'
+--     simp
+--     ext i j
+--     rw [Matrix.mul_apply]
+--     simp
+--     rw [Fintype.sum_prod_type]
+--     simp
+--     rw [Fintype.sum_prod_type]
+--     rw [Fin.sum_univ_two]
+--     rw [Fin.sum_univ_two]
+--     simp
+--     fin_cases i
+--     fin_cases j
+--     simp_all
+--     repeat rw [Matrix.mul_apply]
+--     simp
+--     repeat rw [Matrix.mul_apply]
+--     simp
+--     rw [Fintype.sum_prod_type]
+--     rw [Fin.sum_univ_two]
+--     rw [Fin.sum_univ_two]
+--     simp
+--     repeat rw [Matrix.mul_apply]
+--     simp
+--     repeat rw [Matrix.mul_apply]
+--     simp
+--     all_goals sorry
+--   · sorry
 
-noncomputable def quantumCircuitUnitary'
-    (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
-  : (unitary <| Matrix (Fin 2 × Fin 2 × Fin 2)
-                       (Fin 2 × Fin 2 × Fin 2) ℂ) :=
-    ⟨(Matrix.of fun x y =>
-    (Matrix.fromBlocks A 0 0 1) (split' x) (split' y)), by
-    have := @Matrix.fromBlocks_split'_eq (a := 2) (b := 2) A
-    unfold fromBlocks_split' at this
-    rw [this]
-    -- prove that prod_sum * X * sum_prod is unitary whenever X is!
-    unfold unitary
-    simp
-    constructor
-    · sorry
-    · sorry⟩
+-- noncomputable def quantumCircuitUnitary'
+--     (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
+--   : (unitary <| Matrix (Fin 2 × Fin 2 × Fin 2)
+--                        (Fin 2 × Fin 2 × Fin 2) ℂ) :=
+--     ⟨(Matrix.of fun x y =>
+--     (Matrix.fromBlocks A 0 0 1) (split' x) (split' y)), by
+--     have := @Matrix.fromBlocks_split'_eq (a := 2) (b := 2) A
+--     unfold fromBlocks_split' at this
+--     rw [this]
+--     -- prove that prod_sum * X * sum_prod is unitary whenever X is!
+--     unfold unitary
+--     simp
+--     constructor
+--     · sorry
+--     · sorry⟩
 
-set_option maxHeartbeats 0 in
-noncomputable def quantumCircuitUnitary
-    (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
-    (σ : Equiv.Perm (Fin 2 × Fin 2 × Fin 2)) :
-    (unitary <| Matrix (Fin 2 × Fin 2 × Fin 2)
-                       (Fin 2 × Fin 2 × Fin 2) ℂ) := by
-    exact ⟨quantumCircuit A σ, by
-      unfold quantumCircuit
-      constructor
-      · simp [split']
-        ext x y
-        repeat rw [Matrix.mul_apply]
-        repeat rw [Fintype.sum_prod_type]
-        simp_rw [Fintype.sum_prod_type]
-        simp
-        repeat rw [Matrix.mul_apply]
-        repeat rw [Fintype.sum_prod_type]
-        simp_rw [Fintype.sum_prod_type]
-        simp
-        by_cases H :  σ (0, 0, 0) = x
-        · symm at H
-          subst x
-          simp
-          by_cases Hy :  σ (0, 0, 0) = y
-          · symm at Hy
-            subst y
-            simp
-            repeat rw [Matrix.mul_apply]
-            repeat rw [Fintype.sum_prod_type]
-            simp_rw [Fintype.sum_prod_type]
-            simp
-            repeat rw [Matrix.mul_apply]
-            repeat rw [Fintype.sum_prod_type]
-            by_cases H : (Equiv.symm σ) (0, 0, 0) = (0, 0, 0)
-            · rw [H];simp
-              sorry
-            · rw [if_neg H];simp
-              sorry
-          · sorry
-        · sorry
+-- noncomputable def quantumCircuitUnitary
+--     (A : unitary <| Matrix (Fin 2 × Fin 2) (Fin 2 × Fin 2) ℂ)
+--     (σ : Equiv.Perm (Fin 2 × Fin 2 × Fin 2)) :
+--     (unitary <| Matrix (Fin 2 × Fin 2 × Fin 2)
+--                        (Fin 2 × Fin 2 × Fin 2) ℂ) := by
+--     exact ⟨quantumCircuit A σ, by
+--       unfold quantumCircuit
+--       constructor
+--       · simp [split']
+--         ext x y
+--         repeat rw [Matrix.mul_apply]
+--         repeat rw [Fintype.sum_prod_type]
+--         simp_rw [Fintype.sum_prod_type]
+--         simp
+--         repeat rw [Matrix.mul_apply]
+--         repeat rw [Fintype.sum_prod_type]
+--         simp_rw [Fintype.sum_prod_type]
+--         simp
+--         by_cases H :  σ (0, 0, 0) = x
+--         · symm at H
+--           subst x
+--           simp
+--           by_cases Hy :  σ (0, 0, 0) = y
+--           · symm at Hy
+--             subst y
+--             simp
+--             repeat rw [Matrix.mul_apply]
+--             repeat rw [Fintype.sum_prod_type]
+--             simp_rw [Fintype.sum_prod_type]
+--             simp
+--             repeat rw [Matrix.mul_apply]
+--             repeat rw [Fintype.sum_prod_type]
+--             by_cases H : (Equiv.symm σ) (0, 0, 0) = (0, 0, 0)
+--             · rw [H];simp
+--               sorry
+--             · rw [if_neg H];simp
+--               sorry
+--           · sorry
+--         · sorry
 
-      · sorry⟩
+--       · sorry⟩
     -- quantumCircuit A σ ∈ unitary _ := by
     -- unfold quantumCircuit
     -- set PT := (Equiv.symm σ).toPEquiv.toMatrix (α := ℂ)
