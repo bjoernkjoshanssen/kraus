@@ -157,6 +157,7 @@ lemma krausCompletion_I' (z : ℂ) (hz : star z * z ≤ 1) :
     have g₁ : (1 - (starRingEnd ℂ) z * z) ≥ 0 := by
         simp only [ge_iff_le, sub_nonneg]
         convert hz
+        rfl
     generalize (1 - (starRingEnd ℂ) z * z) = α at *
     refine Complex.conj_eq_iff_im.mpr ?_
     have g₂ : α.sqrt ≥ 0 := Complex.sqrt_nonneg _ g₁
@@ -181,86 +182,87 @@ lemma krausCompletion_I' (z : ℂ) (hz : star z * z ≤ 1) :
 
 
 
-lemma krausCompletion_I
-  (K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ)
-  (h₀ : (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]).PosSemidef)
-  (h₁ : (starRingEnd ℂ) (CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) =
-                         CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) :
-  (krausCompletion K)ᴴ * krausCompletion K = 1 := by
-  have := @krausCompletion_I' (K 0 0 0) (by
-    generalize K 0 0 0 = κ at *
-    have : 1 - !![(starRingEnd ℂ) κ * κ] ≥ 0 := by sorry
-    have : 1 - !![star κ * κ] ≥ 0 := this
-    have : !![star κ * κ] ≤ 1 := by sorry
-    generalize star κ * κ = μ at *
+-- lemma krausCompletion_I
+--   (K : Fin 1 → Matrix (Fin 1) (Fin 1) ℂ)
+--   (h₀ : (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]).PosSemidef)
+--   (h₁ : (starRingEnd ℂ) (CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) =
+--                          CFC.sqrt (1 - !![(starRingEnd ℂ) (K 0 0 0) * K 0 0 0]) 0 0) :
+--   (krausCompletion K)ᴴ * krausCompletion K = 1 := by
+--   have := @krausCompletion_I' (K 0 0 0) (by
+--     generalize K 0 0 0 = κ at *
+--     have : 1 - !![(starRingEnd ℂ) κ * κ] ≥ 0 := by sorry
+--     have : 1 - !![star κ * κ] ≥ 0 := this
+--     have : !![star κ * κ] ≤ 1 := by sorry
+--     generalize star κ * κ = μ at *
 
-    have := matrix_1x1_nonneg_iff -- maybe generalize that
-    sorry)
-  simp only [Nat.reduceAdd, Fin.isValue] at this
+--     have := matrix_1x1_nonneg_iff -- maybe generalize that
+--     sorry)
+--   simp only [Nat.reduceAdd, Fin.isValue] at this
 
-  unfold krausCompletion stinespringOp
-  ext a b
-  rw [Matrix.mul_apply]
-  rw [Fintype.sum_prod_type]
-  rw [Fin.fin_one_eq_zero a]
-  rw [Fin.fin_one_eq_zero b]
-  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
-    Fin.val_eq_zero_iff, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
-    star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
-    single_apply_same, mul_one, one_ne_zero, one_apply_eq]
-  generalize K 0 = L at *
-  have (x y : Fin 1) : L x y = L 0 0 := by
-    have : x = 0 := by exact Fin.fin_one_eq_zero x
-    subst this
-    have : y = 0 := by exact Fin.fin_one_eq_zero _
-    subst this
-    rfl
-  simp_rw [this]
---   generalize L 0 0 = l at *
-  have (l : ℂ) : (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
-    (0:Fin 1) : ℂ))
-       = (fun x y ↦                             (l * single 0 0 1 0 0 : ℂ)) := by
-        ext x y
-        unfold single
-        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, and_self,
-          ↓reduceIte, ite_eq_left_iff]
-        intro h
-        exfalso
-        apply h
-        exact Eq.symm (Fin.fin_one_eq_zero x.2)
-  have (l : ℂ): (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
-    (0:Fin 1) : ℂ))
-       = (fun x y ↦                             (l  : ℂ)) := by
-        ext x y
-        unfold single
-        simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, ite_eq_left_iff]
-        intro h
-        exfalso
-        apply h
-        exact Eq.symm (Fin.fin_one_eq_zero x.2)
-  simp_rw [this]
-  have (l : ℂ) : (@HMul.hMul (Matrix (Fin 1) (Fin 1 × Fin 1) ℂ) (Matrix (Fin 1 × Fin 1) (Fin 1) ℂ)
-    (Matrix (Fin 1) (Fin 1) ℂ)
-  instHMulOfFintypeOfMulOfAddCommMonoid (fun x y ↦ l)ᴴ fun x y ↦ l : Matrix (Fin 1) (Fin 1) ℂ)
-     = !![(starRingEnd ℂ) l * l] := by
-        ext i j
-        rw [Fin.fin_one_eq_zero i]
-        rw [Fin.fin_one_eq_zero j]
-        rw [Matrix.mul_apply]
-        simp
-  rw [this, ← eq_sub_iff_add_eq', h₁]
-  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
-    (CFC.sqrt A) * (CFC.sqrt A) = A  :=
-    CFC.sqrt_mul_sqrt_self A <| nonneg_iff_posSemidef.mpr hA
-  have (A : (Matrix (Fin 1) (Fin 1) ℂ)) ( i j : Fin 1)
-    (hA : A.PosSemidef) :
-    (CFC.sqrt A i j) * (CFC.sqrt A i j)
-     = A i j := by
-        rw [Fin.fin_one_eq_zero i]
-        rw [Fin.fin_one_eq_zero j]
-        nth_rw 3 [← this (A := A)]
-        · rw [Matrix.mul_apply]
-          simp
-        · tauto
-  rw [this (hA := h₀)]
-  simp
+--   unfold krausCompletion stinespringOp
+--   ext a b
+--   rw [Matrix.mul_apply]
+--   rw [Fintype.sum_prod_type]
+--   rw [Fin.fin_one_eq_zero a]
+--   rw [Fin.fin_one_eq_zero b]
+--   simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Nat.reduceAdd, Nat.lt_one_iff,
+--     Fin.val_eq_zero_iff, Finset.sum_singleton, kroneckerMap_apply, conjTranspose_apply,
+--     star_def, Fin.sum_univ_two, ↓reduceDIte, Fin.coe_ofNat_eq_mod, Nat.zero_mod, Fin.zero_eta,
+--     single_apply_same, mul_one, one_ne_zero, one_apply_eq]
+--   generalize K 0 = L at *
+--   have (x y : Fin 1) : L x y = L 0 0 := by
+--     have : x = 0 := by exact Fin.fin_one_eq_zero x
+--     subst this
+--     have : y = 0 := by exact Fin.fin_one_eq_zero _
+--     subst this
+--     rfl
+--   simp_rw [this]
+-- --   generalize L 0 0 = l at *
+--   have (l : ℂ) : (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
+--     (0:Fin 1) : ℂ))
+--        = (fun x y ↦                             (l * single 0 0 1 0 0 : ℂ)) := by
+--         ext x y
+--         unfold single
+--         simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, and_self,
+--           ↓reduceIte, ite_eq_left_iff]
+--         intro h
+--         exfalso
+--         apply h
+--         exact Eq.symm (Fin.fin_one_eq_zero x.2)
+--   have (l : ℂ): (fun (x : Fin 1 × Fin 1) (y : Fin 1) ↦ (l * single (0:Fin 1) (0:Fin 1) (1:ℂ) x.2
+--     (0:Fin 1) : ℂ))
+--        = (fun x y ↦                             (l  : ℂ)) := by
+--         ext x y
+--         unfold single
+--         simp only [Fin.isValue, of_apply, and_true, mul_ite, mul_one, mul_zero, ite_eq_left_iff]
+--         intro h
+--         exfalso
+--         apply h
+--         exact Eq.symm (Fin.fin_one_eq_zero x.2)
+--   simp_rw [this]
+--   have (l : ℂ) : (@HMul.hMul (Matrix (Fin 1) (Fin 1 × Fin 1) ℂ)
+--          (Matrix (Fin 1 × Fin 1) (Fin 1) ℂ)
+--     (Matrix (Fin 1) (Fin 1) ℂ)
+--   instHMulOfFintypeOfMulOfAddCommMonoid (fun x y ↦ l)ᴴ fun x y ↦ l : Matrix (Fin 1) (Fin 1) ℂ)
+--      = !![(starRingEnd ℂ) l * l] := by
+--         ext i j
+--         rw [Fin.fin_one_eq_zero i]
+--         rw [Fin.fin_one_eq_zero j]
+--         rw [Matrix.mul_apply]
+--         simp
+--   rw [this, ← eq_sub_iff_add_eq', h₁]
+--   have (A : (Matrix (Fin 1) (Fin 1) ℂ)) (hA : A.PosSemidef) :
+--     (CFC.sqrt A) * (CFC.sqrt A) = A  :=
+--     CFC.sqrt_mul_sqrt_self A <| nonneg_iff_posSemidef.mpr hA
+--   have (A : (Matrix (Fin 1) (Fin 1) ℂ)) ( i j : Fin 1)
+--     (hA : A.PosSemidef) :
+--     (CFC.sqrt A i j) * (CFC.sqrt A i j)
+--      = A i j := by
+--         rw [Fin.fin_one_eq_zero i]
+--         rw [Fin.fin_one_eq_zero j]
+--         nth_rw 3 [← this (A := A)]
+--         · rw [Matrix.mul_apply]
+--           simp
+--         · tauto
+--   rw [this (hA := h₀)]
+--   simp
