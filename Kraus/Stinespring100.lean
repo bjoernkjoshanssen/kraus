@@ -16,42 +16,33 @@ theorem stinespringForm_eq {R : Type*} [RCLike R] {m r : ℕ}
     (K : Fin r → Matrix (Fin m) (Fin m) R)
     (ρ : Matrix (Fin m) (Fin m) R) :
     tr₂ (stinespringDilation K ρ) = krausApply K ρ := by
-  unfold krausApply
-  ext u v
-  repeat rw [Finset.sum_apply]
-  simp only [tr₂, stinespringDilation, stinespringOp, Fin.isValue]
-  congr
-  ext w
-  simp only [kroneckerMap, single, Fin.isValue, of_apply,
-    mul_ite, mul_one, mul_zero]
-  repeat rw [Matrix.mul_apply]
-  congr
-  ext j
-  repeat rw [Matrix.mul_apply]
-  simp only [Fin.isValue, conjTranspose_apply, star_def]
-  repeat rw [Finset.sum_apply]
-  simp
+  unfold tr₂ stinespringDilation krausApply
+  ext i j
+  simp +decide [stinespringOp, Matrix.mul_apply]
+  simp +decide [Matrix.mul_apply, Finset.sum_mul, Matrix.sum_apply, kroneckerMap_apply,
+    Matrix.single]
+
 open Matrix MatrixOrder ComplexOrder RCLike
 
 open TensorProduct
 
 
 
-theorem heisenberg_schrõdinger_picture {m r : ℕ}
-    (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
-    (ρ : Matrix (Fin m) (Fin m) ℂ) :
-  -- let K' := fun i x y => star <| K i y x
-  -- let U := stinespringOp K'
-  -- let V := stinespringOp K
-  -- Uᴴ * (ρ ⊗ₖ 1) * U = tr₂ (V * ρ * Vᴴ)
-    0 = 0 := by
+-- theorem heisenberg_schrõdinger_picture {m r : ℕ}
+--     (K : Fin r.succ → Matrix (Fin m) (Fin m) ℂ)
+--     (ρ : Matrix (Fin m) (Fin m) ℂ) :
+--   -- let K' := fun i x y => star <| K i y x
+--   -- let U := stinespringOp K'
+--   -- let V := stinespringOp K
+--   -- Uᴴ * (ρ ⊗ₖ 1) * U = tr₂ (V * ρ * Vᴴ)
+--     0 = 0 := by
 
-    have h₀ := @tracefree_version ℂ _ (Fin m) (Fin r.succ) _ _ _ _ _ K ρ
-    have h₁ := @stinespringForm_eq _ _ m r.succ K ρ
-    have := h₀.trans h₁
-    simp at this
+--     have h₀ := @tracefree_version ℂ _ (Fin m) (Fin r.succ) _ _ _ _ _ K ρ
+--     have h₁ := @stinespringForm_eq _ _ m r.succ K ρ
+--     have := h₀.trans h₁
+--     simp at this
 
-    sorry
+--     sorry
 
 
 
@@ -63,6 +54,8 @@ lemma tr₂_one_of_unital {m r : ℕ}
       simp only [stinespringDilation, krausApply, Matrix.mul_one] at this
       rw [this]
       convert hu
+      simp [unital]
+      tauto
 
 
   -- PROOF THAT WORKS IN 4.29.0-rc6 TOO:
