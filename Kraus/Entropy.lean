@@ -58,13 +58,15 @@ lemma unitary_iff₁₁ (z : ℂ) : star z * z = 1 ↔ !![z] ∈ unitary _ := by
       ext i j
       fin_cases i; fin_cases j
       convert hz
-      simp [mul_apply]
+      · simp [mul_apply]
+      · rfl
     constructor
     · exact this
     · exact (mul_eq_one_comm_of_card_eq _ _ _ rfl).mp this
   · intro h
     convert congrFun (congrFun h.1 0) 0
-    simp [mul_apply]
+    · simp [mul_apply]
+    · rfl
 
 lemma unitary_iff₂₂ (a b c d : ℂ) :
   star a * a + star c * c = 1 ∧
@@ -79,9 +81,11 @@ lemma unitary_iff₂₂ (a b c d : ℂ) :
       fin_cases i
       · fin_cases j
         · convert hac
-          simp
+          · simp
+          · rfl
         · convert h
-          simp
+          · simp
+          · rfl
       fin_cases j
       · apply star_injective
         simp only [Fin.mk_one, Fin.isValue, star_apply, of_apply, cons_val', cons_val_one,
@@ -92,7 +96,8 @@ lemma unitary_iff₂₂ (a b c d : ℂ) :
         simp only [RCLike.star_def]
         ring_nf
       · convert hbd
-        simp
+        · simp
+        · rfl
     constructor
     · exact this
     · exact (mul_eq_one_comm_of_card_eq (Fin 2) (Fin 2) ℂ rfl).mp this
